@@ -16,7 +16,7 @@ process preProcess {
   set val(name), file(reads) from raw_reads
 
   output:
-  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming
+  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming, read_files_kraken
 
   script:
   if(params.name_split_on!=""){
@@ -290,5 +290,21 @@ process mlst_formatting {
     for scheme in mlst:
       outFile.write(scheme)
 
+  """
+}
+
+process kraken {
+  tag "$name"
+  publishDir "${params.outdir}/results/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+
+  input:
+  set val(name), file(reads) from read_files_kraken
+
+  output:
+  tuple name, file("${name}_kraken2_report.txt") into kraken_files
+
+  script:
+  """
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
   """
 }
