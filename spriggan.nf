@@ -33,23 +33,6 @@ process preProcess {
   }
 }
 
-//FastQC
-process fastqc {
-  tag "$name"
-  publishDir "${params.outdir}/logs/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
-
-  input:
-  set val(name), file(reads) from read_files_fastqc
-
-  output:
-  file("*_fastqc.{zip,html}") into fastqc_results
-
-  script:
-  """
-  fastqc -q  ${reads}
-  """
-}
-
 //Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
@@ -59,7 +42,7 @@ process clean_reads {
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_shovill
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
 
@@ -68,7 +51,26 @@ process clean_reads {
   bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=window,${params.windowsize} trimq=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe
   repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-  bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_1.clean.fastq.gz out2=${name}_2.clean.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+  bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+  """
+}
+
+combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
+
+//FastQC
+process fastqc {
+  tag "$name"
+  publishDir "${params.outdir}/logs/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+
+  input:
+  set val(name), file(reads) from combined_reads
+
+  output:
+  file("*_fastqc.{zip,html}") into fastqc_results
+
+  script:
+  """
+  fastqc -q  ${reads}
   """
 }
 
@@ -305,6 +307,65 @@ process kraken {
 
   script:
   """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+  """
+}
+
+//Kraken Step 2: Summarize kraken results
+process kraken_summary {
+  tag "$name"
+  publishDir "${params.outdir}/results",mode:'copy'
+
+  input:
+  file(files) from kraken_files.collect()
+
+  output:
+  file("kraken_results.txt") into kraken_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*kraken2_report*")
+
+  results = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
+      df = []
+      dfs = []
+      with open(file,"r") as inFile:
+          for line in inFile:
+              line = line.strip()
+              sline = line.split("\t")
+              if sline[5] == "unclassified":
+                  df.append(sline)
+              if sline[3] == "S":
+                  df.append(sline)
+
+      pandf = DataFrame(df, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      pandf['Name'] = pandf['Name'].str.lstrip()
+      pandf = pandf.sort_values(by=['Percentage'], ascending=False)
+      unclass = pandf[pandf["Name"]=="unclassified"]
+      pandf = pandf[pandf["Name"]!="unclassified"]
+      pandf = pandf.head(2)
+      dfs = pd.concat([unclass,pandf])
+      dfs = dfs.assign(Sample=sample_id)
+      dfs = dfs[['Sample','Percentage','Name']]
+      dfs = dfs.reset_index(drop=True)
+      print(dfs)
+
+      unclassified = dfs.iloc[0]['Percentage'] + "%"
+      first_species = dfs.iloc[1]['Name'] + " (" + dfs.iloc[1]['Percentage'] + "%)"
+      second_species = dfs.iloc[2]['Name'] + " (" + dfs.iloc[2]['Percentage'] + "%)"
+      combined = [[sample_id, unclassified, first_species, second_species]]
+      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
+      results.append(result)
+
+  df_concat = pd.concat(results)
+  df_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
