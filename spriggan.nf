@@ -36,7 +36,7 @@ process preProcess {
 //Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
-  publishDir "${params.outdir}/logs/cleanedreads", mode: 'copy',pattern:"*.stats.txt"
+  publishDir "${params.outdir}/results/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
   set val(name), file(reads) from read_files_trimming
@@ -45,16 +45,23 @@ process clean_reads {
   tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
+  file("${name}.trim.txt") into trim_stats
 
   script:
   """
-  bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=window,${params.windowsize} trimq=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe
+  bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=window,${params.windowsize} trimq=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
+
   repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
+
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
+
   bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+
+  grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
   """
 }
 
+//Combine raw reads channel and cleaned reads channel
 combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 
 //FastQC
@@ -101,7 +108,7 @@ process shovill {
 process samtools {
   tag "$name"
 
-  publishDir "${params.outdir}/results/alignments", mode: 'copy', pattern:"*.bam"
+  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.bam"
   publishDir "${params.outdir}/results/coverage", mode: 'copy', pattern:"*_depth.tsv*"
 
   input:
@@ -119,7 +126,7 @@ process samtools {
   """
 }
 
-//Calculate median coverage
+//Calculate coverage stats
 process coverage_stats {
   publishDir "${params.outdir}/results/coverage", mode: 'copy'
 
@@ -157,16 +164,16 @@ process coverage_stats {
   '''
 }
 
-//Assembly Quality Report
+//Run Quast on assemblies
 process quast {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/logs/quast",mode:'copy'
+  publishDir "${params.outdir}/quast",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_report
+  file("${name}.quast.tsv") into quast_files
 
   script:
   """
@@ -175,7 +182,7 @@ process quast {
   """
 }
 
-//Find AR genes with amrfinder+
+//AR Step 1: Find AR genes with amrfinder+
 process amrfinder {
   tag "$name"
   publishDir "${params.outdir}/results/amrfinder",mode:'copy'
@@ -192,7 +199,7 @@ process amrfinder {
   """
 }
 
-//Summarize amrfinder+ results
+//AR Step 2: Summarize amrfinder+ results
 process amrfinder_summary {
   tag "$name"
   publishDir "${params.outdir}/results",mode:'copy'
@@ -228,6 +235,7 @@ process amrfinder_summary {
   """
 }
 
+//MLST Step 1: Run mlst
 process mlst {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/results",mode:'copy'
@@ -244,6 +252,7 @@ process mlst {
   """
 }
 
+//MLST Step 2: Summarize mlst results
 process mlst_formatting {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/results",mode:'copy'
@@ -295,6 +304,7 @@ process mlst_formatting {
   """
 }
 
+//Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
   publishDir "${params.outdir}/results/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
