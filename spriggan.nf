@@ -67,7 +67,7 @@ combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 //FastQC
 process fastqc {
   tag "$name"
-  publishDir "${params.outdir}/logs/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+  publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
   input:
   set val(name), file(reads) from combined_reads
@@ -80,6 +80,38 @@ process fastqc {
   fastqc -q  ${reads}
   """
 }
+
+process fastqc_summary {
+  publishDir "${params.outdir}/fastqc", mode: 'copy'
+
+  input:
+  file(fastqc) from fastqc_results.collect()
+
+  output:
+  file("fq_summary.txt") into fastqc_summary
+
+  shell:
+  """
+  zips=`ls *.zip`
+
+  for i in \$zips; do
+      unzip -o \$i &>/dev/null;
+  done
+
+  fq_folders=\${zips}
+
+  for folder in \$fq_folders; do
+    folder=\${folder%.*}
+    cat \$folder/summary.txt >> fq_summary.txt
+    ls .
+  done;
+
+  sed -i 's/.fastq.gz//g' fq_summary.txt
+  """
+}
+
+
+
 
 //Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
