@@ -45,7 +45,7 @@ process clean_reads {
   tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
-  file("${name}.trim.txt") into trim_stats
+  file("${name}.trim.txt") into bbduk_files
 
   script:
   """
@@ -109,9 +109,6 @@ process fastqc_summary {
   sed -i 's/.fastq.gz//g' fq_summary.txt
   """
 }
-
-
-
 
 //Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
@@ -210,7 +207,42 @@ process quast {
   script:
   """
   quast.py ${assembly} -o .
-  mv report.txt ${name}.quast.tsv
+  mv transposed_report.tsv ${name}.quast.tsv
+  """
+}
+
+process quast_summary {
+  publishDir "${params.outdir}/quast",mode:'copy'
+
+  input:
+  file(files) from quast_files.collect()
+
+  output:
+  file("quast_results.txt") into quast_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*.quast.tsv")
+
+  dfs = []
+
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      df = pd.read_csv(file, sep='\t')
+      df = df.iloc[:,[1,7,17]]
+      df = df.assign(Sample=sample_id)
+      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
+      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
+      dfs.append(df)
+
+  dfs_concat = pd.concat(dfs)
+  dfs_concat.to_csv(f'quast_results.txt',sep='\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -233,7 +265,6 @@ process amrfinder {
 
 //AR Step 2: Summarize amrfinder+ results
 process amrfinder_summary {
-  tag "$name"
   publishDir "${params.outdir}/results",mode:'copy'
 
   input:
@@ -241,29 +272,45 @@ process amrfinder_summary {
 
   output:
   file("ar_predictions.tsv") into ar_tsv
+  file("ar_summary.tsv") into ar_summary
 
   script:
   """
   #!/usr/bin/env python3
+
   import os
   import glob
   import pandas as pd
-
   files = glob.glob("*.tsv")
+
   dfs = []
+  semi_dfs = []
+
   for file in files:
       sample_id = os.path.basename(file).split(".")[0]
-      print(sample_id)
       df = pd.read_csv(file, header=0, delimiter="\\t")
       df.columns=df.columns.str.replace(' ', '_')
-      print(df)
       df = df.assign(Sample=sample_id)
       df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
       df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
       dfs.append(df)
 
-  concat = pd.concat(dfs)
-  concat.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+      sample = sample_id
+      gene = df['Gene'].tolist()
+      gene = ';'.join(gene)
+      coverage = df['Coverage'].tolist()
+      coverage = ';'.join(map(str, coverage))
+      identity = df['Identity'].tolist()
+      identity = ';'.join(map(str, identity))
+      data = [[sample,gene,coverage,identity]]
+      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+      semi_dfs.append(semi_df)
+
+  concat_dfs = pd.concat(dfs)
+  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+
+  concat_semi_dfs = pd.concat(semi_dfs)
+  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -377,37 +424,78 @@ process kraken_summary {
   results = []
   for file in files:
       sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
-      df = []
-      dfs = []
+      vals = []
+      vals_concat = []
       with open(file,"r") as inFile:
           for line in inFile:
               line = line.strip()
               sline = line.split("\t")
               if sline[5] == "unclassified":
-                  df.append(sline)
+                  vals.append(sline)
               if sline[3] == "S":
-                  df.append(sline)
+                  vals.append(sline)
 
-      pandf = DataFrame(df, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
-      pandf['Name'] = pandf['Name'].str.lstrip()
-      pandf = pandf.sort_values(by=['Percentage'], ascending=False)
-      unclass = pandf[pandf["Name"]=="unclassified"]
-      pandf = pandf[pandf["Name"]!="unclassified"]
-      pandf = pandf.head(2)
-      dfs = pd.concat([unclass,pandf])
-      dfs = dfs.assign(Sample=sample_id)
-      dfs = dfs[['Sample','Percentage','Name']]
-      dfs = dfs.reset_index(drop=True)
-      print(dfs)
+      vals_df = DataFrame(vals, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      vals_df['Name'] = vals_df['Name'].str.lstrip()
+      vals_df = vals_df.sort_values(by=['Percentage'], ascending=False)
+      unclass = vals_df[vals_df["Name"]=="unclassified"]
+      vals_df = vals_df[vals_df["Name"]!="unclassified"]
+      vals_df = vals_df.head(2)
 
-      unclassified = dfs.iloc[0]['Percentage'] + "%"
-      first_species = dfs.iloc[1]['Name'] + " (" + dfs.iloc[1]['Percentage'] + "%)"
-      second_species = dfs.iloc[2]['Name'] + " (" + dfs.iloc[2]['Percentage'] + "%)"
+      vals_concat = pd.concat([unclass,vals_df])
+      vals_concat = vals_concat.assign(Sample=sample_id)
+      vals_concat = vals_concat[['Sample','Percentage','Name']]
+      vals_concat = vals_concat.reset_index(drop=True)
+
+      unclassified = vals_concat.iloc[0]['Percentage'] + "%"
+      first_species = vals_concat.iloc[1]['Name'] + " (" + vals_concat.iloc[1]['Percentage'] + "%)"
+      second_species = vals_concat.iloc[2]['Name'] + " (" + vals_concat.iloc[2]['Percentage'] + "%)"
+
       combined = [[sample_id, unclassified, first_species, second_species]]
       result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
       results.append(result)
 
-  df_concat = pd.concat(results)
-  df_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
+  vals_concat = pd.concat(results)
+  vals_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
+  """
+}
+
+process bbduk_summary {
+  publishDir "${params.outdir}/results",mode:'copy'
+
+  input:
+  file(files) from bbduk_files.collect()
+
+  output:
+  file("bbduk_results.txt") into bbduk_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*.txt")
+
+  results = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      vals = []
+      vals.append(sample_id)
+      with open(file,"r") as inFile:
+          for i, line in enumerate(inFile):
+              if i == 0:
+                  num_reads = line.strip().split("\\t")[1].replace(" reads ","")
+                  vals.append(num_reads)
+              if i == 3:
+                  rm_reads = line.strip().split("\\t")[1].replace("reads ","")
+                  rm_reads = rm_reads.rstrip()
+                  vals.append(rm_reads)
+      results.append(vals)
+
+  df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
+  df.to_csv(f'bbduk_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
