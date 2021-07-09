@@ -29,7 +29,7 @@ Assembly of the cleaned and trimmed reads is performed using [Shovill v1.1.0](ht
 Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bioinf.spbau.ru/quast)
 
 #### Genome coverage
-Mean and median genome coverage is calculated by mapping the cleaned reads to the assemblies using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and [samtools v1.10](http://www.htslib.org/)
+Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
 #### Antimicrobial resistance gene detection
 Antimicrobial resistance genes are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr)
