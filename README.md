@@ -31,6 +31,10 @@ Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bi
 #### Genome coverage
 Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
+### Authors
+[Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
+[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Scientist
+
 #### Antimicrobial resistance gene detection
 Antimicrobial resistance genes are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr)
 
