@@ -15,7 +15,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline that assembles bacte
 [Contamination detection](#contamination-detection)  
 
 ### Using the pipeline
-The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using ``.
+The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow sprriggan.nf --reads [path-to-reads]`.
 
 ### Workflow outline
 
