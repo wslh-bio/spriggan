@@ -38,4 +38,4 @@ Antimicrobial resistance genes are identified using [AMRFinderPlus v3.1.1](https
 MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
 
 #### Contamination detection
-Contamination for other organisms is detected using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken database.
+Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken database.
