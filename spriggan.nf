@@ -36,7 +36,7 @@ process preProcess {
 //Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
-  publishDir "${params.outdir}/results/trimming", mode: 'copy',pattern:"*.trim.txt"
+  publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
   set val(name), file(reads) from read_files_trimming
@@ -114,8 +114,8 @@ process fastqc_summary {
 process shovill {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/results/assembled", mode: 'copy',pattern:"*.fa"
-  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
   input:
   set val(name), file(reads) from cleaned_reads_shovill
@@ -137,8 +137,8 @@ process shovill {
 process samtools {
   tag "$name"
 
-  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.bam"
-  publishDir "${params.outdir}/results/coverage", mode: 'copy', pattern:"*_depth.tsv*"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
+  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*_depth.tsv*"
 
   input:
   set val(name), file(sam) from sam_files
@@ -157,13 +157,13 @@ process samtools {
 
 //Calculate coverage stats
 process coverage_stats {
-  publishDir "${params.outdir}/results/coverage", mode: 'copy'
+  publishDir "${params.outdir}/coverage", mode: 'copy'
 
   input:
   file(cov) from cov_files.collect()
 
   output:
-  file('coverage_stats.txt')
+  file('coverage_stats.tsv') into coverage_tsv
 
   script:
   '''
@@ -186,7 +186,7 @@ process coverage_stats {
       avg = average(nums)
       results.append(f"{sid}\\t{med}\\t{avg}\\n")
 
-  with open('coverage_stats.txt', 'w') as outFile:
+  with open('coverage_stats.tsv', 'w') as outFile:
     outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
     for result in results:
       outFile.write(result)
@@ -218,7 +218,7 @@ process quast_summary {
   file(files) from quast_files.collect()
 
   output:
-  file("quast_results.txt") into quast_tsv
+  file("quast_results.tsv") into quast_tsv
 
   script:
   """
@@ -234,7 +234,7 @@ process quast_summary {
 
   for file in files:
       sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, sep='\t')
+      df = pd.read_csv(file, sep='\\t')
       df = df.iloc[:,[1,7,17]]
       df = df.assign(Sample=sample_id)
       df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
@@ -242,14 +242,14 @@ process quast_summary {
       dfs.append(df)
 
   dfs_concat = pd.concat(dfs)
-  dfs_concat.to_csv(f'quast_results.txt',sep='\t', index=False, header=True, na_rep='NaN')
+  dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
 //AR Step 1: Find AR genes with amrfinder+
 process amrfinder {
   tag "$name"
-  publishDir "${params.outdir}/results/amrfinder",mode:'copy'
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_ar
@@ -265,14 +265,14 @@ process amrfinder {
 
 //AR Step 2: Summarize amrfinder+ results
 process amrfinder_summary {
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions.tsv") into ar_tsv
-  file("ar_summary.tsv") into ar_summary
+  file("ar_predictions.tsv") into ar_predictions
+  file("ar_summary.tsv") into ar_tsv
 
   script:
   """
@@ -317,7 +317,7 @@ process amrfinder_summary {
 //MLST Step 1: Run mlst
 process mlst {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}/mlst",mode:'copy'
 
   input:
   file(assemblies) from assembled_genomes_mlst.collect()
@@ -334,13 +334,13 @@ process mlst {
 //MLST Step 2: Summarize mlst results
 process mlst_formatting {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}/mlst",mode:'copy'
 
   input:
   file(mlst) from mlst_results
 
   output:
-  file("mlst_formatted.tsv")
+  file("*.tsv") into mlst_tsv
 
   script:
   """
@@ -386,7 +386,7 @@ process mlst_formatting {
 //Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
-  publishDir "${params.outdir}/results/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
 
   input:
   set val(name), file(reads) from read_files_kraken
@@ -403,7 +403,7 @@ process kraken {
 //Kraken Step 2: Summarize kraken results
 process kraken_summary {
   tag "$name"
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
   file(files) from kraken_files.collect()
@@ -461,13 +461,13 @@ process kraken_summary {
 }
 
 process bbduk_summary {
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}/bbduk",mode:'copy'
 
   input:
   file(files) from bbduk_files.collect()
 
   output:
-  file("bbduk_results.txt") into bbduk_tsv
+  file("bbduk_results.tsv") into bbduk_tsv
 
   script:
   """
@@ -496,6 +496,46 @@ process bbduk_summary {
       results.append(vals)
 
   df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
-  df.to_csv(f'bbduk_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
+  df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
+}
+
+
+//Merge results
+process merge_results {
+  publishDir "${params.outdir}/", mode: 'copy'
+
+  input:
+  file(bbduk) from bbduk_tsv
+  file(quast) from quast_tsv
+  file(coverage) from coverage_tsv
+  file(mlst) from mlst_tsv
+  file(ar) from ar_tsv
+  file(kraken) from kraken_tsv
+
+  output:
+  file('spriggan_report.tsv')
+
+  script:
+  '''
+  #!/usr/bin/env python3
+
+  import os
+  import glob
+  import pandas as pd
+  from functools import reduce
+
+  files = glob.glob("*.tsv")
+
+  dfs = []
+
+  for file in files:
+      df = pd.read_csv(file, header=0, delimiter=''\\t')
+      dfs.append(df)
+
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
+                                              how='left'), dfs)
+
+  merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
+  '''
 }
