@@ -4,11 +4,24 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
-//setup channel to read in and pair the fastq files
-Channel
-    .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
-    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
-    .set { raw_reads }
+if(params.test){
+  testIDS = ['SRR14131356','SRR14131352','SRR14311556','SRR14568713',
+  'SRR14131354','SRR14613517','SRR14613503','SRR14613504','SRR14613708',
+  'SRR14613700','SRR14616016','SRR14874874','SRR14874873','SRR14874872',
+  'SRR14874871','SRR14874870','SRR14874869']
+  println "Running test analysis using the following samples:"
+  println testIDS
+  Channel
+      .fromSRA(testIDS)
+      .set { raw_reads }
+
+} else{
+  //setup channel to read in and pair the fastq files
+  Channel
+      .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
+      .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
+      .set { raw_reads }
+}
 
 //Preprocess reads - change names
 process preProcess {
@@ -271,7 +284,7 @@ process amrfinder_summary {
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions.tsv") into ar_predictions
+  file("ar_predictions.tsv") into ar_predictions_result
   file("ar_summary.tsv") into ar_tsv
 
   script:
