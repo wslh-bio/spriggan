@@ -8,7 +8,6 @@ jobs:
         shell: bash
         working-directory: ci_test
     steps:
-      steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
 
