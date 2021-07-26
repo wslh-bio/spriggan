@@ -543,12 +543,12 @@ process merge_results {
   dfs = []
 
   for file in files:
-      df = pd.read_csv(file, header=0, delimiter=''\\t')
+      df = pd.read_csv(file, header=0, delimiter='\\t')
       dfs.append(df)
 
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
 
-  merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
+  merged.to_csv('spriggan_report.tsv', index=False, sep='\\t', encoding='utf-8')
   '''
 }
