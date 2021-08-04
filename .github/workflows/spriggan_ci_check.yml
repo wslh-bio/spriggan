@@ -2,22 +2,17 @@ name: spriggan_ci_check
 on: [push]
 jobs:
   run-check:
+    if: "contains(github.event.head_commit.message, '[ci]')"
     runs-on: ubuntu-latest
+    container:
+      image: kflorek/nextflow-test
     defaults:
       run:
         shell: bash
     steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v2
-
-      - name: Setup Environment
-        run: |
-          git clone https://github.com/nextflow-io/nextflow.git
-          cd nextflow && make compile && make pack
-
       - name: Run Spriggan with test data
         run: |
-          ./nextflow/launch.sh spriggan.nf --test -c <(echo "process.executor = 'awsbatch'\\n process.queue = 'aws-nextflow'\\n aws.batch.cliPath = '/home/ec2-user/miniconda/bin/aws'\\n aws.region = 'us-east-2'\\n workDir = 's3://wslh-nextflow/work'\\n docker.enabled = false\\n")
+          nextflow --test -c <(echo "process.executor = 'awsbatch'\\n process.queue = 'aws-nextflow'\\n aws.batch.cliPath = '/home/ec2-user/miniconda/bin/aws'\\n aws.region = 'us-east-2'\\n workDir = 's3://wslh-nextflow/work'\\n docker.enabled = false\\n")
 
       - name: Check Results
         run: |
