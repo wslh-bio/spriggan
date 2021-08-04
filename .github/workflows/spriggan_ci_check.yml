@@ -3,6 +3,7 @@ on: [push]
 jobs:
   run-check:
     if: "contains(github.event.head_commit.message, '[ci]')"
+    runs-on: ubuntu-latest
     container:
       image: kflorek/nextflow-test
       env:
