@@ -15,7 +15,8 @@ jobs:
 
       - name: Run Spriggan with test data
         run: |
-          cd ${{github.workspace}}/test
+          ls ${{github.workspace}}
+          cd ./test
           nextflow run ../spriggan.nf --test -c autobuild.config
 
       - name: Check Results
