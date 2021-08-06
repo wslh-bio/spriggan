@@ -4,6 +4,8 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
+params.test = false
+
 if(params.test){
   testIDS = ['SRR14131356','SRR14131352','SRR14311556','SRR14568713',
   'SRR14131354','SRR14613517','SRR14613503','SRR14613504','SRR14613708',
@@ -29,7 +31,7 @@ process preProcess {
   set val(name), file(reads) from raw_reads
 
   output:
-  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming, read_files_kraken
+  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming
 
   script:
   if(params.name_split_on!=""){
@@ -55,7 +57,7 @@ process clean_reads {
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, read_files_kraken
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
   file("${name}.trim.txt") into bbduk_files
@@ -179,7 +181,7 @@ process coverage_stats {
   file('coverage_stats.tsv') into coverage_tsv
 
   script:
-  '''
+  """
   #!/usr/bin/env python3
   import glob
   import os
@@ -195,15 +197,15 @@ process coverage_stats {
     with open(file,'r') as inFile:
       for line in inFile:
         nums.append(int(line.strip().split()[2]))
-      med = median(nums)
-      avg = average(nums)
+      med = int(median(nums))
+      avg = int(average(nums))
       results.append(f"{sid}\\t{med}\\t{avg}\\n")
 
   with open('coverage_stats.tsv', 'w') as outFile:
     outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
     for result in results:
       outFile.write(result)
-  '''
+  """
 }
 
 //Run Quast on assemblies
@@ -284,7 +286,7 @@ process amrfinder_summary {
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions.tsv") into ar_predictions_result
+  file("ar_predictions.tsv")
   file("ar_summary.tsv") into ar_tsv
 
   script:
@@ -422,7 +424,7 @@ process kraken_summary {
   file(files) from kraken_files.collect()
 
   output:
-  file("kraken_results.txt") into kraken_tsv
+  file("kraken_results.tsv") into kraken_tsv
 
   script:
   """
@@ -469,7 +471,7 @@ process kraken_summary {
       results.append(result)
 
   vals_concat = pd.concat(results)
-  vals_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
+  vals_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -527,10 +529,10 @@ process merge_results {
   file(kraken) from kraken_tsv
 
   output:
-  file('spriggan_report.tsv')
+  file('spriggan_report.txt')
 
   script:
-  '''
+  """
   #!/usr/bin/env python3
 
   import os
@@ -549,6 +551,6 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
 
-  merged.to_csv('spriggan_report.tsv', index=False, sep='\\t', encoding='utf-8')
-  '''
+  merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
+  """
 }
