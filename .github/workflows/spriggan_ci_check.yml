@@ -29,6 +29,6 @@ jobs:
         env:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
-          pwd
           ls
+          pwd
           ./autocheck.sh spriggan_results/amrfinder/ar_summary.tsv spriggan_results/coverage/coverage_stats.tsv spriggan_results/kraken/kraken_results.txt spriggan_results/mlst/mlst_formatted.tsv spriggan_results/quast/quast_results.tsv
