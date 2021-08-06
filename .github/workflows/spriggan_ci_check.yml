@@ -4,8 +4,6 @@ jobs:
   run-check:
     if: "contains(github.event.head_commit.message, '[ci]')"
     runs-on: ubuntu-latest
-    container:
-      image: kflorek/nextflow-test
     defaults:
       run:
         shell: bash
@@ -20,14 +18,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      - name: Run Spriggan with test data
-        run: |
-          cd ./tests
-          nextflow run ../spriggan.nf --test -c autobuild.config
+      - name: Cache Nextflow Version
+        uses: actions/cache@v2
+        env:
+          NXF_VER: 21.07.0-edge
+        with:
+          path: ~/.nextflow
+          key: ${{ runner.os }}-build-${{ env.NXF_VER }}
 
-      - name: Check Results
+      - name: Get Nextflow
+        run: curl -s https://get.nextflow.io | bash
+
+      - name: Run Spriggan with test data
         env:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+        run: |
+          cd ./tests
+          ../nextflow run ../spriggan.nf --test -c autobuild.config
+
+      - name: Check Results
         run: |
           pwd
           ls
