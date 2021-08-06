@@ -6,8 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: kflorek/nextflow-test
-      env:
-        NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
     defaults:
       run:
         shell: bash
@@ -28,6 +26,8 @@ jobs:
           nextflow run ../spriggan.nf --test -c autobuild.config
 
       - name: Check Results
+        env:
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
           pwd
           ls
