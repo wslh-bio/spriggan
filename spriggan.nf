@@ -261,74 +261,6 @@ process quast_summary {
   """
 }
 
-//AR Step 1: Find AR genes with amrfinder+
-process amrfinder {
-  tag "$name"
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
-
-  input:
-  set val(name), file(assembly) from assembled_genomes_ar
-
-  output:
-  file("${name}.tsv") into ar_predictions
-
-  script:
-  """
-  amrfinder -n ${assembly} -o ${name}.tsv
-  """
-}
-
-//AR Step 2: Summarize amrfinder+ results
-process amrfinder_summary {
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
-
-  input:
-  file(predictions) from ar_predictions.collect()
-
-  output:
-  file("ar_predictions.tsv")
-  file("ar_summary.tsv") into ar_tsv
-
-  script:
-  """
-  #!/usr/bin/env python3
-
-  import os
-  import glob
-  import pandas as pd
-  files = glob.glob("*.tsv")
-
-  dfs = []
-  semi_dfs = []
-
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, header=0, delimiter="\\t")
-      df.columns=df.columns.str.replace(' ', '_')
-      df = df.assign(Sample=sample_id)
-      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
-      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
-      dfs.append(df)
-
-      sample = sample_id
-      gene = df['Gene'].tolist()
-      gene = ';'.join(gene)
-      coverage = df['Coverage'].tolist()
-      coverage = ';'.join(map(str, coverage))
-      identity = df['Identity'].tolist()
-      identity = ';'.join(map(str, identity))
-      data = [[sample,gene,coverage,identity]]
-      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
-      semi_dfs.append(semi_df)
-
-  concat_dfs = pd.concat(dfs)
-  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-
-  concat_semi_dfs = pd.concat(semi_dfs)
-  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  """
-}
-
 //MLST Step 1: Run mlst
 process mlst {
   errorStrategy 'ignore'
@@ -425,6 +357,7 @@ process kraken_summary {
 
   output:
   file("kraken_results.tsv") into kraken_tsv
+  file("kraken_results.tsv") into kraken_test
 
   script:
   """
@@ -472,6 +405,114 @@ process kraken_summary {
 
   vals_concat = pd.concat(results)
   vals_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  """
+}
+
+//AR Step 1: Make amrfinder+ script
+process amrfinder_sh {
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  file(kraken) from kraken_tsv
+
+  output:
+  file("amr.sh") into amr_script
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  files = glob.glob("*.tsv")
+  dfs = []
+  semi_dfs = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      df = pd.read_csv(file, header=0, delimiter="\\t")
+      df.columns=df.columns.str.replace(' ', '_')
+      df = df.assign(Sample=sample_id)
+      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
+      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
+      dfs.append(df)
+      sample = sample_id
+      gene = df['Gene'].tolist()
+      gene = ';'.join(gene)
+      coverage = df['Coverage'].tolist()
+      coverage = ';'.join(map(str, coverage))
+      identity = df['Identity'].tolist()
+      identity = ';'.join(map(str, identity))
+      data = [[sample,gene,coverage,identity]]
+      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+      semi_dfs.append(semi_df)
+  concat_dfs = pd.concat(dfs)
+  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_semi_dfs = pd.concat(semi_dfs)
+  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  """
+}
+
+//AR Step 2: Find AR genes with amrfinder+
+process amrfinder {
+  tag "$name"
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  file(script) from amr_script
+  file(genomes) from assembled_genomes_ar.collect()
+
+  output:
+  file("*_amr.tsv*") into ar_predictions
+
+  script:
+  """
+  chmod +x amr.sh
+  ./amr.sh
+  """
+}
+
+//AR Step 3: Summarize amrfinder+ results
+process amrfinder_summary {
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  file(predictions) from ar_predictions.collect()
+
+  output:
+  file("ar_predictions.tsv")
+  file("ar_summary.tsv") into ar_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  files = glob.glob("*.tsv")
+  dfs = []
+  semi_dfs = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      df = pd.read_csv(file, header=0, delimiter="\\t")
+      df.columns=df.columns.str.replace(' ', '_')
+      df = df.assign(Sample=sample_id)
+      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
+      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
+      dfs.append(df)
+      sample = sample_id
+      gene = df['Gene'].tolist()
+      gene = ';'.join(gene)
+      coverage = df['Coverage'].tolist()
+      coverage = ';'.join(map(str, coverage))
+      identity = df['Identity'].tolist()
+      identity = ';'.join(map(str, identity))
+      data = [[sample,gene,coverage,identity]]
+      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+      semi_dfs.append(semi_df)
+  concat_dfs = pd.concat(dfs)
+  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_semi_dfs = pd.concat(semi_dfs)
+  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -525,8 +566,7 @@ process merge_results {
   file(quast) from quast_tsv
   file(coverage) from coverage_tsv
   file(mlst) from mlst_tsv
-  file(ar) from ar_tsv
-  file(kraken) from kraken_tsv
+  file(kraken) from kraken_test
 
   output:
   file('spriggan_report.txt')
