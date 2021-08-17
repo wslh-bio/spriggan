@@ -421,34 +421,30 @@ process amrfinder_sh {
   script:
   """
   #!/usr/bin/env python3
-  import os
-  import glob
   import pandas as pd
-  files = glob.glob("*.tsv")
-  dfs = []
-  semi_dfs = []
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, header=0, delimiter="\\t")
-      df.columns=df.columns.str.replace(' ', '_')
-      df = df.assign(Sample=sample_id)
-      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
-      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
-      dfs.append(df)
-      sample = sample_id
-      gene = df['Gene'].tolist()
-      gene = ';'.join(gene)
-      coverage = df['Coverage'].tolist()
-      coverage = ';'.join(map(str, coverage))
-      identity = df['Identity'].tolist()
-      identity = ';'.join(map(str, identity))
-      data = [[sample,gene,coverage,identity]]
-      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
-      semi_dfs.append(semi_df)
-  concat_dfs = pd.concat(dfs)
-  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  concat_semi_dfs = pd.concat(semi_dfs)
-  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+
+  species = ["Acinetobacter_baumannii","Enterococcus_faecalis","Enterococcus_faecium","Staphylococcus_aureus","Staphylococcus_pseudintermedius","Streptococcus_agalactiae","Streptococcus_pneumoniae","Streptococcus_pyogenes"]
+
+  genus = ["Campylobacter","Escherichia","Klebsiella","Salmonella"]
+
+  with open("amr.sh","w") as outFile:
+      outFile.write("#!/bin/bash\\n")
+      with open("kraken_results.tsv", "r") as inFile:
+          next(inFile)
+          for line in inFile:
+              line = line.strip().split("\\t")
+              sid = line[0]
+              taxa = line[2].split(" ")
+              taxa_species = taxa[0] + "_" + taxa[1]
+              taxa_genus = taxa[0]
+              if any(x in taxa_species for x in species):
+                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism {taxa_species} -o {sid}_amr.tsv\\n")
+              if any(x in taxa_genus for x in genus):
+                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism {taxa_genus} -o {sid}_amr.tsv\\n")
+              if taxa_genus == "Shigella":
+                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism Escherichia -o {sid}_amr.tsv\\n")
+              else:
+                  outFile.write(f"amrfinder -n {sid}.contigs.fa -o {sid}_amr.tsv\\n")
   """
 }
 
