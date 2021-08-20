@@ -357,7 +357,7 @@ process kraken_summary {
 
   output:
   file("kraken_results.tsv") into kraken_tsv
-  file("kraken_results.tsv") into kraken_test
+  file("kraken_results.tsv") into kraken_amr
 
   script:
   """
@@ -408,53 +408,12 @@ process kraken_summary {
   """
 }
 
-//AR Step 1: Make amrfinder+ script
-process amrfinder_sh {
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
-
-  input:
-  file(kraken) from kraken_tsv
-
-  output:
-  file("amr.sh") into amr_script
-
-  script:
-  """
-  #!/usr/bin/env python3
-  import pandas as pd
-
-  species = ["Acinetobacter_baumannii","Enterococcus_faecalis","Enterococcus_faecium","Staphylococcus_aureus","Staphylococcus_pseudintermedius","Streptococcus_agalactiae","Streptococcus_pneumoniae","Streptococcus_pyogenes"]
-
-  genus = ["Campylobacter","Escherichia","Klebsiella","Salmonella"]
-
-  with open("amr.sh","w") as outFile:
-      outFile.write("#!/bin/bash\\n")
-      with open("kraken_results.tsv", "r") as inFile:
-          next(inFile)
-          for line in inFile:
-              line = line.strip().split("\\t")
-              sid = line[0]
-              taxa = line[2].split(" ")
-              taxa_species = taxa[0] + "_" + taxa[1]
-              taxa_genus = taxa[0]
-              if any(x in taxa_species for x in species):
-                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism {taxa_species} -o {sid}_amr.tsv\\n")
-              if any(x in taxa_genus for x in genus):
-                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism {taxa_genus} -o {sid}_amr.tsv\\n")
-              if taxa_genus == "Shigella":
-                  outFile.write(f"amrfinder -n {sid}.contigs.fa --organism Escherichia -o {sid}_amr.tsv\\n")
-              else:
-                  outFile.write(f"amrfinder -n {sid}.contigs.fa -o {sid}_amr.tsv\\n")
-  """
-}
-
-//AR Step 2: Find AR genes with amrfinder+
+//AR Step 1: Run amrfinder
 process amrfinder {
-  tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
-  file(script) from amr_script
+  file(kraken) from kraken_amr
   file(genomes) from assembled_genomes_ar.collect()
 
   output:
@@ -462,12 +421,49 @@ process amrfinder {
 
   script:
   """
-  chmod +x amr.sh
-  ./amr.sh
+  #!/usr/bin/env python3
+  import pandas as pd
+  import os
+  import sys
+  import subprocess as sub
+  import shlex
+
+  species = ["Acinetobacter_baumannii","Enterococcus_faecalis","Enterococcus_faecium","Staphylococcus_aureus","Staphylococcus_pseudintermedius","Streptococcus_agalactiae","Streptococcus_pneumoniae","Streptococcus_pyogenes"]
+
+  genus = ["Campylobacter","Escherichia","Klebsiella","Salmonella"]
+
+  with open("kraken_results.tsv", "r") as inFile:
+      next(inFile)
+      for line in inFile:
+          line = line.strip().split("\\t")
+          sid = line[0]
+          taxa = line[2].split(" ")
+          taxa_species = taxa[0] + "_" + taxa[1]
+          taxa_genus = taxa[0]
+          if any(x in taxa_species for x in species):
+              outFile = open(f"{sid}_amr.tsv","w")
+              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism {taxa_species}")
+              print(cmd)
+              sub.Popen(cmd, stdout=outFile).wait()
+          if any(x in taxa_genus for x in genus):
+              outFile = open(f"{sid}_amr.tsv","w")
+              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism {taxa_genus}")
+              print(cmd)
+              sub.Popen(cmd, stdout=outFile).wait()
+          if taxa_genus == "Shigella":
+              outFile = open(f"{sid}_amr.tsv","w")
+              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism Escherichia")
+              print(cmd)
+              sub.Popen(cmd, stdout=outFile).wait()
+          else:
+              outFile = open(f"{sid}_amr.tsv","w")
+              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa")
+              print(cmd)
+              sub.Popen(cmd, stdout=outFile).wait()
   """
 }
 
-//AR Step 3: Summarize amrfinder+ results
+//AR Step 2: Summarize amrfinder+ results
 process amrfinder_summary {
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
@@ -484,6 +480,7 @@ process amrfinder_summary {
   import os
   import glob
   import pandas as pd
+
   files = glob.glob("*.tsv")
   dfs = []
   semi_dfs = []
@@ -506,8 +503,10 @@ process amrfinder_summary {
       semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
       semi_dfs.append(semi_df)
   concat_dfs = pd.concat(dfs)
+  concat_dfs['Sample'] = concat_dfs['Sample'].str.replace('_amr', '')
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   concat_semi_dfs = pd.concat(semi_dfs)
+  concat_semi_dfs['Sample'] = concat_semi_dfs['Sample'].str.replace('_amr', '')
   concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
@@ -562,7 +561,8 @@ process merge_results {
   file(quast) from quast_tsv
   file(coverage) from coverage_tsv
   file(mlst) from mlst_tsv
-  file(kraken) from kraken_test
+  file(kraken) from kraken_tsv
+  file(amr) from ar_tsv
 
   output:
   file('spriggan_report.txt')
