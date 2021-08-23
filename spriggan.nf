@@ -377,7 +377,7 @@ process kraken_summary {
       with open(file,"r") as inFile:
           for line in inFile:
               line = line.strip()
-              sline = line.split("\t")
+              sline = line.split("\\t")
               if sline[5] == "unclassified":
                   vals.append(sline)
               if sline[3] == "S":
@@ -389,6 +389,11 @@ process kraken_summary {
       unclass = vals_df[vals_df["Name"]=="unclassified"]
       vals_df = vals_df[vals_df["Name"]!="unclassified"]
       vals_df = vals_df.head(2)
+      if len(vals_df) == 0:
+          vals_df = vals_df.append(pd.Series(), ignore_index=True)
+          vals_df = vals_df.append(pd.Series(), ignore_index=True)
+      if len(vals_df) == 1:
+          vals_df = vals_df.append(pd.Series(), ignore_index=True)
 
       vals_concat = pd.concat([unclass,vals_df])
       vals_concat = vals_concat.assign(Sample=sample_id)
@@ -396,8 +401,14 @@ process kraken_summary {
       vals_concat = vals_concat.reset_index(drop=True)
 
       unclassified = vals_concat.iloc[0]['Percentage'] + "%"
-      first_species = vals_concat.iloc[1]['Name'] + " (" + vals_concat.iloc[1]['Percentage'] + "%)"
-      second_species = vals_concat.iloc[2]['Name'] + " (" + vals_concat.iloc[2]['Percentage'] + "%)"
+      if str(vals_concat.iloc[1]['Name']) == "nan":
+          first_species = "NA"
+      else:
+          first_species = vals_concat.iloc[1]['Name'] + " (" + vals_concat.iloc[1]['Percentage'] + "%)"
+      if str(vals_concat.iloc[2]['Name']) == "nan":
+          second_species = "NA"
+      else:
+          second_species = vals_concat.iloc[2]['Name'] + " (" + vals_concat.iloc[2]['Percentage'] + "%)"
 
       combined = [[sample_id, unclassified, first_species, second_species]]
       result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
