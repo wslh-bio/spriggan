@@ -8,9 +8,8 @@ params.test = false
 
 if(params.test){
   testIDS = ['SRR14131356','SRR14131352','SRR14311556','SRR14568713',
-  'SRR14131354','SRR14613517','SRR14613503','SRR14613504','SRR14613708',
-  'SRR14613700','SRR14616016','SRR14874874','SRR14874873','SRR14874872',
-  'SRR14874871','SRR14874870','SRR14874869']
+  'SRR14131354','SRR14613517','SRR14613503','SRR14613708','SRR14613700',
+  'SRR14616016']
   println "Running test analysis using the following samples:"
   println testIDS
   Channel
@@ -61,6 +60,7 @@ process clean_reads {
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
   file("${name}.trim.txt") into bbduk_files
+  tuple file("${name}.phix.stats.txt"),file("${name}.adapters.stats.txt"),file("${name}.trim.txt") into multiqc_clean_reads
 
   script:
   """
@@ -88,7 +88,7 @@ process fastqc {
   set val(name), file(reads) from combined_reads
 
   output:
-  file("*_fastqc.{zip,html}") into fastqc_results
+  file("*_fastqc.{zip,html}") into fastqc_results, fastqc_multiqc
 
   script:
   """
@@ -160,6 +160,7 @@ process samtools {
 
   output:
   file("${name}_depth.tsv") into cov_files
+  file("${name}.stats.txt") into stats_multiqc
 
   shell:
   """
@@ -167,6 +168,7 @@ process samtools {
   samtools sort ${name}.bam > ${name}.sorted.bam
   samtools index ${name}.sorted.bam
   samtools depth -a ${name}.sorted.bam > ${name}_depth.tsv
+  samtools stats ${name}.sorted.bam > ${name}.stats.txt
   """
 }
 
@@ -217,7 +219,7 @@ process quast {
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_files
+  file("${name}.quast.tsv") into quast_files, quast_multiqc
 
   script:
   """
@@ -339,7 +341,7 @@ process kraken {
   set val(name), file(reads) from read_files_kraken
 
   output:
-  tuple name, file("${name}_kraken2_report.txt") into kraken_files
+  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
 
   script:
   """
@@ -599,5 +601,30 @@ process merge_results {
                                               how='left'), dfs)
 
   merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
+  """
+}
+
+Channel
+  .from("$baseDir/multiqc_config.yaml")
+  .set { multiqc_config }
+
+//QC Step: MultiQC
+process multiqc {
+  publishDir "${params.outdir}",mode:'copy'
+
+  input:
+  file(a) from multiqc_clean_reads.collect()
+  file(b) from fastqc_multiqc.collect()
+  file(c) from stats_multiqc.collect()
+  file(d) from kraken_multiqc.collect()
+  file(e) from quast_multiqc.collect()
+  file(config) from multiqc_config
+
+  output:
+  file("*.html") into multiqc_output
+
+  script:
+  """
+  multiqc -c ${config} .
   """
 }
