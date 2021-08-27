@@ -47,20 +47,35 @@ Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://cc
 ```
 spriggan_results
 ├── alignments
+│   ├── *.sam
+│   └── *.bam
 ├── amrfinder
+│   ├── ar_predictions.tsv
+│   ├── ar_summary.tsv
+│   └── *amr.tsv
 ├── assembled
+│   └── *.contigs.fa
 ├── bbduk
+│   └── bbduk_results.tsv
 ├── coverage
+│   ├── coverage_stats.tsv
+│   └── *depth.tsv
 ├── fastqc
+│   ├── fq_summary.txt
+│   └── *.html
 ├── kraken
+│   ├── kraken_results.tsv
+│   └── *kraken2_report.txt
 ├── mlst
-├── core_genome.tree
-├── mash
-├── mlst
+│   ├── mlst_results.tsv
+│   └── *.tsv
 ├── quast
+│   ├── quast_results.tsv
+│   └── *.quast.tsv
 ├── multiqc_report.html
 ├── spriggan_report.txt
 └── trimming
+    └── *.trim.txt
 ```
 
 ### Authors
