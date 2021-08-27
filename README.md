@@ -12,9 +12,8 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline that assembles bacte
 [Assembly quality assessment](#assembly-quality-assessment)  
 [Genome coverage](#genome-coverage)  
 [MLST scheme](#mlst-scheme)  
-[Contamination detection](#contamination-detection)
+[Contamination detection](#contamination-detection)                                                                                                                                   
 [Output](#output-files)  
-[Dependencies](#dependencies)   
 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow sprriggan.nf --reads [path-to-reads]`.
