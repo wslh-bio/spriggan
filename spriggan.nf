@@ -136,7 +136,7 @@ process shovill {
   set val(name), file(reads) from cleaned_reads_shovill
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar, assembled_genomes_mash, assembled_genomes_mlst
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar, assembled_genomes_mlst
   tuple name, file("${name}.sam") into sam_files
 
   script:
@@ -266,17 +266,89 @@ process quast_summary {
 //MLST Step 1: Run mlst
 process mlst {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/mlst",mode:'copy'
+  publishDir "${params.outdir}/mlst", mode: 'copy', pattern: "*.tsv"
 
   input:
-  file(assemblies) from assembled_genomes_mlst.collect()
+  set val(name), file(input) from assembled_genomes_mlst
 
   output:
-  file("mlst.tsv") into mlst_results
+  file("*.txt") into mlst_results
+  file("*.tsv")
 
   script:
   """
-  mlst --nopath *.fa > mlst.tsv
+  #!/usr/bin/env python3
+
+  import os
+  import subprocess as sub
+  import shlex
+  import glob
+  import pandas as pd
+  from functools import reduce
+  import shutil
+
+  def run_schemes(first_scheme,all_schemes,count,sample):
+      remaining_schemes = list(set(all_schemes) - set([first_scheme]))
+      for i in remaining_schemes:
+          outFile = open(f'{sample}.{i}.tsv','w')
+          cmd = shlex.split(f'mlst --nopath --scheme {i} {sample}.contigs.fa')
+          sub.Popen(cmd, stdout=outFile).wait()
+
+  inFile = glob.glob('*.fa')[0]
+  sid = inFile.split('.')[0]
+  outFile = open(f'{sid}.tsv','w')
+  cmd = shlex.split(f'mlst --nopath {sid}.contigs.fa')
+  sub.Popen(cmd, stdout=outFile).wait()
+
+  abaumannii_schemes = ['abaumannii','abaumannii_2']
+  ecoli_schemes = ['ecoli','ecoli_2']
+  leptospira_schemes = ['leptospira','leptospira_2','leptospira_3']
+  sthermophilus_schemes = ['sthermophilus','sthermophilus_2']
+  vcholerae_schemes = ['vcholerae','vcholerae2']
+
+  df = pd.read_csv(f'{sid}.tsv', header=None, delimiter='\\t')
+  scheme = df.iloc[0][1]
+  shutil.move(f'{sid}.tsv', f'{sid}.{scheme}.tsv')
+  if scheme == '-':
+    shutil.move(f'{sid}.{scheme}.tsv',f'{sid}.NA.tsv')
+
+  if any(x in scheme for x in abaumannii_schemes):
+      run_schemes(scheme,abaumannii_schemes,1,sid)
+
+  if any(x in scheme for x in ecoli_schemes):
+      run_schemes(scheme,ecoli_schemes,1,sid)
+
+  if any(x in scheme for x in leptospira_schemes):
+      run_schemes(scheme,leptospira_schemes,1,sid)
+
+  if any(x in scheme for x in sthermophilus_schemes):
+      run_schemes(scheme,sthermophilus_schemes,1,sid)
+
+  if any(x in scheme for x in vcholerae_schemes):
+      run_schemes(scheme,vcholerae_schemes,1,sid)
+
+  mlst_files = glob.glob('*.tsv')
+  dfs = []
+
+  for file in mlst_files:
+      df = pd.read_csv(file, header=None, delimiter='\\t')
+      df[0] = df[0].str.replace('.contigs.fa', '')
+      df[2] = 'ST' + df[2].astype(str)
+      df[2] = df[2].str.replace('ST-', 'NA')
+      df[2] = df[[1,2]].agg(':'.join, axis=1)
+      df = df[[0,2]]
+      df.columns =['Sample','MLST Scheme']
+      dfs.append(df)
+
+  if len(dfs) > 1:
+      merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
+                                                how='left'), dfs)
+      merged = merged.reindex(sorted(merged.columns,reverse=True), axis=1)
+      merged['MLST Scheme'] = merged.iloc[: , 1:].agg(';'.join, axis=1)
+      merged = merged[['Sample','MLST Scheme']]
+      merged.to_csv(f'{sid}.txt', index=False, sep='\\t', encoding='utf-8')
+  else:
+      dfs[0].to_csv(f'{sid}.txt', index=False, sep='\\t', encoding='utf-8')
   """
 }
 
@@ -286,49 +358,28 @@ process mlst_formatting {
   publishDir "${params.outdir}/mlst",mode:'copy'
 
   input:
-  file(mlst) from mlst_results
+  file(mlst) from mlst_results.collect()
 
   output:
-  file("*.tsv") into mlst_tsv
+  file("mlst_results.tsv") into mlst_tsv
 
   script:
   """
   #!/usr/bin/env python3
-  import csv
 
-  string_map = {}
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
 
-  with open('mlst.tsv','r') as csvfile:
-    dialect = csv.Sniffer().sniff(csvfile.read(1024))
-    csvfile.seek(0)
-    reader = csv.reader(csvfile,dialect,delimiter='\t')
-    for row in reader:
-      id_string = row[0]
-      sp_string = row[1]
-      st_string = row[2]
-      string_map[id_string] = [sp_string,st_string]
-
-  mlst = []
-  for key in string_map:
-    id = key
-    id = id.replace('.contigs.fa','')
-    species = string_map[key][0]
-    st = string_map[key][1]
-    if species == 'abaumannii':
-        st = 'PubMLST ST' + str(st) + ' (Oxford)'
-    if species == 'abaumannii_2':
-        st = 'PubMLST ST' + str(st) + ' (Pasteur)'
-    else:
-        st = 'PubMLST ST' + str(st)
-    if '-' in st:
-        st = 'NA'
-    mlst.append(f'{id}\\t{st}\\n')
-
-  with open('mlst_formatted.tsv','w') as outFile:
-    outFile.write('Sample\\tMLST Scheme\\n')
-    for scheme in mlst:
-      outFile.write(scheme)
-
+  files = glob.glob('*.txt')
+  dfs = []
+  for file in files:
+      df = pd.read_csv(file, sep='\\t')
+      dfs.append(df)
+  dfs_concat = pd.concat(dfs)
+  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'NA')
+  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('ST', 'PubMLST ST')
+  dfs_concat.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -421,13 +472,55 @@ process kraken_summary {
   """
 }
 
-//AR Step 1: Run amrfinder
+//AR Setup amrfinder files
+process amrfinder_setup {
+
+  input:
+  file(kraken) from kraken_amr
+  file(genome) from assembled_genomes_ar
+
+  output:
+  file("*.fa") into ar_input
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import pandas as pd
+  import glob
+  import shutil
+
+  species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
+  genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
+
+  genomeFile = glob.glob('*.fa')[0]
+
+  sid = genomeFile.split('.')[0]
+
+  df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+  df = df[df['Sample'] == sid]
+  taxa = df.iloc[0]['Primary Species (%)']
+  taxa = taxa.split(' ')
+  taxa_species = taxa[0] + '_' + taxa[1]
+  taxa_genus = taxa[0]
+
+  if any(x in taxa_species for x in species):
+      shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
+  elif any(x in taxa_genus for x in genus):
+      shutil.copyfile(genomeFile, f'{sid}.{taxa_genus}.fa')
+  elif taxa_genus == 'Shigella':
+      shutil.copyfile(genomeFile, f'{sid}.Escherichia.fa')
+  else:
+      shutil.copyfile(genomeFile, f'{sid}.NA.fa')
+  """
+}
+
+//AR Step 2: Run amrfinder
 process amrfinder {
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
-  file(kraken) from kraken_amr
-  file(genomes) from assembled_genomes_ar.collect()
+  file(file) from ar_input
 
   output:
   file("*_amr.tsv*") into ar_predictions
@@ -435,48 +528,29 @@ process amrfinder {
   script:
   """
   #!/usr/bin/env python3
-  import pandas as pd
-  import os
-  import sys
+
   import subprocess as sub
   import shlex
+  import glob
 
-  species = ["Acinetobacter_baumannii","Enterococcus_faecalis","Enterococcus_faecium","Staphylococcus_aureus","Staphylococcus_pseudintermedius","Streptococcus_agalactiae","Streptococcus_pneumoniae","Streptococcus_pyogenes"]
+  organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
-  genus = ["Campylobacter","Escherichia","Klebsiella","Salmonella"]
+  fastaFile = glob.glob('*.fa')[0]
+  sid = fastaFile.split('.')[0]
+  organism = fastaFile.split('.')[1]
 
-  with open("kraken_results.tsv", "r") as inFile:
-      next(inFile)
-      for line in inFile:
-          line = line.strip().split("\\t")
-          sid = line[0]
-          taxa = line[2].split(" ")
-          taxa_species = taxa[0] + "_" + taxa[1]
-          taxa_genus = taxa[0]
-          if any(x in taxa_species for x in species):
-              outFile = open(f"{sid}_amr.tsv","w")
-              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism {taxa_species}")
-              print(cmd)
-              sub.Popen(cmd, stdout=outFile).wait()
-          if any(x in taxa_genus for x in genus):
-              outFile = open(f"{sid}_amr.tsv","w")
-              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism {taxa_genus}")
-              print(cmd)
-              sub.Popen(cmd, stdout=outFile).wait()
-          if taxa_genus == "Shigella":
-              outFile = open(f"{sid}_amr.tsv","w")
-              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa --organism Escherichia")
-              print(cmd)
-              sub.Popen(cmd, stdout=outFile).wait()
-          else:
-              outFile = open(f"{sid}_amr.tsv","w")
-              cmd = shlex.split(f"amrfinder -n {sid}.contigs.fa")
-              print(cmd)
-              sub.Popen(cmd, stdout=outFile).wait()
+  if any(x in organism for x in organisms):
+      outFile = open(f'{sid}_amr.tsv','w')
+      cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa --organism {organism}')
+      sub.Popen(cmd, stdout=outFile).wait()
+  else:
+      outFile = open(f'{sid}_amr.tsv','w')
+      cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
+      sub.Popen(cmd, stdout=outFile).wait()
   """
 }
 
-//AR Step 2: Summarize amrfinder+ results
+//AR Step 3: Summarize amrfinder+ results
 process amrfinder_summary {
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
@@ -493,13 +567,12 @@ process amrfinder_summary {
   import os
   import glob
   import pandas as pd
-
-  files = glob.glob("*.tsv")
+  files = glob.glob('*.tsv')
   dfs = []
   semi_dfs = []
   for file in files:
-      sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, header=0, delimiter="\\t")
+      sample_id = os.path.basename(file).split('.')[0]
+      df = pd.read_csv(file, header=0, delimiter='\\t')
       df.columns=df.columns.str.replace(' ', '_')
       df = df.assign(Sample=sample_id)
       df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
@@ -564,7 +637,6 @@ process bbduk_summary {
   """
 }
 
-
 //Merge results
 process merge_results {
   publishDir "${params.outdir}/", mode: 'copy'
@@ -589,7 +661,7 @@ process merge_results {
   import pandas as pd
   from functools import reduce
 
-  files = glob.glob("*.tsv")
+  files = glob.glob('*.tsv')
 
   dfs = []
 
