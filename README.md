@@ -12,7 +12,9 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline that assembles bacte
 [Assembly quality assessment](#assembly-quality-assessment)  
 [Genome coverage](#genome-coverage)  
 [MLST scheme](#mlst-scheme)  
-[Contamination detection](#contamination-detection)  
+[Contamination detection](#contamination-detection)
+[Output](#output-files)  
+[Dependencies](#dependencies)   
 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow sprriggan.nf --reads [path-to-reads]`.
@@ -32,13 +34,34 @@ Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bi
 Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
 #### Antimicrobial resistance gene detection
-Antimicrobial resistance genes are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr)
+Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr).
 
 #### MLST scheme
-MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
+MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst). Multiple schemes are available for specific organisms, and STs from all available schemes are reported for those organisms.
 
 #### Contamination detection
 Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken database.
+
+### Output files
+
+```
+spriggan_results
+├── alignments
+├── amrfinder
+├── assembled
+├── bbduk
+├── coverage
+├── fastqc
+├── kraken
+├── mlst
+├── core_genome.tree
+├── mash
+├── mlst
+├── quast
+├── multiqc_report.html
+├── spriggan_report.txt
+└── trimming
+```
 
 ### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
