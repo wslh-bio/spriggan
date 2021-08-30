@@ -103,7 +103,7 @@ process fastqc_summary {
   file(fastqc) from fastqc_results.collect()
 
   output:
-  file("fq_summary.txt") into fastqc_summary
+  file("fastqc_summary.tsv") into fastqc_summary
 
   shell:
   """
@@ -117,11 +117,11 @@ process fastqc_summary {
 
   for folder in \$fq_folders; do
     folder=\${folder%.*}
-    cat \$folder/summary.txt >> fq_summary.txt
+    cat \$folder/summary.txt >> fastqc_summary.tsv
     ls .
   done;
 
-  sed -i 's/.fastq.gz//g' fq_summary.txt
+  sed -i 's/.fastq.gz//g' fastqc_summary.tsv
   """
 }
 
@@ -129,6 +129,7 @@ process fastqc_summary {
 process shovill {
   errorStrategy 'ignore'
   tag "$name"
+
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
   publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
@@ -152,22 +153,24 @@ process shovill {
 process samtools {
   tag "$name"
 
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
-  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*_depth.tsv*"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sorted.*"
+  publishDir "${params.outdir}/alignments", mode: 'copy', pattern:"*.stats.txt*"
+  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*.depth.tsv*"
 
   input:
   set val(name), file(sam) from sam_files
 
   output:
-  file("${name}_depth.tsv") into cov_files
+  file("${name}.depth.tsv") into cov_files
   file("${name}.stats.txt") into stats_multiqc
+  file("*.sorted.*")
 
   shell:
   """
   samtools view -S -b ${name}.sam > ${name}.bam
   samtools sort ${name}.bam > ${name}.sorted.bam
   samtools index ${name}.sorted.bam
-  samtools depth -a ${name}.sorted.bam > ${name}_depth.tsv
+  samtools depth -a ${name}.sorted.bam > ${name}.depth.tsv
   samtools stats ${name}.sorted.bam > ${name}.stats.txt
   """
 }
@@ -192,10 +195,10 @@ process coverage_stats {
 
   results = []
 
-  files = glob.glob("*_depth.tsv*")
+  files = glob.glob("*.depth.tsv*")
   for file in files:
     nums = []
-    sid = os.path.basename(file).split('_')[0]
+    sid = os.path.basename(file).split('.')[0]
     with open(file,'r') as inFile:
       for line in inFile:
         nums.append(int(line.strip().split()[2]))
@@ -212,6 +215,8 @@ process coverage_stats {
 
 //Run Quast on assemblies
 process quast {
+  tag "$name"
+
   errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy'
 
@@ -265,6 +270,8 @@ process quast_summary {
 
 //MLST Step 1: Run mlst
 process mlst {
+  tag "$name"
+
   errorStrategy 'ignore'
   publishDir "${params.outdir}/mlst", mode: 'copy', pattern: "*.tsv"
 
@@ -282,10 +289,10 @@ process mlst {
   import os
   import subprocess as sub
   import shlex
-  import glob
   import pandas as pd
   from functools import reduce
   import shutil
+  import glob
 
   def run_schemes(first_scheme,all_schemes,count,sample):
       remaining_schemes = list(set(all_schemes) - set([first_scheme]))
@@ -294,7 +301,7 @@ process mlst {
           cmd = shlex.split(f'mlst --nopath --scheme {i} {sample}.contigs.fa')
           sub.Popen(cmd, stdout=outFile).wait()
 
-  inFile = glob.glob('*.fa')[0]
+  inFile = '${input}'
   sid = inFile.split('.')[0]
   outFile = open(f'{sid}.tsv','w')
   cmd = shlex.split(f'mlst --nopath {sid}.contigs.fa')
@@ -377,7 +384,7 @@ process mlst_formatting {
       df = pd.read_csv(file, sep='\\t')
       dfs.append(df)
   dfs_concat = pd.concat(dfs)
-  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'NA')
+  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'No Scheme Available')
   dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('ST', 'PubMLST ST')
   dfs_concat.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
@@ -474,13 +481,14 @@ process kraken_summary {
 
 //AR Setup amrfinder files
 process amrfinder_setup {
+  tag "$name"
 
   input:
   file(kraken) from kraken_amr
-  file(genome) from assembled_genomes_ar
+  set val(name), file(input) from assembled_genomes_ar
 
   output:
-  file("*.fa") into ar_input
+  tuple name, file("${name}.*.fa") into ar_input
 
   script:
   """
@@ -493,8 +501,7 @@ process amrfinder_setup {
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
 
-  genomeFile = glob.glob('*.fa')[0]
-
+  genomeFile = '${input}'
   sid = genomeFile.split('.')[0]
 
   df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
@@ -517,13 +524,14 @@ process amrfinder_setup {
 
 //AR Step 2: Run amrfinder
 process amrfinder {
+  tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
-  file(file) from ar_input
+  set val(name), file(input) from ar_input
 
   output:
-  file("*_amr.tsv*") into ar_predictions
+  tuple name, file("${name}.amr.tsv") into ar_predictions
 
   script:
   """
@@ -535,16 +543,16 @@ process amrfinder {
 
   organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
-  fastaFile = glob.glob('*.fa')[0]
+  fastaFile = '${input}'
   sid = fastaFile.split('.')[0]
   organism = fastaFile.split('.')[1]
 
   if any(x in organism for x in organisms):
-      outFile = open(f'{sid}_amr.tsv','w')
+      outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa --organism {organism}')
       sub.Popen(cmd, stdout=outFile).wait()
   else:
-      outFile = open(f'{sid}_amr.tsv','w')
+      outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
       sub.Popen(cmd, stdout=outFile).wait()
   """
@@ -567,7 +575,9 @@ process amrfinder_summary {
   import os
   import glob
   import pandas as pd
+
   files = glob.glob('*.tsv')
+
   dfs = []
   semi_dfs = []
   for file in files:
@@ -589,7 +599,7 @@ process amrfinder_summary {
       semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
       semi_dfs.append(semi_df)
   concat_dfs = pd.concat(dfs)
-  concat_dfs['Sample'] = concat_dfs['Sample'].str.replace('_amr', '')
+  concat_dfs['Sample'] = concat_dfs['Sample'].str.replace('amr', '')
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   concat_semi_dfs = pd.concat(semi_dfs)
   concat_semi_dfs['Sample'] = concat_semi_dfs['Sample'].str.replace('_amr', '')
@@ -598,7 +608,7 @@ process amrfinder_summary {
 }
 
 process bbduk_summary {
-  publishDir "${params.outdir}/bbduk",mode:'copy'
+  publishDir "${params.outdir}/trimming",mode:'copy'
 
   input:
   file(files) from bbduk_files.collect()
@@ -671,6 +681,9 @@ process merge_results {
 
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
+
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','MLST Scheme','Gene','Coverage','Identity']]
+  merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity'})
 
   merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
   """
