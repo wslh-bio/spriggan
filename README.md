@@ -93,12 +93,12 @@ spriggan_results
 **\*.bam** - Alignments in BAM format  
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
-**\*amr.tsv** - Raw AMRFinderPlus output for each sample  
+**\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
 **\*.contigs.fa** - Shovill assembly for wach sample  
 **bbduk_results.tsv** - Summary table of trimming with BBDuk  
 **coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
 **\*depth.tsv** - Raw Samtools depth output for each sample  
-**fq_summary.txt** - Summary table of FastQC results  
+**fastqc_summary.txt** - Summary table of FastQC results  
 **\*.html** - HTML files of FastQC results  
 **kraken_results.tsv** - Summary table of Kraken results  
 **\*kraken2_report.txt** - Report of Kraken results for each sample  
