@@ -14,7 +14,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 [Output](#output-files)  
 
 ### Using the workflow
-The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using:
+The pipeline is designed to start from raw Illumina reads. All reads must be in the same directory. Then start the pipeline using:
 ```
 nextflow sprriggan.nf --reads [path-to-reads]
 ```
@@ -112,5 +112,5 @@ spriggan_results
 **\*.trim.txt** - Trimming results from BBduk each sample
 
 ### Authors
-[Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
+[Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
 [Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Scientist
