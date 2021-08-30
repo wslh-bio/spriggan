@@ -64,16 +64,14 @@ spriggan_results
 ├── amrfinder
 │   ├── ar_predictions.tsv
 │   ├── ar_summary.tsv
-│   └── *amr.tsv
+│   └── *.amr.tsv
 ├── assembled
 │   └── *.contigs.fa
-├── bbduk
-│   └── bbduk_results.tsv
 ├── coverage
 │   ├── coverage_stats.tsv
-│   └── *depth.tsv
+│   └── *.depth.tsv
 ├── fastqc
-│   ├── fq_summary.txt
+│   ├── fastqc_summary.txt
 │   └── *.html
 ├── kraken
 │   ├── kraken_results.tsv
@@ -87,6 +85,7 @@ spriggan_results
 ├── multiqc_report.html
 ├── spriggan_report.txt
 └── trimming
+    ├── bbduk_results.tsv
     └── *.trim.txt
 ```
 
