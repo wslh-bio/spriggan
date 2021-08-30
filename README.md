@@ -31,7 +31,7 @@ nextflow wslh-bio/spriggan -r <version> --reads [path-to-reads]
 
 ### Workflow outline
 
-![Spriggan Block Diagram]('/assets/Spriggan.png')
+<img src ='/assets/Spriggan.png'>
 
 #### Read trimming and quality assessment
 Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
