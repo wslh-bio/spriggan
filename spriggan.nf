@@ -136,7 +136,7 @@ process shovill {
   set val(name), file(reads) from cleaned_reads_shovill
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar, assembled_genomes_mlst
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_ar, assembled_genomes_mlst
   tuple name, file("${name}.sam") into sam_files
 
   script:
