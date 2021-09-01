@@ -272,15 +272,13 @@ process quast_summary {
 process mlst {
   tag "$name"
 
-  errorStrategy 'ignore'
-  publishDir "${params.outdir}/mlst", mode: 'copy', pattern: "*.tsv"
+  publishDir "${params.outdir}/mlst", mode: 'copy', pattern: "*.mlst.tsv*"
 
   input:
   set val(name), file(input) from assembled_genomes_mlst
 
   output:
-  file("*.txt") into mlst_results
-  file("*.tsv")
+  file("*.tsv") into mlst_results
 
   script:
   """
@@ -294,68 +292,97 @@ process mlst {
   import shutil
   import glob
 
-  def run_schemes(first_scheme,all_schemes,count,sample):
+  # Function for running mlst on samples with multiple schemes
+  def run_schemes(first_scheme,all_schemes,sample):
+      # Subtract selected scheme from list of schemes to get remaining schemes
       remaining_schemes = list(set(all_schemes) - set([first_scheme]))
+      # Run mlst on remaining schemes
       for i in remaining_schemes:
           outFile = open(f'{sample}.{i}.tsv','w')
-          cmd = shlex.split(f'mlst --nopath --scheme {i} {sample}.contigs.fa')
+          cmd = shlex.split(f'mlst --nopath --exclude sthermophilus --scheme {i} {sample}.contigs.fa')
           sub.Popen(cmd, stdout=outFile).wait()
 
+  # Read in fasta file
   inFile = '${input}'
   sid = inFile.split('.')[0]
+
+  # Open outfile and run mlst
   outFile = open(f'{sid}.tsv','w')
-  cmd = shlex.split(f'mlst --nopath {sid}.contigs.fa')
+  cmd = shlex.split(f'mlst --nopath --exclude sthermophilus {sid}.contigs.fa')
   sub.Popen(cmd, stdout=outFile).wait()
 
+  # Lists organisms with multiple schemes
   abaumannii_schemes = ['abaumannii','abaumannii_2']
   ecoli_schemes = ['ecoli','ecoli_2']
   leptospira_schemes = ['leptospira','leptospira_2','leptospira_3']
-  sthermophilus_schemes = ['sthermophilus','sthermophilus_2']
   vcholerae_schemes = ['vcholerae','vcholerae2']
 
+  # Dictionary of scheme names
+  ids = {'mlstID':['abaumannii','abaumannii_2','ecoli','ecoli_2','leptospira','leptospira_2','leptospira_3','vcholerae2','vcholerae'],
+  'PubMLSTID':['Oxford','Pasteur','Achtman','Pasteur ','Scheme 1','Scheme 2', 'Scheme 3','O1 and O139','']}
+  ids = dict(zip(ids['mlstID'], ids['PubMLSTID']))
+
+  # read in mlst output and get scheme
   df = pd.read_csv(f'{sid}.tsv', header=None, delimiter='\\t')
   scheme = df.iloc[0][1]
-  shutil.move(f'{sid}.tsv', f'{sid}.{scheme}.tsv')
+
+  # Add scheme to mlst file name
   if scheme == '-':
-    shutil.move(f'{sid}.{scheme}.tsv',f'{sid}.NA.tsv')
+      shutil.move(f'{sid}.tsv',f'{sid}.NA.tsv')
+  else:
+      shutil.move(f'{sid}.tsv', f'{sid}.{scheme}.tsv')
 
-  if any(x in scheme for x in abaumannii_schemes):
-      run_schemes(scheme,abaumannii_schemes,1,sid)
-
-  if any(x in scheme for x in ecoli_schemes):
-      run_schemes(scheme,ecoli_schemes,1,sid)
-
-  if any(x in scheme for x in leptospira_schemes):
-      run_schemes(scheme,leptospira_schemes,1,sid)
-
-  if any(x in scheme for x in sthermophilus_schemes):
-      run_schemes(scheme,sthermophilus_schemes,1,sid)
-
-  if any(x in scheme for x in vcholerae_schemes):
-      run_schemes(scheme,vcholerae_schemes,1,sid)
-
-  mlst_files = glob.glob('*.tsv')
   dfs = []
 
+  # Check and run multiple schemes
+  if any(x in scheme for x in abaumannii_schemes):
+      run_schemes(scheme,abaumannii_schemes,sid)
+  if any(x in scheme for x in ecoli_schemes):
+      run_schemes(scheme,ecoli_schemes,sid)
+  if any(x in scheme for x in leptospira_schemes):
+      run_schemes(scheme,leptospira_schemes,sid)
+  if any(x in scheme for x in vcholerae_schemes):
+      run_schemes(scheme,vcholerae_schemes,sid)
+
+  # Get list of mlst files and set up empty list
+  mlst_files = glob.glob('*.tsv')
+
+  # Reformat MLST results and append to empty list
   for file in mlst_files:
       df = pd.read_csv(file, header=None, delimiter='\\t')
       df[0] = df[0].str.replace('.contigs.fa', '')
       df[2] = 'ST' + df[2].astype(str)
       df[2] = df[2].str.replace('ST-', 'NA')
-      df[2] = df[[1,2]].agg(':'.join, axis=1)
-      df = df[[0,2]]
+
+      if len(mlst_files) > 1:
+          # Replace mlst scheme names with PubMLST scheme names
+          for old, new in ids.items():
+              df[1] = df[1].replace(to_replace=old, value=new)
+      else:
+          # Remove scheme name
+          df.iloc[0,1] = ''
+          df[2] = df[2].str.replace('NA', 'No scheme available')
+      # Join ST to PubMLST scheme names
+      df['MLST Scheme'] = df[[1,2]].agg(' '.join, axis=1)
+      df = df[[0,'MLST Scheme']]
       df.columns =['Sample','MLST Scheme']
+      df['MLST Scheme'] = df['MLST Scheme'].replace('\\s+', ' ', regex=True)
+      df['MLST Scheme'] = df['MLST Scheme'].str.replace('NA -', 'NA', regex=True)
       dfs.append(df)
 
+  # Merge multiple dataframes (separated by ;) and write to file
   if len(dfs) > 1:
-      merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
-                                                how='left'), dfs)
+      merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'], how='left'), dfs)
       merged = merged.reindex(sorted(merged.columns,reverse=True), axis=1)
       merged['MLST Scheme'] = merged.iloc[: , 1:].agg(';'.join, axis=1)
       merged = merged[['Sample','MLST Scheme']]
-      merged.to_csv(f'{sid}.txt', index=False, sep='\\t', encoding='utf-8')
+      merged.to_csv(f'{sid}.mlst.tsv', index=False, sep='\\t', encoding='utf-8')
+
   else:
-      dfs[0].to_csv(f'{sid}.txt', index=False, sep='\\t', encoding='utf-8')
+      df = dfs[0]
+      df['MLST Scheme'] = df['MLST Scheme'].str.replace(' S', 'S')
+      df['MLST Scheme'] = df['MLST Scheme'].str.replace(' N', 'N')
+      df.to_csv(f'{sid}.mlst.tsv', index=False, sep='\\t', encoding='utf-8')
   """
 }
 
@@ -378,14 +405,13 @@ process mlst_formatting {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob('*.txt')
+  files = glob.glob('*.mlst.tsv')
   dfs = []
   for file in files:
       df = pd.read_csv(file, sep='\\t')
       dfs.append(df)
   dfs_concat = pd.concat(dfs)
   dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'No Scheme Available')
-  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('ST', 'PubMLST ST')
   dfs_concat.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
@@ -660,7 +686,7 @@ process merge_results {
   file(amr) from ar_tsv
 
   output:
-  file('spriggan_report.txt')
+  file('spriggan_report.csv')
 
   script:
   """
@@ -685,7 +711,7 @@ process merge_results {
   merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','MLST Scheme','Gene','Coverage','Identity']]
   merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity'})
 
-  merged.to_csv('spriggan_report.txt', index=False, sep='\\t', encoding='utf-8')
+  merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
   """
 }
 
