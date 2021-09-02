@@ -7,8 +7,8 @@ import argparse
 ### Load validation data
 ar_std = pd.read_csv("./validation/ar_summary_std.tsv",sep='\t',index_col="Sample")
 cov_std = pd.read_csv("./validation/coverage_stats_std.tsv",sep='\t',index_col="Sample")
-kraken_std = pd.read_csv("./validation/kraken_results_std.txt",sep='\t',index_col="Sample")
-mlst_std = pd.read_csv("./validation/mlst_formatted_std.tsv",sep='\t',index_col="Sample")
+kraken_std = pd.read_csv("./validation/kraken_results_std.tsv",sep='\t',index_col="Sample")
+mlst_std = pd.read_csv("./validation/mlst_results_std.tsv",sep='\t',index_col="Sample")
 quast_std = pd.read_csv("./validation/quast_results_std.tsv",sep='\t',index_col="Sample")
 
 ### Load in result data
@@ -103,11 +103,6 @@ for sample in list(kraken_std.index):
 ### Validate MLST results
 mlst_hits = []
 for sample in list(mlst_std.index):
-    if pd.isnull(mlst_std.loc[sample]["MLST Scheme"]):
-        mlst_std.loc[sample]["MLST Scheme"] = "NA"
-    if pd.isnull(mlst_data.loc[sample]["MLST Scheme"]):
-        mlst_data.loc[sample]["MLST Scheme"] = "NA"
-
     if mlst_std.loc[sample]["MLST Scheme"] != mlst_data.loc[sample]["MLST Scheme"]:
         mlst_hits.append({sample:" != ".join([mlst_std.loc[sample]["MLST Scheme"],mlst_data.loc[sample]["MLST Scheme"]])})
 
