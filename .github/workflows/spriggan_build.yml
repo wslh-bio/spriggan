@@ -1,4 +1,4 @@
-name: spriggan_ci_check
+name: spriggan_build
 on: [push]
 jobs:
   run-check:
