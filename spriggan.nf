@@ -24,6 +24,10 @@ if(params.test){
       .set { raw_reads }
 }
 
+Channel
+  .fromPath("$baseDir/multiqc_config.yaml")
+  .set { multiqc_config }
+
 //Preprocess reads - change names
 process preProcess {
   input:
@@ -218,17 +222,19 @@ process quast {
   tag "$name"
 
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/quast",mode:'copy'
+  publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.quast.tsv"
 
   input:
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_files, quast_multiqc
+  file("${name}.quast.tsv") into quast_files
+  file("${name}.report.quast.tsv") into quast_multiqc
 
   script:
   """
   quast.py ${assembly} -o .
+  mv report.tsv ${name}.report.quast.tsv
   mv transposed_report.tsv ${name}.quast.tsv
   """
 }
@@ -714,10 +720,6 @@ process merge_results {
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
   """
 }
-
-Channel
-  .from("$baseDir/multiqc_config.yaml")
-  .set { multiqc_config }
 
 //QC Step: MultiQC
 process multiqc {
