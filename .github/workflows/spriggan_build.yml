@@ -48,5 +48,5 @@ jobs:
 
       - name: Check Results
         run: |
-          cd ./validation
-          ./validate.py spriggan_results/amrfinder/ar_summary.tsv spriggan_results/coverage/coverage_stats.tsv spriggan_results/kraken/kraken_results.txt spriggan_results/mlst/mlst_formatted.tsv spriggan_results/quast/quast_results.tsv
+          cd ./tests
+          ./validate.py spriggan_results/amrfinder/ar_summary.tsv spriggan_results/coverage/coverage_stats.tsv spriggan_results/kraken/kraken_results.tsv spriggan_results/mlst/mlst_results.tsv spriggan_results/quast/quast_results.tsv
