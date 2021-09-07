@@ -4,12 +4,14 @@ import sys,os
 import pandas as pd
 import argparse
 
+base_path =  os.path.dirname(os.path.realpath(__file__))
+
 ### Load validation data
-ar_std = pd.read_csv("./validation/ar_summary_std.tsv",sep='\t',index_col="Sample")
-cov_std = pd.read_csv("./validation/coverage_stats_std.tsv",sep='\t',index_col="Sample")
-kraken_std = pd.read_csv("./validation/kraken_results_std.tsv",sep='\t',index_col="Sample")
-mlst_std = pd.read_csv("./validation/mlst_results_std.tsv",sep='\t',index_col="Sample")
-quast_std = pd.read_csv("./validation/quast_results_std.tsv",sep='\t',index_col="Sample")
+ar_std = pd.read_csv(os.path.join(base_path,"validation/ar_summary_std.tsv"),sep='\t',index_col="Sample")
+cov_std = pd.read_csv(os.path.join(base_path,"validation/coverage_stats_std.tsv"),sep='\t',index_col="Sample")
+kraken_std = pd.read_csv(os.path.join(base_path,"validation/kraken_results_std.tsv"),sep='\t',index_col="Sample")
+mlst_std = pd.read_csv(os.path.join(base_path,"validation/mlst_results_std.tsv"),sep='\t',index_col="Sample")
+quast_std = pd.read_csv(os.path.join(base_path,"validation/quast_results_std.tsv"),sep='\t',index_col="Sample")
 
 ### Load in result data
 parser = argparse.ArgumentParser(description='Validate pipeline results.')
@@ -103,8 +105,19 @@ for sample in list(kraken_std.index):
 ### Validate MLST results
 mlst_hits = []
 for sample in list(mlst_std.index):
-    if mlst_std.loc[sample]["MLST Scheme"] != mlst_data.loc[sample]["MLST Scheme"]:
-        mlst_hits.append({sample:" != ".join([mlst_std.loc[sample]["MLST Scheme"],mlst_data.loc[sample]["MLST Scheme"]])})
+    if ";" in mlst_data.loc[sample]["MLST Scheme"]:
+        std = mlst_std.loc[sample]["MLST Scheme"].split(";")
+        test = mlst_data.loc[sample]["MLST Scheme"].split(";")
+        std.sort()
+        test.sort()
+        std = ";".join(std)
+        test = ";".join(test)
+    else:
+        std = mlst_std.loc[sample]["MLST Scheme"]
+        test = mlst_data.loc[sample]["MLST Scheme"]
+
+    if std != test:
+        mlst_hits.append({sample:" != ".join([std,test])})
 
 ### Validate QUAST results
 quast_hits = []
