@@ -1,6 +1,7 @@
 # Spriggan
 ![Spriggan](https://github.com/wslh-bio/spriggan/actions/workflows/spriggan_build.yml/badge.svg)
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/spriggan)
+![GitHub Release](https://img.shields.io/github/release/wslh-bio/spriggan)
 
 Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes.
 
