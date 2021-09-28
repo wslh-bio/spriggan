@@ -15,18 +15,20 @@ quast_std = pd.read_csv(os.path.join(base_path,"validation/quast_results_std.tsv
 
 ### Load in result data
 parser = argparse.ArgumentParser(description='Validate pipeline results.')
-parser.add_argument('ar_data',help='ar_summary.tsv')
-parser.add_argument('cov_data',help='coverage_stats.tsv')
-parser.add_argument('kraken_data',help='kraken_results.txt')
-parser.add_argument('mlst_data',help='mlst_formatted.tsv')
-parser.add_argument('quast_data',help='quast_results.tsv')
+parser.add_argument('spriggan_result_path',help='Path to spriggan_results output directory.')
 args = parser.parse_args()
 
-ar_data = pd.read_csv(args.ar_data,sep='\t',index_col="Sample")
-cov_data = pd.read_csv(args.cov_data,sep='\t',index_col="Sample")
-kraken_data = pd.read_csv(args.kraken_data,sep='\t',index_col="Sample")
-mlst_data = pd.read_csv(args.mlst_data,sep='\t',index_col="Sample")
-quast_data = pd.read_csv(args.quast_data,sep='\t',index_col="Sample")
+ar_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"amrfinder/ar_summary.tsv"))
+cov_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"coverage/coverage_stats.tsv"))
+kraken_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"kraken/kraken_results.tsv"))
+mlst_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"mlst/mlst_results.tsv"))
+quast_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"quast/quast_results.tsv"))
+
+ar_data = pd.read_csv(ar_data_path,sep='\t',index_col="Sample")
+cov_data = pd.read_csv(cov_data_path,sep='\t',index_col="Sample")
+kraken_data = pd.read_csv(kraken_data_path,sep='\t',index_col="Sample")
+mlst_data = pd.read_csv(mlst_data_path,sep='\t',index_col="Sample")
+quast_data = pd.read_csv(quast_data_path,sep='\t',index_col="Sample")
 
 def check_compare(y_std,x_data,range=2):
     x_data = round(float(x_data),2)
@@ -145,6 +147,9 @@ for sample in list(quast_std.index):
 ### Report Results
 validation_pass = True
 
+print("##")
+print("## Comparing Standard to Sample")
+print("##")
 # AR
 print("AR Validation")
 if not ar_hits:
