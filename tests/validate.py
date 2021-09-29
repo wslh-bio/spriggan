@@ -127,22 +127,17 @@ for sample in list(quast_std.index):
 
     contigs_std = str(quast_std.loc[sample]["Contigs"])
     length_std = str(quast_std.loc[sample]["Assembly Length (bp)"])
-    n50_std = str(quast_std.loc[sample]["N50"])
 
     contigs = str(quast_data.loc[sample]["Contigs"])
     length = str(quast_data.loc[sample]["Assembly Length (bp)"])
-    n50 = str(quast_data.loc[sample]["N50"])
 
     contig_result = check_compare(contigs_std,contigs,10)
     length_result = check_compare(length_std,length,50000)
-    n50_result = check_compare(n50_std,n50,500)
 
     if not contig_result:
         quast_hits.append({sample+"_contigs":contigs_std+" != "+contigs})
     if not length_result:
         quast_hits.append({sample+"_length":length_std+" != "+length})
-    if not n50_result:
-        quast_hits.append({sample+"_N50":n50_std+" != "+n50})
 
 ### Report Results
 validation_pass = True
