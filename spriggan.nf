@@ -560,7 +560,7 @@ process amrfinder_setup {
 //AR Step 2: Run amrfinder
 process amrfinder {
   tag "$name"
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
+  publishDir "${params.outdir}/amrfinder",mode: 'copy',pattern:"*.amr.tsv"
 
   input:
   set val(name), file(input) from ar_input
