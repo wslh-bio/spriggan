@@ -432,10 +432,13 @@ process kraken {
 
   output:
   tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
+  file("Kraken2_DB.txt") into kraken_version
 
   script:
   """
   kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+
+  ls /kraken2-db/ > Kraken2_DB.txt
   """
 }
 
@@ -564,6 +567,7 @@ process amrfinder {
 
   output:
   tuple name, file("${name}.amr.tsv") into ar_predictions
+  file("AMRFinderPlus_DB.txt") into amrfinder_version
 
   script:
   """
@@ -572,6 +576,7 @@ process amrfinder {
   import subprocess as sub
   import shlex
   import glob
+  import shutil
 
   organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
@@ -587,6 +592,9 @@ process amrfinder {
       outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
       sub.Popen(cmd, stdout=outFile).wait()
+
+  versionFile = "/amrfinder/data/latest/version.txt"
+  shutil.copy(versionFile,"AMRFinderPlus_DB.txt")
   """
 }
 
@@ -690,6 +698,8 @@ process merge_results {
   file(mlst) from mlst_tsv
   file(kraken) from kraken_tsv
   file(amr) from ar_tsv
+  file(vkraken) from kraken_version.first()
+  file(vamrfinder) from amrfinder_version.first()
 
   output:
   file('spriggan_report.csv')
@@ -703,6 +713,12 @@ process merge_results {
   import pandas as pd
   from functools import reduce
 
+  with open('AMRFinderPlus_DB.txt', 'r') as amrFile:
+      amrfinderDB_version = amrFile.readline().strip()
+
+  with open('Kraken2_DB.txt', 'r') as krakenFile:
+      krakenDB_version = krakenFile.readline().strip()
+
   files = glob.glob('*.tsv')
 
   dfs = []
@@ -711,11 +727,11 @@ process merge_results {
       df = pd.read_csv(file, header=0, delimiter='\\t')
       dfs.append(df)
 
-  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
-                                              how='left'), dfs)
-
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','MLST Scheme','Gene','Coverage','Identity']]
-  merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity'})
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
+  merged = merged.assign(krakenDB=krakenDB_version)
+  merged = merged.assign(amrDB=amrfinderDB_version)
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','amrDB']]
+  merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity','krakenDB':'Kraken Database Verion','amrDB':'AMRFinderPlus Database Version'})
 
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
   """
