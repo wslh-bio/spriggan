@@ -131,7 +131,7 @@ for sample in list(quast_std.index):
     contigs = str(quast_data.loc[sample]["Contigs"])
     length = str(quast_data.loc[sample]["Assembly Length (bp)"])
 
-    contig_result = check_compare(contigs_std,contigs,10)
+    contig_result = check_compare(contigs_std,contigs,50)
     length_result = check_compare(length_std,length,50000)
 
     if not contig_result:
