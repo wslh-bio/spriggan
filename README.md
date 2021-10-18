@@ -22,7 +22,7 @@ The pipeline is designed to start from raw Illumina reads. All reads must be in 
 nextflow sprriggan.nf --reads [path-to-reads]
 ```
 
-You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
+You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.09.0-edge` or greater:
 ```
 nextflow sprriggan.nf --test
 ```
