@@ -13,7 +13,7 @@ if(params.test){
   println "Running test analysis using the following samples:"
   println testIDS
   Channel
-      .fromSRA(testIDS,protocol:'https')
+      .fromSRA(testIDS,protocol:'http')
       .set { raw_reads }
 
 } else{
