@@ -615,35 +615,63 @@ process amrfinder_summary {
   import os
   import glob
   import pandas as pd
+  from functools import reduce
 
-  files = glob.glob('*.tsv')
-
+  files = glob.glob('*.amr.tsv')
   dfs = []
   semi_dfs = []
+  space_dfs = []
+
+  def pretty_df(data,sample):
+      data.columns = data.columns.str.replace(' ', '_')
+      data = data.assign(Sample=sample)
+      data = data[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
+      pretty_data = data.set_axis(['Sample', 'Gene', 'Coverage', 'Identity'], axis=1, inplace=False)
+      return pretty_data
+
+  def join_df(data,sample,delim):
+      gene = data['Gene'].tolist()
+      gene = delim.join(gene)
+      coverage = data['Coverage'].tolist()
+      coverage = delim.join(map(str, coverage))
+      identity = data['Identity'].tolist()
+      identity = delim.join(map(str, identity))
+      joined_data = [[sample,gene,coverage,identity]]
+      joined_data = pd.DataFrame(joined_data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+      return joined_data
+
   for file in files:
       sample_id = os.path.basename(file).split('.')[0]
       df = pd.read_csv(file, header=0, delimiter='\\t')
-      df.columns=df.columns.str.replace(' ', '_')
-      df = df.assign(Sample=sample_id)
-      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
-      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
+
+      df = pretty_df(df,sample_id)
       dfs.append(df)
-      sample = sample_id
-      gene = df['Gene'].tolist()
-      gene = ';'.join(gene)
-      coverage = df['Coverage'].tolist()
-      coverage = ';'.join(map(str, coverage))
-      identity = df['Identity'].tolist()
-      identity = ';'.join(map(str, identity))
-      data = [[sample,gene,coverage,identity]]
-      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+  #    print(df)
+
+      semi_df = join_df(df,sample_id,';')
       semi_dfs.append(semi_df)
+  #    print(semi_df)
+
+      mask = df['Gene'].str.contains('NDM|OXA|KPC|IMP|VIM', case=False, na=False)
+      masked_df = df[mask]
+      space_df = join_df(masked_df,sample_id,' ')
+      space_df = space_df.set_axis(['Sample', 'Important Genes', 'Important Genes Coverage', 'Important Genes Identity'], axis=1, inplace=False)
+      space_dfs.append(space_df)
+  #    print(space_df)
+
   concat_dfs = pd.concat(dfs)
-  concat_dfs['Sample'] = concat_dfs['Sample'].str.replace('amr', '')
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+
   concat_semi_dfs = pd.concat(semi_dfs)
-  concat_semi_dfs['Sample'] = concat_semi_dfs['Sample'].str.replace('_amr', '')
-  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_space_dfs = pd.concat(space_dfs)
+
+  # print(concat_semi_dfs)
+  # print(concat_space_dfs)
+
+  both_dfs = [concat_semi_dfs,concat_space_dfs]
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), both_dfs)
+  # print(merged)
+  merged.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
