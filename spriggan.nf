@@ -286,7 +286,7 @@ process quast_summary {
 
   # concatenate dfs and write data frame to file
   dfs_concat = pd.concat(dfs)
-  dfs_concat.to_csv(f'quast_resultsII.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
