@@ -425,18 +425,18 @@ process mlst_formatting {
 //Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
-  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*.kraken2.txt*"
 
   input:
   set val(name), file(reads) from read_files_kraken
 
   output:
-  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
+  tuple name, file("${name}.kraken2.txt") into kraken_files, kraken_multiqc
   file("Kraken2_DB.txt") into kraken_version
 
   script:
   """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${reads[0]} ${reads[1]}
 
   ls /kraken2-db/ > Kraken2_DB.txt
   """
@@ -462,55 +462,82 @@ process kraken_summary {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob("*kraken2_report*")
+  # function for summarizing kraken2 report files
+  def summarize_kraken(file):
+      # get sample id from file name
+      sample_id = os.path.basename(file).split('.')[0].replace('.kraken2.txt','')
+      data = []
 
-  results = []
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
-      vals = []
-      vals_concat = []
-      with open(file,"r") as inFile:
+      # read kraken2 report file
+      with open(file,'r') as inFile:
           for line in inFile:
               line = line.strip()
-              sline = line.split("\\t")
-              if sline[5] == "unclassified":
-                  vals.append(sline)
-              if sline[3] == "S":
-                  vals.append(sline)
+              sline = line.split('\\t')
+              # get unclassified reads result (denoted by 'unclassified') and append to data
+              if sline[5] == 'unclassified':
+                  data.append(sline)
+              # get species results (denoted by 'S') and append to data
+              if sline[3] == 'S':
+                  data.append(sline)
 
-      vals_df = DataFrame(vals, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
-      vals_df['Name'] = vals_df['Name'].str.lstrip()
-      vals_df = vals_df.sort_values(by=['Percentage'], ascending=False)
-      unclass = vals_df[vals_df["Name"]=="unclassified"]
-      vals_df = vals_df[vals_df["Name"]!="unclassified"]
-      vals_df = vals_df.head(2)
-      if len(vals_df) == 0:
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
-      if len(vals_df) == 1:
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
+      # convert data list to data frame
+      data_df = DataFrame(data, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      # remove left leading spaces from the Name column
+      data_df['Name'] = data_df['Name'].str.lstrip()
+      # sort data frame by percentages (largest to smallest)
+      data_df = data_df.sort_values(by=['Percentage'], ascending=False)
+      # make new data frame for unclassified reads only
+      unclass = data_df[data_df['Name']=='unclassified']
+      # subset data frame by species
+      species_df = data_df[data_df['Name']!='unclassified']
+      # get first two species matches (first two largest percentages) in data frame
+      species_df = species_df.head(2)
+      # check if species data frame has two rows
+      if len(species_df) == 0:
+          # add two empty rows to species data frame
+          species_df = species_df.append(pd.Series(), ignore_index=True)
+          species_df = species_df.append(pd.Series(), ignore_index=True)
+      if len(species_df) == 1:
+          # add one empty row to species data frame
+          species_df = species_df.append(pd.Series(), ignore_index=True)
 
-      vals_concat = pd.concat([unclass,vals_df])
-      vals_concat = vals_concat.assign(Sample=sample_id)
-      vals_concat = vals_concat[['Sample','Percentage','Name']]
-      vals_concat = vals_concat.reset_index(drop=True)
-
-      unclassified = vals_concat.iloc[0]['Percentage'] + "%"
-      if str(vals_concat.iloc[1]['Name']) == "nan":
-          first_species = "NA"
+      # concatenate unclassified data frame and species data frame
+      df_concat = pd.concat([unclass,species_df])
+      # add sample name column to concatenated data frame
+      df_concat = df_concat.assign(Sample=sample_id)
+      # keep only Sample Percentage and Name columns in concatenated data frame
+      df_concat = df_concat[['Sample','Percentage','Name']]
+      # reset index of concatenated data frame using drop parameter to avoid old index added as column
+      df_concat = df_concat.reset_index(drop=True)
+      # add percentage sign to unclassified column
+      unclassified = df_concat.iloc[0]['Percentage'] + '%'
+      # convert to lists
+      # if primary species is nan, replace with NA
+      if str(df_concat.iloc[1]['Name']) == 'nan':
+          primary_species = 'NA'
+      # otherwise convert to (#%)
       else:
-          first_species = vals_concat.iloc[1]['Name'] + " (" + vals_concat.iloc[1]['Percentage'] + "%)"
-      if str(vals_concat.iloc[2]['Name']) == "nan":
-          second_species = "NA"
+          primary_species = df_concat.iloc[1]['Name'] + ' (' + df_concat.iloc[1]['Percentage'] + '%)'
+      # repeat for secondary species
+      if str(df_concat.iloc[2]['Name']) == 'nan':
+          secondary_species = 'NA'
       else:
-          second_species = vals_concat.iloc[2]['Name'] + " (" + vals_concat.iloc[2]['Percentage'] + "%)"
+          secondary_species = df_concat.iloc[2]['Name'] + ' (' + df_concat.iloc[2]['Percentage'] + '%)'
+      # list of lists
+      combined = [[sample_id, unclassified, primary_species, secondary_species]]
+      # convert list of lists to data frame
+      combined_df = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
+      return combined_df
 
-      combined = [[sample_id, unclassified, first_species, second_species]]
-      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
-      results.append(result)
+  # get all kraken2 report files and make results list
+  files = glob.glob("*.kraken2.txt*")
 
-  vals_concat = pd.concat(results)
-  vals_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  # summarize kraken2 report files
+  results = map(summarize_kraken, files)
+
+  # concatenate summary results and write to tsv
+  data_concat = pd.concat(results)
+  data_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -608,6 +635,7 @@ process amrfinder_summary {
   output:
   file("ar_predictions.tsv")
   file("ar_summary.tsv") into ar_tsv
+  file("important_ar_genes.tsv") into important_ar_tsv
 
   script:
   """
@@ -615,12 +643,11 @@ process amrfinder_summary {
   import os
   import glob
   import pandas as pd
-  from functools import reduce
 
   files = glob.glob('*.amr.tsv')
   dfs = []
-  semi_dfs = []
-  space_dfs = []
+  all_ar_dfs = []
+  important_ar_dfs = []
 
   def pretty_df(data,sample):
       data.columns = data.columns.str.replace(' ', '_')
@@ -646,32 +673,24 @@ process amrfinder_summary {
 
       df = pretty_df(df,sample_id)
       dfs.append(df)
-  #    print(df)
 
-      semi_df = join_df(df,sample_id,';')
-      semi_dfs.append(semi_df)
-  #    print(semi_df)
+      all_ar_df = join_df(df,sample_id,';')
+      all_ar_dfs.append(all_ar_df)
 
-      mask = df['Gene'].str.contains('NDM|OXA|KPC|IMP|VIM', case=False, na=False)
+      mask = df['Gene'].str.contains(${params.important_genes}, case=False, na=False)
       masked_df = df[mask]
-      space_df = join_df(masked_df,sample_id,' ')
-      space_df = space_df.set_axis(['Sample', 'Important Genes', 'Important Genes Coverage', 'Important Genes Identity'], axis=1, inplace=False)
-      space_dfs.append(space_df)
-  #    print(space_df)
+      important_ar_df = join_df(masked_df,sample_id,' ')
+      important_ar_df = important_ar_df.set_axis(['Sample', 'Important Genes', 'Important Genes Coverage', 'Important Genes Identity'], axis=1, inplace=False)
+      important_ar_dfs.append(important_ar_df)
 
   concat_dfs = pd.concat(dfs)
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
-  concat_semi_dfs = pd.concat(semi_dfs)
-  concat_space_dfs = pd.concat(space_dfs)
+  concat_all_ar_dfs = pd.concat(all_ar_dfs)
+  concat_important_ar_dfs = pd.concat(important_ar_dfs)
 
-  # print(concat_semi_dfs)
-  # print(concat_space_dfs)
-
-  both_dfs = [concat_semi_dfs,concat_space_dfs]
-  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), both_dfs)
-  # print(merged)
-  merged.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_all_ar_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_important_ar_dfs.to_csv('important_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -726,6 +745,7 @@ process merge_results {
   file(mlst) from mlst_tsv
   file(kraken) from kraken_tsv
   file(amr) from ar_tsv
+  file(important_ar) from important_ar_tsv
   file(vkraken) from kraken_version.first()
   file(vamrfinder) from amrfinder_version.first()
 
@@ -758,7 +778,7 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
   merged = merged.assign(krakenDB=krakenDB_version)
   merged = merged.assign(amrDB=amrfinderDB_version)
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','amrDB']]
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Important Genes','Gene','Coverage','Identity','Important Genes Coverage','Important Genes Identity','amrDB']]
   merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity','krakenDB':'Kraken Database Verion','amrDB':'AMRFinderPlus Database Version'})
 
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
