@@ -69,13 +69,9 @@ process clean_reads {
   script:
   """
   bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=${params.trimdirection} qtrim=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
-
   repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
-
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-
   bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
-
   grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
   """
 }
@@ -197,23 +193,33 @@ process coverage_stats {
   from numpy import median
   from numpy import average
 
-  results = []
+  # function for summarizing samtools depth files
+  def summarize_depth(file):
+      # get sample id from file name and set up data list
+      sid = os.path.basename(file).split('.')[0]
+      data = []
+      # open samtools depth file and get depth
+      with open(file,'r') as inFile:
+          for line in inFile:
+              data.append(int(line.strip().split()[2]))
+      # get median and average depth
+      med = int(median(data))
+      avg = int(average(data))
+      # return sample id, median and average depth
+      result = f"{sid}\\t{med}\\t{avg}\\n"
+      return result
 
-  files = glob.glob("*.depth.tsv*")
-  for file in files:
-    nums = []
-    sid = os.path.basename(file).split('.')[0]
-    with open(file,'r') as inFile:
-      for line in inFile:
-        nums.append(int(line.strip().split()[2]))
-      med = int(median(nums))
-      avg = int(average(nums))
-      results.append(f"{sid}\\t{med}\\t{avg}\\n")
+  # get all samtools depth files
+  files = glob.glob("*.depth.tsv")
 
+  # summarize samtools depth files
+  results = map(summarize_depth,files)
+
+  # write results to file
   with open('coverage_stats.tsv', 'w') as outFile:
-    outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
-    for result in results:
-      outFile.write(result)
+      outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
+      for result in results:
+          outFile.write(result)
   """
 }
 
@@ -256,21 +262,31 @@ process quast_summary {
   import pandas as pd
   from pandas import DataFrame
 
+  # function for summarizing quast output
+  def summarize_quast(file):
+      # get sample id from file name and set up data list
+      sample_id = os.path.basename(file).split(".")[0]
+      # read in data frame from file
+      df = pd.read_csv(file, sep='\\t')
+      # get contigs, total length and assembly length columns
+      df = df.iloc[:,[1,7,17]]
+      # assign sample id as column
+      df = df.assign(Sample=sample_id)
+      # rename columns
+      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
+      # re-order data frame
+      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
+      return df
+
+  # get quast output files
   files = glob.glob("*.quast.tsv")
 
-  dfs = []
+  # summarize quast output files
+  dfs = map(summarize_quast,files)
 
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, sep='\\t')
-      df = df.iloc[:,[1,7,17]]
-      df = df.assign(Sample=sample_id)
-      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
-      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
-      dfs.append(df)
-
+  # concatenate dfs and write data frame to file
   dfs_concat = pd.concat(dfs)
-  dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  dfs_concat.to_csv(f'quast_resultsII.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -529,7 +545,7 @@ process kraken_summary {
       combined_df = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
       return combined_df
 
-  # get all kraken2 report files and make results list
+  # get all kraken2 report files
   files = glob.glob("*.kraken2.txt*")
 
   # summarize kraken2 report files
@@ -711,24 +727,32 @@ process bbduk_summary {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob("*.txt")
-
-  results = []
-  for file in files:
+  # function for summarizing bbduk output
+  def summarize_bbduk(file):
+      # get sample id from file name and set up data list
       sample_id = os.path.basename(file).split(".")[0]
-      vals = []
-      vals.append(sample_id)
+      data = []
+      data.append(sample_id)
       with open(file,"r") as inFile:
           for i, line in enumerate(inFile):
+              # get total number of reads
               if i == 0:
                   num_reads = line.strip().split("\\t")[1].replace(" reads ","")
-                  vals.append(num_reads)
+                  data.append(num_reads)
+              # get total number of reads removed
               if i == 3:
                   rm_reads = line.strip().split("\\t")[1].replace("reads ","")
                   rm_reads = rm_reads.rstrip()
-                  vals.append(rm_reads)
-      results.append(vals)
+                  data.append(rm_reads)
+      return data
 
+  # get all bbduk output files
+  files = glob.glob("*.trim.txt")
+
+  # summarize bbduk output files
+  results = map(summarize_bbduk,files)
+
+  # convert results to data frame and write to tsv
   df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
   df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
