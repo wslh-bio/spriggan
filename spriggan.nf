@@ -576,19 +576,25 @@ process amrfinder_setup {
   import glob
   import shutil
 
+  # species and genus lists
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
 
+  # get sample name from fasta file
   genomeFile = '${input}'
   sid = genomeFile.split('.')[0]
 
+  # read in kraken results as data frame
   df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+  # subset data frame by sample id
   df = df[df['Sample'] == sid]
+  # get primary species and genus identified
   taxa = df.iloc[0]['Primary Species (%)']
   taxa = taxa.split(' ')
   taxa_species = taxa[0] + '_' + taxa[1]
   taxa_genus = taxa[0]
 
+  # add taxa or genus name to file name if present in lists
   if any(x in taxa_species for x in species):
       shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
   elif any(x in taxa_genus for x in genus):
@@ -621,21 +627,26 @@ process amrfinder {
   import glob
   import shutil
 
+  # organism list
   organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
+  # get sample id and organism name from fasta file
   fastaFile = '${input}'
   sid = fastaFile.split('.')[0]
   organism = fastaFile.split('.')[1]
 
+  # run amrfinder using --organism if present in organism list
   if any(x in organism for x in organisms):
       outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa --organism {organism}')
       sub.Popen(cmd, stdout=outFile).wait()
+  # otherwise run amrfinder without --organism
   else:
       outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
       sub.Popen(cmd, stdout=outFile).wait()
 
+  # get version information from version file
   versionFile = "/amrfinder/data/latest/version.txt"
   shutil.copy(versionFile,"AMRFinderPlus_DB.txt")
   """
@@ -660,11 +671,13 @@ process amrfinder_summary {
   import glob
   import pandas as pd
 
+  # get amrfinder output files and set up lists
   files = glob.glob('*.amr.tsv')
   dfs = []
   all_ar_dfs = []
   important_ar_dfs = []
 
+  # function for cleanining up amrfinder output
   def pretty_df(data,sample):
       data.columns = data.columns.str.replace(' ', '_')
       data = data.assign(Sample=sample)
@@ -672,6 +685,7 @@ process amrfinder_summary {
       pretty_data = data.set_axis(['Sample', 'Gene', 'Coverage', 'Identity'], axis=1, inplace=False)
       return pretty_data
 
+  # function for joining amrfinder results by a delimiter
   def join_df(data,sample,delim):
       gene = data['Gene'].tolist()
       gene = delim.join(gene)
@@ -684,27 +698,35 @@ process amrfinder_summary {
       return joined_data
 
   for file in files:
+      # get sample id from file name
       sample_id = os.path.basename(file).split('.')[0]
+      # read in amrfinder results as data frame
       df = pd.read_csv(file, header=0, delimiter='\\t')
 
+      # clean up data frame
       df = pretty_df(df,sample_id)
       dfs.append(df)
 
+      # summarize all results
       all_ar_df = join_df(df,sample_id,';')
       all_ar_dfs.append(all_ar_df)
 
+      # subset data frame by important genes
       mask = df['Gene'].str.contains(${params.important_genes}, case=False, na=False)
       masked_df = df[mask]
       important_ar_df = join_df(masked_df,sample_id,' ')
       important_ar_df = important_ar_df.set_axis(['Sample', 'Important Genes', 'Important Genes Coverage', 'Important Genes Identity'], axis=1, inplace=False)
       important_ar_dfs.append(important_ar_df)
 
+  # concatenate results and write to tsv
   concat_dfs = pd.concat(dfs)
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
+  # concatenate joined restults and write to tsv
   concat_all_ar_dfs = pd.concat(all_ar_dfs)
   concat_important_ar_dfs = pd.concat(important_ar_dfs)
 
+  # concatenate important genes and write to tsv
   concat_all_ar_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   concat_important_ar_dfs.to_csv('important_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
