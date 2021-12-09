@@ -12,6 +12,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 [Genome assembly](#genome-assembly)  
 [Assembly quality assessment](#assembly-quality-assessment)  
 [Genome coverage](#genome-coverage)  
+[Antimicrobial resistance gene detection](#antimicrobial-resistance-gene-detection)  
 [MLST scheme](#mlst-scheme)  
 [Contamination detection](#contamination-detection)                                                                                                                                   
 [Output](#output-files)  
@@ -68,7 +69,8 @@ spriggan_results
 ├── amrfinder
 │   ├── ar_predictions.tsv
 │   ├── ar_summary.tsv
-│   └── *.amr.tsv
+│   ├── *.amr.tsv
+│   └── slected_ar_genes.tsv
 ├── assembled
 │   └── *.contigs.fa
 ├── coverage
@@ -100,8 +102,8 @@ spriggan_results
 **\*.txt** - Samtools stats output  
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
-**\*.amr.tsv** - Raw AMRFinderPlus output for each sample 
-**selected_ar_genes.tsv** - Genes identified in AMRFinder Output 
+**\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
+**selected_ar_genes.tsv** - Separate table of AMRFinderPlus results for genes selected by user  
 **\*.contigs.fa** - Shovill assembly for each sample  
 **coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
 **\*.depth.tsv** - Raw Samtools depth output for each sample  
