@@ -100,7 +100,8 @@ spriggan_results
 **\*.txt** - Samtools stats output  
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
-**\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
+**\*.amr.tsv** - Raw AMRFinderPlus output for each sample 
+**selected_ar_genes.tsv** - Genes identified in AMRFinder Output 
 **\*.contigs.fa** - Shovill assembly for each sample  
 **coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
 **\*.depth.tsv** - Raw Samtools depth output for each sample  
@@ -108,7 +109,7 @@ spriggan_results
 **\*.html** - HTML files of FastQC results  
 **\*.zip** - Zipped folders of FastQC output    
 **kraken_results.tsv** - Summary table of Kraken results  
-**\*kraken2_report.txt** - Report of Kraken results for each sample  
+**\*.kraken2.txt** - Report of Kraken results for each sample  
 **mlst_results.tsv** - Summary table of MLST results  
 **\*.mlst.tsv** - Raw MLST output for each sample  
 **quast_results.tsv** - Summary table of QUAST results  
