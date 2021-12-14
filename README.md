@@ -83,7 +83,7 @@ spriggan_results
 │       └── *.zip
 ├── kraken
 │   ├── kraken_results.tsv
-│   └── *kraken2_report.txt
+│   └── *.kraken2.txt
 ├── mlst
 │   ├── mlst_results.tsv
 │   └── *.mlst.tsv
@@ -103,7 +103,7 @@ spriggan_results
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
 **\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
-**selected_ar_genes.tsv** - Separate table of AMRFinderPlus results for genes selected by user  
+**selected_ar_genes.tsv** - Table of AMRFinderPlus results for genes selected by user  
 **\*.contigs.fa** - Shovill assembly for each sample  
 **coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
 **\*.depth.tsv** - Raw Samtools depth output for each sample  
