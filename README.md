@@ -12,6 +12,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 [Genome assembly](#genome-assembly)  
 [Assembly quality assessment](#assembly-quality-assessment)  
 [Genome coverage](#genome-coverage)  
+[Antimicrobial resistance gene detection](#antimicrobial-resistance-gene-detection)  
 [MLST scheme](#mlst-scheme)  
 [Contamination detection](#contamination-detection)                                                                                                                                   
 [Output](#output-files)  
@@ -49,7 +50,7 @@ Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bi
 Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
 #### Antimicrobial resistance gene detection
-Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr).
+Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr). Spriggan can generate a table of AMRFinderPlus results for AR genes of interest with the selected_genes parameter. Spriggan will search for matches to the AR genes of interest in the AMRFinderPlus results and make a table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. By default the selected_genes parameter is set to: 'NDM|OXA|KPC|IMP|VIM'
 
 #### MLST scheme
 MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst). Multiple schemes are available for specific organisms, and STs from all available schemes are reported for those organisms.
@@ -68,7 +69,8 @@ spriggan_results
 ├── amrfinder
 │   ├── ar_predictions.tsv
 │   ├── ar_summary.tsv
-│   └── *.amr.tsv
+│   ├── *.amr.tsv
+│   └── selected_ar_genes.tsv
 ├── assembled
 │   └── *.contigs.fa
 ├── coverage
@@ -81,7 +83,7 @@ spriggan_results
 │       └── *.zip
 ├── kraken
 │   ├── kraken_results.tsv
-│   └── *kraken2_report.txt
+│   └── *.kraken2.txt
 ├── mlst
 │   ├── mlst_results.tsv
 │   └── *.mlst.tsv
@@ -101,6 +103,7 @@ spriggan_results
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
 **\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
+**selected_ar_genes.tsv** - Table of AMRFinderPlus results for genes selected by user  
 **\*.contigs.fa** - Shovill assembly for each sample  
 **coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
 **\*.depth.tsv** - Raw Samtools depth output for each sample  
@@ -108,7 +111,7 @@ spriggan_results
 **\*.html** - HTML files of FastQC results  
 **\*.zip** - Zipped folders of FastQC output    
 **kraken_results.tsv** - Summary table of Kraken results  
-**\*kraken2_report.txt** - Report of Kraken results for each sample  
+**\*.kraken2.txt** - Report of Kraken results for each sample  
 **mlst_results.tsv** - Summary table of MLST results  
 **\*.mlst.tsv** - Raw MLST output for each sample  
 **quast_results.tsv** - Summary table of QUAST results  

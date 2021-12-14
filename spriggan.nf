@@ -69,13 +69,9 @@ process clean_reads {
   script:
   """
   bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=${params.trimdirection} qtrim=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
-
   repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
-
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-
   bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
-
   grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
   """
 }
@@ -197,23 +193,33 @@ process coverage_stats {
   from numpy import median
   from numpy import average
 
-  results = []
+  # function for summarizing samtools depth files
+  def summarize_depth(file):
+      # get sample id from file name and set up data list
+      sid = os.path.basename(file).split('.')[0]
+      data = []
+      # open samtools depth file and get depth
+      with open(file,'r') as inFile:
+          for line in inFile:
+              data.append(int(line.strip().split()[2]))
+      # get median and average depth
+      med = int(median(data))
+      avg = int(average(data))
+      # return sample id, median and average depth
+      result = f"{sid}\\t{med}\\t{avg}\\n"
+      return result
 
-  files = glob.glob("*.depth.tsv*")
-  for file in files:
-    nums = []
-    sid = os.path.basename(file).split('.')[0]
-    with open(file,'r') as inFile:
-      for line in inFile:
-        nums.append(int(line.strip().split()[2]))
-      med = int(median(nums))
-      avg = int(average(nums))
-      results.append(f"{sid}\\t{med}\\t{avg}\\n")
+  # get all samtools depth files
+  files = glob.glob("*.depth.tsv")
 
+  # summarize samtools depth files
+  results = map(summarize_depth,files)
+
+  # write results to file
   with open('coverage_stats.tsv', 'w') as outFile:
-    outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
-    for result in results:
-      outFile.write(result)
+      outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
+      for result in results:
+          outFile.write(result)
   """
 }
 
@@ -256,19 +262,29 @@ process quast_summary {
   import pandas as pd
   from pandas import DataFrame
 
+  # function for summarizing quast output
+  def summarize_quast(file):
+      # get sample id from file name and set up data list
+      sample_id = os.path.basename(file).split(".")[0]
+      # read in data frame from file
+      df = pd.read_csv(file, sep='\\t')
+      # get contigs, total length and assembly length columns
+      df = df.iloc[:,[1,7,17]]
+      # assign sample id as column
+      df = df.assign(Sample=sample_id)
+      # rename columns
+      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
+      # re-order data frame
+      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
+      return df
+
+  # get quast output files
   files = glob.glob("*.quast.tsv")
 
-  dfs = []
+  # summarize quast output files
+  dfs = map(summarize_quast,files)
 
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0]
-      df = pd.read_csv(file, sep='\\t')
-      df = df.iloc[:,[1,7,17]]
-      df = df.assign(Sample=sample_id)
-      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
-      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
-      dfs.append(df)
-
+  # concatenate dfs and write data frame to file
   dfs_concat = pd.concat(dfs)
   dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
@@ -425,18 +441,18 @@ process mlst_formatting {
 //Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
-  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*.kraken2.txt*"
 
   input:
   set val(name), file(reads) from read_files_kraken
 
   output:
-  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
+  tuple name, file("${name}.kraken2.txt") into kraken_files, kraken_multiqc
   file("Kraken2_DB.txt") into kraken_version
 
   script:
   """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${reads[0]} ${reads[1]}
 
   ls /kraken2-db/ > Kraken2_DB.txt
   """
@@ -462,55 +478,82 @@ process kraken_summary {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob("*kraken2_report*")
+  # function for summarizing kraken2 report files
+  def summarize_kraken(file):
+      # get sample id from file name
+      sample_id = os.path.basename(file).split('.')[0].replace('.kraken2.txt','')
+      data = []
 
-  results = []
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
-      vals = []
-      vals_concat = []
-      with open(file,"r") as inFile:
+      # read kraken2 report file
+      with open(file,'r') as inFile:
           for line in inFile:
               line = line.strip()
-              sline = line.split("\\t")
-              if sline[5] == "unclassified":
-                  vals.append(sline)
-              if sline[3] == "S":
-                  vals.append(sline)
+              sline = line.split('\\t')
+              # get unclassified reads result (denoted by 'unclassified') and append to data
+              if sline[5] == 'unclassified':
+                  data.append(sline)
+              # get species results (denoted by 'S') and append to data
+              if sline[3] == 'S':
+                  data.append(sline)
 
-      vals_df = DataFrame(vals, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
-      vals_df['Name'] = vals_df['Name'].str.lstrip()
-      vals_df = vals_df.sort_values(by=['Percentage'], ascending=False)
-      unclass = vals_df[vals_df["Name"]=="unclassified"]
-      vals_df = vals_df[vals_df["Name"]!="unclassified"]
-      vals_df = vals_df.head(2)
-      if len(vals_df) == 0:
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
-      if len(vals_df) == 1:
-          vals_df = vals_df.append(pd.Series(), ignore_index=True)
+      # convert data list to data frame
+      data_df = DataFrame(data, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      # remove left leading spaces from the Name column
+      data_df['Name'] = data_df['Name'].str.lstrip()
+      # sort data frame by percentages (largest to smallest)
+      data_df = data_df.sort_values(by=['Percentage'], ascending=False)
+      # make new data frame for unclassified reads only
+      unclass = data_df[data_df['Name']=='unclassified']
+      # subset data frame by species
+      species_df = data_df[data_df['Name']!='unclassified']
+      # get first two species matches (first two largest percentages) in data frame
+      species_df = species_df.head(2)
+      # check if species data frame has two rows
+      if len(species_df) == 0:
+          # add two empty rows to species data frame
+          species_df = species_df.append(pd.Series(), ignore_index=True)
+          species_df = species_df.append(pd.Series(), ignore_index=True)
+      if len(species_df) == 1:
+          # add one empty row to species data frame
+          species_df = species_df.append(pd.Series(), ignore_index=True)
 
-      vals_concat = pd.concat([unclass,vals_df])
-      vals_concat = vals_concat.assign(Sample=sample_id)
-      vals_concat = vals_concat[['Sample','Percentage','Name']]
-      vals_concat = vals_concat.reset_index(drop=True)
-
-      unclassified = vals_concat.iloc[0]['Percentage'] + "%"
-      if str(vals_concat.iloc[1]['Name']) == "nan":
-          first_species = "NA"
+      # concatenate unclassified data frame and species data frame
+      df_concat = pd.concat([unclass,species_df])
+      # add sample name column to concatenated data frame
+      df_concat = df_concat.assign(Sample=sample_id)
+      # keep only Sample Percentage and Name columns in concatenated data frame
+      df_concat = df_concat[['Sample','Percentage','Name']]
+      # reset index of concatenated data frame using drop parameter to avoid old index added as column
+      df_concat = df_concat.reset_index(drop=True)
+      # add percentage sign to unclassified column
+      unclassified = df_concat.iloc[0]['Percentage'] + '%'
+      # convert to lists
+      # if primary species is nan, replace with NA
+      if str(df_concat.iloc[1]['Name']) == 'nan':
+          primary_species = 'NA'
+      # otherwise convert to (#%)
       else:
-          first_species = vals_concat.iloc[1]['Name'] + " (" + vals_concat.iloc[1]['Percentage'] + "%)"
-      if str(vals_concat.iloc[2]['Name']) == "nan":
-          second_species = "NA"
+          primary_species = df_concat.iloc[1]['Name'] + ' (' + df_concat.iloc[1]['Percentage'] + '%)'
+      # repeat for secondary species
+      if str(df_concat.iloc[2]['Name']) == 'nan':
+          secondary_species = 'NA'
       else:
-          second_species = vals_concat.iloc[2]['Name'] + " (" + vals_concat.iloc[2]['Percentage'] + "%)"
+          secondary_species = df_concat.iloc[2]['Name'] + ' (' + df_concat.iloc[2]['Percentage'] + '%)'
+      # list of lists
+      combined = [[sample_id, unclassified, primary_species, secondary_species]]
+      # convert list of lists to data frame
+      combined_df = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
+      return combined_df
 
-      combined = [[sample_id, unclassified, first_species, second_species]]
-      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
-      results.append(result)
+  # get all kraken2 report files
+  files = glob.glob("*.kraken2.txt*")
 
-  vals_concat = pd.concat(results)
-  vals_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  # summarize kraken2 report files
+  results = map(summarize_kraken, files)
+
+  # concatenate summary results and write to tsv
+  data_concat = pd.concat(results)
+  data_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -533,19 +576,25 @@ process amrfinder_setup {
   import glob
   import shutil
 
+  # species and genus lists
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
 
+  # get sample name from fasta file
   genomeFile = '${input}'
   sid = genomeFile.split('.')[0]
 
+  # read in kraken results as data frame
   df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+  # subset data frame by sample id
   df = df[df['Sample'] == sid]
+  # get primary species and genus identified
   taxa = df.iloc[0]['Primary Species (%)']
   taxa = taxa.split(' ')
   taxa_species = taxa[0] + '_' + taxa[1]
   taxa_genus = taxa[0]
 
+  # add taxa or genus name to file name if present in lists
   if any(x in taxa_species for x in species):
       shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
   elif any(x in taxa_genus for x in genus):
@@ -578,21 +627,26 @@ process amrfinder {
   import glob
   import shutil
 
+  # organism list
   organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
+  # get sample id and organism name from fasta file
   fastaFile = '${input}'
   sid = fastaFile.split('.')[0]
   organism = fastaFile.split('.')[1]
 
+  # run amrfinder using --organism if present in organism list
   if any(x in organism for x in organisms):
       outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa --organism {organism}')
       sub.Popen(cmd, stdout=outFile).wait()
+  # otherwise run amrfinder without --organism
   else:
       outFile = open(f'{sid}.amr.tsv','w')
       cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
       sub.Popen(cmd, stdout=outFile).wait()
 
+  # get version information from version file
   versionFile = "/amrfinder/data/latest/version.txt"
   shutil.copy(versionFile,"AMRFinderPlus_DB.txt")
   """
@@ -608,6 +662,7 @@ process amrfinder_summary {
   output:
   file("ar_predictions.tsv")
   file("ar_summary.tsv") into ar_tsv
+  file("selected_ar_genes.tsv") into selected_ar_tsv
 
   script:
   """
@@ -616,34 +671,67 @@ process amrfinder_summary {
   import glob
   import pandas as pd
 
-  files = glob.glob('*.tsv')
-
+  # get amrfinder output files and set up lists
+  files = glob.glob('*.amr.tsv')
   dfs = []
-  semi_dfs = []
+  all_ar_dfs = []
+  selected_ar_dfs = []
+
+  # function for cleanining up amrfinder output
+  def pretty_df(data,sample):
+      data.columns = data.columns.str.replace(' ', '_')
+      data = data.assign(Sample=sample)
+      data = data[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
+      pretty_data = data.set_axis(['Sample', 'Gene', 'Coverage', 'Identity'], axis=1, inplace=False)
+      return pretty_data
+
+  # function for joining amrfinder results by a delimiter
+  def join_df(data,sample,delim):
+      gene = data['Gene'].tolist()
+      gene = delim.join(gene)
+      coverage = data['Coverage'].tolist()
+      coverage = delim.join(map(str, coverage))
+      identity = data['Identity'].tolist()
+      identity = delim.join(map(str, identity))
+      joined_data = [[sample,gene,coverage,identity]]
+      joined_data = pd.DataFrame(joined_data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
+      return joined_data
+
   for file in files:
+      # get sample id from file name
       sample_id = os.path.basename(file).split('.')[0]
+      # read in amrfinder results as data frame
       df = pd.read_csv(file, header=0, delimiter='\\t')
-      df.columns=df.columns.str.replace(' ', '_')
-      df = df.assign(Sample=sample_id)
-      df = df[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
-      df = df.rename(columns={'%_Coverage_of_reference_sequence':'Coverage','%_Identity_to_reference_sequence':'Identity','Gene_symbol':'Gene'})
+
+      # clean up data frame
+      df = pretty_df(df,sample_id)
       dfs.append(df)
-      sample = sample_id
-      gene = df['Gene'].tolist()
-      gene = ';'.join(gene)
-      coverage = df['Coverage'].tolist()
-      coverage = ';'.join(map(str, coverage))
-      identity = df['Identity'].tolist()
-      identity = ';'.join(map(str, identity))
-      data = [[sample,gene,coverage,identity]]
-      semi_df = pd.DataFrame(data, columns = ['Sample', 'Gene', 'Coverage', 'Identity'])
-      semi_dfs.append(semi_df)
+
+      # summarize all results
+      all_ar_df = join_df(df,sample_id,';')
+      all_ar_dfs.append(all_ar_df)
+
+      # subset data frame by selected genes
+      mask = df['Gene'].str.contains(${params.selected_genes}, case=False, na=False)
+      masked_df = df[mask]
+      # check if any select genes were found
+      if masked_df.empty:
+          masked_df = masked_df.append({'Sample' : sample_id, 'Gene' : 'None', 'Coverage' : 'None','Identity' : 'None'}, ignore_index = True)
+      selected_ar_df = join_df(masked_df,sample_id,';')
+      selected_ar_df = selected_ar_df.set_axis(['Sample', 'Selected AMR Genes', 'Selected AMR Genes Coverage', 'Selected AMR Genes Identity'], axis=1, inplace=False)
+      selected_ar_dfs.append(selected_ar_df)
+
+  # concatenate results and write to tsv
   concat_dfs = pd.concat(dfs)
-  concat_dfs['Sample'] = concat_dfs['Sample'].str.replace('amr', '')
   concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  concat_semi_dfs = pd.concat(semi_dfs)
-  concat_semi_dfs['Sample'] = concat_semi_dfs['Sample'].str.replace('_amr', '')
-  concat_semi_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+
+  # concatenate joined restults and write to tsv
+  concat_all_ar_dfs = pd.concat(all_ar_dfs)
+  concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
+
+  # concatenate selected genes and write to tsv
+  concat_all_ar_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -664,24 +752,32 @@ process bbduk_summary {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob("*.txt")
-
-  results = []
-  for file in files:
+  # function for summarizing bbduk output
+  def summarize_bbduk(file):
+      # get sample id from file name and set up data list
       sample_id = os.path.basename(file).split(".")[0]
-      vals = []
-      vals.append(sample_id)
+      data = []
+      data.append(sample_id)
       with open(file,"r") as inFile:
           for i, line in enumerate(inFile):
+              # get total number of reads
               if i == 0:
                   num_reads = line.strip().split("\\t")[1].replace(" reads ","")
-                  vals.append(num_reads)
+                  data.append(num_reads)
+              # get total number of reads removed
               if i == 3:
                   rm_reads = line.strip().split("\\t")[1].replace("reads ","")
                   rm_reads = rm_reads.rstrip()
-                  vals.append(rm_reads)
-      results.append(vals)
+                  data.append(rm_reads)
+      return data
 
+  # get all bbduk output files
+  files = glob.glob("*.trim.txt")
+
+  # summarize bbduk output files
+  results = map(summarize_bbduk,files)
+
+  # convert results to data frame and write to tsv
   df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
   df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
@@ -698,6 +794,7 @@ process merge_results {
   file(mlst) from mlst_tsv
   file(kraken) from kraken_tsv
   file(amr) from ar_tsv
+  file(selected_ar) from selected_ar_tsv
   file(vkraken) from kraken_version.first()
   file(vamrfinder) from amrfinder_version.first()
 
@@ -730,7 +827,7 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
   merged = merged.assign(krakenDB=krakenDB_version)
   merged = merged.assign(amrDB=amrfinderDB_version)
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','amrDB']]
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','Selected AMR Genes','Selected AMR Genes Coverage','Selected AMR Genes Identity','amrDB']]
   merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity','krakenDB':'Kraken Database Verion','amrDB':'AMRFinderPlus Database Version'})
 
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
