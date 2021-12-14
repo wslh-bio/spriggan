@@ -716,7 +716,7 @@ process amrfinder_summary {
       masked_df = df[mask]
       # check if any select genes were found
       if masked_df.empty:
-          masked_df = masked_df.append({'Sample' : sample_id, 'Gene' : 'NaN', 'Coverage' : 'NaN','Identity' : 'NaN'}, ignore_index = True)
+          masked_df = masked_df.append({'Sample' : sample_id, 'Gene' : 'None', 'Coverage' : 'None','Identity' : 'None'}, ignore_index = True)
       selected_ar_df = join_df(masked_df,sample_id,';')
       selected_ar_df = selected_ar_df.set_axis(['Sample', 'Selected AMR Genes', 'Selected AMR Genes Coverage', 'Selected AMR Genes Identity'], axis=1, inplace=False)
       selected_ar_dfs.append(selected_ar_df)
