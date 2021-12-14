@@ -662,7 +662,7 @@ process amrfinder_summary {
   output:
   file("ar_predictions.tsv")
   file("ar_summary.tsv") into ar_tsv
-  file("important_ar_genes.tsv") into important_ar_tsv
+  file("selected_ar_genes.tsv") into selected_ar_tsv
 
   script:
   """
@@ -675,7 +675,7 @@ process amrfinder_summary {
   files = glob.glob('*.amr.tsv')
   dfs = []
   all_ar_dfs = []
-  important_ar_dfs = []
+  selected_ar_dfs = []
 
   # function for cleanining up amrfinder output
   def pretty_df(data,sample):
@@ -711,12 +711,15 @@ process amrfinder_summary {
       all_ar_df = join_df(df,sample_id,';')
       all_ar_dfs.append(all_ar_df)
 
-      # subset data frame by important genes
-      mask = df['Gene'].str.contains(${params.important_genes}, case=False, na=False)
+      # subset data frame by selected genes
+      mask = df['Gene'].str.contains(${params.selected_genes}, case=False, na=False)
       masked_df = df[mask]
-      important_ar_df = join_df(masked_df,sample_id,' ')
-      important_ar_df = important_ar_df.set_axis(['Sample', 'Important Genes', 'Important Genes Coverage', 'Important Genes Identity'], axis=1, inplace=False)
-      important_ar_dfs.append(important_ar_df)
+      # check if any select genes were found
+      if masked_df.empty:
+          masked_df = masked_df.append({'Sample' : sample_id, 'Gene' : 'NaN', 'Coverage' : 'NaN','Identity' : 'NaN'}, ignore_index = True)
+      selected_ar_df = join_df(masked_df,sample_id,';')
+      selected_ar_df = selected_ar_df.set_axis(['Sample', 'Selected AMR Genes', 'Selected AMR Genes Coverage', 'Selected AMR Genes Identity'], axis=1, inplace=False)
+      selected_ar_dfs.append(selected_ar_df)
 
   # concatenate results and write to tsv
   concat_dfs = pd.concat(dfs)
@@ -724,11 +727,11 @@ process amrfinder_summary {
 
   # concatenate joined restults and write to tsv
   concat_all_ar_dfs = pd.concat(all_ar_dfs)
-  concat_important_ar_dfs = pd.concat(important_ar_dfs)
+  concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
 
-  # concatenate important genes and write to tsv
+  # concatenate selected genes and write to tsv
   concat_all_ar_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  concat_important_ar_dfs.to_csv('important_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -791,7 +794,7 @@ process merge_results {
   file(mlst) from mlst_tsv
   file(kraken) from kraken_tsv
   file(amr) from ar_tsv
-  file(important_ar) from important_ar_tsv
+  file(selected_ar) from selected_ar_tsv
   file(vkraken) from kraken_version.first()
   file(vamrfinder) from amrfinder_version.first()
 
@@ -824,7 +827,7 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
   merged = merged.assign(krakenDB=krakenDB_version)
   merged = merged.assign(amrDB=amrfinderDB_version)
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Important Genes','Gene','Coverage','Identity','Important Genes Coverage','Important Genes Identity','amrDB']]
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','Selected AMR Genes','Selected AMR Genes Coverage','Selected AMR Genes Identity','amrDB']]
   merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity','krakenDB':'Kraken Database Verion','amrDB':'AMRFinderPlus Database Version'})
 
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
