@@ -573,29 +573,34 @@ process amrfinder_setup {
   script:
   """
   #!/usr/bin/env python3
-
   import pandas as pd
   import glob
   import shutil
-
+  
   # species and genus lists
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
-
+  
   # get sample name from fasta file
   genomeFile = '${input}'
   sid = genomeFile.split('.')[0]
-
+  
   # read in kraken results as data frame
   df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+  
   # subset data frame by sample id
   df = df[df['Sample'] == sid]
+  
   # get primary species and genus identified
-  taxa = df.iloc[0]['Primary Species (%)']
-  taxa = taxa.split(' ')
-  taxa_species = taxa[0] + '_' + taxa[1]
-  taxa_genus = taxa[0]
-
+  if df.empty:
+      taxa_species = 'NA'
+      taxa_genus = 'NA'
+  else:
+      taxa = df.iloc[0]['Primary Species (%)']
+      taxa = taxa.split(' ')
+      taxa_species = taxa[0] + '_' + taxa[1]
+      taxa_genus = taxa[0]
+  
   # add taxa or genus name to file name if present in lists
   if any(x in taxa_species for x in species):
       shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
@@ -605,6 +610,7 @@ process amrfinder_setup {
       shutil.copyfile(genomeFile, f'{sid}.Escherichia.fa')
   else:
       shutil.copyfile(genomeFile, f'{sid}.NA.fa')
+
   """
 }
 
