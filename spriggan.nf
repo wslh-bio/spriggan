@@ -11,7 +11,7 @@ if(params.test){
   'SRR14131354','SRR14613517','SRR14613503','SRR14613708','SRR14613700',
   'SRR14616016']
   
-  ln "Running test analysis using the following samples:"
+  println "Running test analysis using the following samples:"
   println testIDS
   Channel
       .fromSRA(testIDS)
