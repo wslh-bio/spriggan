@@ -31,7 +31,7 @@ Channel
   .fromPath("$baseDir/multiqc_config.yaml")
   .set { multiqc_config }
 
-//Preprocess reads - change read names
+//Preprocessing Step: Change read names
 process preProcess {
   publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
 
@@ -56,7 +56,7 @@ process preProcess {
   }
 }
 
-//Trim reads and remove adapters and phiX contamination
+//QC Step: Trim reads and remove adapters and remove PhiX contamination
 process clean_reads {
   tag "$name"
   //errorStrategy 'ignore'
@@ -77,6 +77,7 @@ process clean_reads {
   """
 }
 
+//Summary Step: Summarize BBDuk results
 process bbduk_summary {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming",mode:'copy'
@@ -127,7 +128,7 @@ process bbduk_summary {
 }
 
 
-//Run FastQC on processed and cleaned reads
+//QC Step: Run FastQC on processed and cleaned reads
 process fastqc {
   //errorStrategy 'ignore'
   tag "$name"
@@ -145,6 +146,7 @@ process fastqc {
   """
 }
 
+//Summary Step: Summarize FastQC results
 process fastqc_summary {
   //errorStrategy 'ignore'
   publishDir "${params.outdir}/fastqc", mode: 'copy'
@@ -175,7 +177,7 @@ process fastqc_summary {
   """
 }
 
-//Assemble trimmed reads with Shovill and map reads back to assembly
+//Assembly step: Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
   //errorStrategy 'ignore'
   tag "$name"
@@ -277,7 +279,7 @@ process coverage_stats {
   """
 }
 
-//Run Quast on assemblies
+//QC Step: Run QUAST on assemblies
 process quast {
 //  errorStrategy 'ignore'
   tag "$name"
@@ -289,6 +291,7 @@ process quast {
 
   output:
   path("*.transposed.quast.tsv"), emit: quast_files
+  path("*.report.quast.tsv"), emit: multiqc_quast
 
   script:
   """
@@ -298,6 +301,7 @@ process quast {
   """
 }
 
+//QC Step: Run QUAST on assemblies
 process quast_summary {
   //errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy'
@@ -504,7 +508,7 @@ process mlst_summary {
   """
 }
 
-//Kraken Step 1: Run Kraken
+//Classification Step: Run Kraken
 process kraken {
   tag "$name"
   //errorStrategy 'ignore'
@@ -525,7 +529,7 @@ process kraken {
   """
 }
 
-//Kraken Step 2: Summarize kraken results
+//Summary Step: Summarize kraken results
 process kraken_summary {
   tag "$name"
 //   errorStrategy 'ignore'
@@ -924,5 +928,5 @@ workflow {
 
     merge_results(bbduk_summary.out.bbduk_tsv,coverage_stats.out.coverage_tsv,quast_summary.out.quast_tsv,mlst_summary.out.mlst_tsv,kraken_summary.out.kraken_tsv,amrfinder_summary.out.amrfinder_tsv,amrfinder_summary.out.selected_ar_tsv,kraken.out.kraken_version,amrfinder.out.amrfinder_version)
 
-    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.quast_files).collect(),multiqc_config)
+    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.multiqc_quast).collect(),multiqc_config)
 }
