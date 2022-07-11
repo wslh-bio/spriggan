@@ -10,7 +10,7 @@ if(params.test){
   testIDS = ['SRR14131356','SRR14131352','SRR14311556','SRR14568713',
   'SRR14131354','SRR14613517','SRR14613503','SRR14613708','SRR14613700',
   'SRR14616016']
-  
+
   println "Running test analysis using the following samples:"
   println testIDS
   Channel
@@ -55,6 +55,7 @@ process preProcess {
 //Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
@@ -82,6 +83,7 @@ combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 
 //FastQC
 process fastqc {
+  errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
@@ -98,6 +100,7 @@ process fastqc {
 }
 
 process fastqc_summary {
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/fastqc", mode: 'copy'
 
   input:
@@ -132,7 +135,7 @@ process shovill {
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
+  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
   input:
   set val(name), file(reads) from cleaned_reads_shovill
@@ -152,11 +155,13 @@ process shovill {
 
 //Index and sort bam file then calculate coverage
 process samtools {
+  errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sorted.*"
   publishDir "${params.outdir}/alignments", mode: 'copy', pattern:"*.stats.txt*"
   publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*.depth.tsv*"
+  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
 
   input:
   set val(name), file(sam) from sam_files
@@ -178,6 +183,7 @@ process samtools {
 
 //Calculate coverage stats
 process coverage_stats {
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/coverage", mode: 'copy'
 
   input:
@@ -226,6 +232,7 @@ process coverage_stats {
 
 //Run Quast on assemblies
 process quast {
+  errorStrategy 'ignore'
   tag "$name"
 
   errorStrategy 'ignore'
@@ -247,6 +254,7 @@ process quast {
 }
 
 process quast_summary {
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy'
 
   input:
@@ -293,15 +301,18 @@ process quast_summary {
 
 //MLST Step 1: Run mlst
 process mlst {
+  errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/mlst", mode: 'copy', pattern: "*.mlst.tsv*"
+  publishDir "${params.outdir}/mlst/schemes", mode: 'copy', pattern: "*.mlst.tsv"
+  publishDir "${params.outdir}/mlst/alleles", mode: 'copy', pattern: "*.alleles.tsv"
 
   input:
   set val(name), file(input) from assembled_genomes_mlst
 
   output:
-  file("*.tsv") into mlst_results
+  file("*.mlst.tsv") into mlst_results
+  file("*.alleles.tsv")
 
   script:
   """
@@ -406,6 +417,15 @@ process mlst {
       df['MLST Scheme'] = df['MLST Scheme'].str.replace(' S', 'S')
       df['MLST Scheme'] = df['MLST Scheme'].str.replace(' N', 'N')
       df.to_csv(f'{sid}.mlst.tsv', index=False, sep='\\t', encoding='utf-8')
+
+  # rename raw mlst output (scheme files) with scheme name and add "alleles" to file name
+  mlst_files = glob.glob('*.tsv')
+  scheme_files = [file for file in mlst_files if not ('mlst' in file)]
+  # scheme_files = [file for file in mlst_files if not ('mlst' in file or 'NA' in file)]
+  for file in scheme_files:
+      sid = file.split('.')[0]
+      scheme = file.split('.')[1]
+      shutil.move(f'{file}', f'{sid}.{scheme}.alleles.tsv')
   """
 }
 
@@ -480,7 +500,7 @@ process kraken_summary {
   import glob
   import pandas as pd
   from pandas import DataFrame
-  
+
   # function for summarizing kraken2 report files
   def summarize_kraken(file):
       # get sample id from file name
@@ -561,6 +581,7 @@ process kraken_summary {
 
 //AR Setup amrfinder files
 process amrfinder_setup {
+  errorStrategy 'ignore'
   tag "$name"
 
   input:
@@ -576,21 +597,21 @@ process amrfinder_setup {
   import pandas as pd
   import glob
   import shutil
-  
+
   # species and genus lists
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
-  
+
   # get sample name from fasta file
   genomeFile = '${input}'
   sid = genomeFile.split('.')[0]
-  
+
   # read in kraken results as data frame
   df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
-  
+
   # subset data frame by sample id
   df = df[df['Sample'] == sid]
-  
+
   # get primary species and genus identified
   if df.empty:
       taxa_species = 'NA'
@@ -600,7 +621,7 @@ process amrfinder_setup {
       taxa = taxa.split(' ')
       taxa_species = taxa[0] + '_' + taxa[1]
       taxa_genus = taxa[0]
-  
+
   # add taxa or genus name to file name if present in lists
   if any(x in taxa_species for x in species):
       shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
@@ -616,6 +637,7 @@ process amrfinder_setup {
 
 //AR Step 2: Run amrfinder
 process amrfinder {
+  errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode: 'copy',pattern:"*.amr.tsv"
 
@@ -662,6 +684,7 @@ process amrfinder {
 
 //AR Step 3: Summarize amrfinder+ results
 process amrfinder_summary {
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
@@ -744,6 +767,7 @@ process amrfinder_summary {
 }
 
 process bbduk_summary {
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming",mode:'copy'
 
   input:
