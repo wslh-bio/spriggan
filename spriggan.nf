@@ -4,6 +4,8 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
+nextflow.preview.dsl=2
+
 params.test = false
 
 if(params.test){
@@ -29,13 +31,15 @@ Channel
   .fromPath("$baseDir/multiqc_config.yaml")
   .set { multiqc_config }
 
-//Preprocess reads - change names
+//Preprocess reads - change read names
 process preProcess {
+  publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
+
   input:
-  set val(name), file(reads) from raw_reads
+  tuple val(name), path(reads)
 
   output:
-  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming
+  tuple val(name), path("*_R{1,2}.fastq.gz"), emit: processed_reads
 
   script:
   if(params.name_split_on!=""){
@@ -52,46 +56,88 @@ process preProcess {
   }
 }
 
-//Trim reads and remove PhiX contamination
+//Trim reads and remove adapters and phiX contamination
 process clean_reads {
   tag "$name"
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
-  set val(name), file(reads) from read_files_trimming
+  tuple val(name), path(processed_reads)
 
   output:
-  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, read_files_kraken
-  file("${name}.phix.stats.txt") into phix_cleanning_stats
-  file("${name}.adapters.stats.txt") into adapter_cleanning_stats
-  file("${name}.trim.txt") into bbduk_files
-  tuple file("${name}.phix.stats.txt"),file("${name}.adapters.stats.txt"),file("${name}.trim.txt") into multiqc_clean_reads
+  tuple val(name), path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads
+  path("${name}.trim.txt"), emit: bbduk_files
+  path("${name}.adapter.stats.txt"), emit: multiqc_adapters
 
   script:
   """
-  bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=${params.trimdirection} qtrim=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
-  repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
-  bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-  bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+  bbduk.sh in1=${processed_reads[0]} in2=${processed_reads[1]} out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.adapters.fq qtrim=${params.trimdirection} trimq=${params.qualitytrimscore} minlength=${params.minlength} ref=/bbmap/resources/adapters.fa stats=${name}.adapter.stats.txt k=31 hdist=1 tpe tbo &> ${name}.out
   grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
   """
 }
 
-//Combine raw reads channel and cleaned reads channel
-combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
-
-//FastQC
-process fastqc {
+process bbduk_summary {
   errorStrategy 'ignore'
+  publishDir "${params.outdir}/trimming",mode:'copy'
+
+  input:
+  path("data*/*")
+
+  output:
+  path("bbduk_results.tsv"), emit: bbduk_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  # function for summarizing bbduk output
+  def summarize_bbduk(file):
+      # get sample id from file name and set up data list
+      sample_id = os.path.basename(file).split(".")[0]
+      data = []
+      data.append(sample_id)
+      with open(file,"r") as inFile:
+          for i, line in enumerate(inFile):
+              # get total number of reads
+              if i == 0:
+                  num_reads = line.strip().split("\\t")[1].replace(" reads ","")
+                  data.append(num_reads)
+              # get total number of reads removed
+              if i == 3:
+                  rm_reads = line.strip().split("\\t")[1].replace("reads ","")
+                  rm_reads = rm_reads.rstrip()
+                  data.append(rm_reads)
+      return data
+
+  # get all bbduk output files
+  files = glob.glob("data*/*.trim.txt")
+
+  # summarize bbduk output files
+  results = map(summarize_bbduk,files)
+
+  # convert results to data frame and write to tsv
+  df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
+  df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  """
+}
+
+
+//Run FastQC on processed and cleaned reads
+process fastqc {
+  //errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
   input:
-  set val(name), file(reads) from combined_reads
+  tuple val(name), path(reads)
 
   output:
-  file("*_fastqc.{zip,html}") into fastqc_results, fastqc_multiqc
+  path("*_fastqc.{zip,html}"), emit: fastqc_results
 
   script:
   """
@@ -100,14 +146,14 @@ process fastqc {
 }
 
 process fastqc_summary {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/fastqc", mode: 'copy'
 
   input:
-  file(fastqc) from fastqc_results.collect()
+  path(fastqc_results)
 
   output:
-  file("fastqc_summary.tsv") into fastqc_summary
+  path("fastqc_summary.tsv"), emit: fastqc_summary
 
   shell:
   """
@@ -131,45 +177,45 @@ process fastqc_summary {
 
 //Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
   //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
   input:
-  set val(name), file(reads) from cleaned_reads_shovill
+  tuple val(name), path(cleaned_reads)
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_ar, assembled_genomes_mlst
-  tuple name, file("${name}.sam") into sam_files
+  tuple name, path("${name}.contigs.fa"), emit: assembled_genomes
+  tuple name, path("${name}.sam"), emit: sam_files
 
   script:
   """
-  shovill --cpus ${task.cpus} --ram ${task.memory} --outdir ./output --R1 ${reads[0]} --R2 ${reads[1]} --force
+  shovill --cpus ${task.cpus} --ram ${task.memory} --outdir ./output --R1 ${cleaned_reads[0]} --R2 ${cleaned_reads[1]} --force
   mv ./output/contigs.fa ${name}.contigs.fa
   bwa index ${name}.contigs.fa
-  bwa mem ${name}.contigs.fa ${reads[0]} ${reads[1]} > ${name}.sam
+  bwa mem ${name}.contigs.fa ${cleaned_reads[0]} ${cleaned_reads[1]} > ${name}.sam
   """
 }
 
 //Index and sort bam file then calculate coverage
 process samtools {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
+  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
   publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sorted.*"
   publishDir "${params.outdir}/alignments", mode: 'copy', pattern:"*.stats.txt*"
   publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*.depth.tsv*"
-  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
 
   input:
-  set val(name), file(sam) from sam_files
+  tuple val(name), path(sam_files)
 
   output:
-  file("${name}.depth.tsv") into cov_files
-  file("${name}.stats.txt") into stats_multiqc
-  file("*.sorted.*")
+  path("*.depth.tsv"), emit: cov_files
+  path("*.stats.txt"), emit: stats_multiqc
+  path("*.sorted.*")
 
   shell:
   """
@@ -187,10 +233,10 @@ process coverage_stats {
   publishDir "${params.outdir}/coverage", mode: 'copy'
 
   input:
-  file(cov) from cov_files.collect()
+  path("data*/*")
 
   output:
-  file('coverage_stats.tsv') into coverage_tsv
+  path('coverage_stats.tsv'), emit: coverage_tsv
 
   script:
   """
@@ -217,7 +263,8 @@ process coverage_stats {
       return result
 
   # get all samtools depth files
-  files = glob.glob("*.depth.tsv")
+  files = glob.glob("data*/*.depth.tsv")
+  print(files)
 
   # summarize samtools depth files
   results = map(summarize_depth,files)
@@ -232,36 +279,34 @@ process coverage_stats {
 
 //Run Quast on assemblies
 process quast {
-  errorStrategy 'ignore'
+//  errorStrategy 'ignore'
   tag "$name"
 
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.quast.tsv"
 
   input:
-  set val(name), file(assembly) from assembled_genomes_quality
+  tuple val(name), path(assembled_genomes)
 
   output:
-  file("${name}.quast.tsv") into quast_files
-  file("${name}.report.quast.tsv") into quast_multiqc
+  path("*.transposed.quast.tsv"), emit: quast_files
 
   script:
   """
-  quast.py ${assembly} -o .
+  quast.py ${name}.contigs.fa -o .
   mv report.tsv ${name}.report.quast.tsv
-  mv transposed_report.tsv ${name}.quast.tsv
+  mv transposed_report.tsv ${name}.transposed.quast.tsv
   """
 }
 
 process quast_summary {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy'
 
   input:
-  file(files) from quast_files.collect()
+  path("data*/*")
 
   output:
-  file("quast_results.tsv") into quast_tsv
+  path("quast_results.tsv"), emit: quast_tsv
 
   script:
   """
@@ -288,7 +333,7 @@ process quast_summary {
       return df
 
   # get quast output files
-  files = glob.glob("*.quast.tsv")
+  files = glob.glob("data*/*.transposed.quast.tsv")
 
   # summarize quast output files
   dfs = map(summarize_quast,files)
@@ -308,11 +353,11 @@ process mlst {
   publishDir "${params.outdir}/mlst/alleles", mode: 'copy', pattern: "*.alleles.tsv"
 
   input:
-  set val(name), file(input) from assembled_genomes_mlst
+  tuple val(name), path(input)
 
   output:
-  file("*.mlst.tsv") into mlst_results
-  file("*.alleles.tsv")
+  path("*.mlst.tsv"), emit: mlst_files
+  path("*.alleles.tsv")
 
   script:
   """
@@ -430,15 +475,15 @@ process mlst {
 }
 
 //MLST Step 2: Summarize mlst results
-process mlst_formatting {
-  errorStrategy 'ignore'
+process mlst_summary {
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/mlst",mode:'copy'
 
   input:
-  file(mlst) from mlst_results.collect()
+  path("data*/*")
 
   output:
-  file("mlst_results.tsv") into mlst_tsv
+  path("mlst_results.tsv"), emit: mlst_tsv
 
   script:
   """
@@ -448,7 +493,7 @@ process mlst_formatting {
   import pandas as pd
   from pandas import DataFrame
 
-  files = glob.glob('*.mlst.tsv')
+  files = glob.glob('data*/*.mlst.tsv')
   dfs = []
   for file in files:
       df = pd.read_csv(file, sep='\\t')
@@ -462,19 +507,19 @@ process mlst_formatting {
 //Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*.kraken2.txt*"
 
   input:
-  set val(name), file(reads) from read_files_kraken
+  tuple val(name), path(cleaned_reads)
 
   output:
-  tuple name, file("${name}.kraken2.txt") into kraken_files, kraken_multiqc
-  file("Kraken2_DB.txt") into kraken_version
+  path("${name}.kraken2.txt"), emit: kraken_files
+  path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
   """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${reads[0]} ${reads[1]}
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
 
   ls /kraken2-db/ > Kraken2_DB.txt
   """
@@ -483,15 +528,14 @@ process kraken {
 //Kraken Step 2: Summarize kraken results
 process kraken_summary {
   tag "$name"
-  errorStrategy 'ignore'
+//   errorStrategy 'ignore'
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
-  file(files) from kraken_files.collect()
+  path("data*/*")
 
   output:
-  file("kraken_results.tsv") into kraken_tsv
-  file("kraken_results.tsv") into kraken_amr
+  path("kraken_results.tsv"), emit: kraken_tsv
 
   script:
   """
@@ -570,7 +614,7 @@ process kraken_summary {
       combined_df = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
       return combined_df
   # get all kraken2 report files
-  files = glob.glob("*.kraken2.txt*")
+  files = glob.glob("data*/*.kraken2.txt")
   # summarize kraken2 report files
   results = map(summarize_kraken, files)
   # concatenate summary results and write to tsv
@@ -581,15 +625,15 @@ process kraken_summary {
 
 //AR Setup amrfinder files
 process amrfinder_setup {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   input:
-  file(kraken) from kraken_amr
-  set val(name), file(input) from assembled_genomes_ar
+  path("kraken_results.tsv")
+  tuple val(name), path(assembly)
 
   output:
-  tuple name, file("${name}.*.fa") into ar_input
+  tuple name, path("${name}.*.fa"), emit: amrfinder_input
 
   script:
   """
@@ -603,7 +647,7 @@ process amrfinder_setup {
   genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
 
   # get sample name from fasta file
-  genomeFile = '${input}'
+  genomeFile = '${assembly}'
   sid = genomeFile.split('.')[0]
 
   # read in kraken results as data frame
@@ -637,16 +681,16 @@ process amrfinder_setup {
 
 //AR Step 2: Run amrfinder
 process amrfinder {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode: 'copy',pattern:"*.amr.tsv"
 
   input:
-  set val(name), file(input) from ar_input
+  tuple val(name), path(amrfinder_input)
 
   output:
-  tuple name, file("${name}.amr.tsv") into ar_predictions
-  file("AMRFinderPlus_DB.txt") into amrfinder_version
+  path("${name}.amr.tsv"), emit: amrfinder_predictions
+  path("AMRFinderPlus_DB.txt"), emit: amrfinder_version
 
   script:
   """
@@ -661,7 +705,7 @@ process amrfinder {
   organisms = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes','Campylobacter','Escherichia','Klebsiella','Salmonella','Escherichia']
 
   # get sample id and organism name from fasta file
-  fastaFile = '${input}'
+  fastaFile = '${amrfinder_input}'
   sid = fastaFile.split('.')[0]
   organism = fastaFile.split('.')[1]
 
@@ -688,12 +732,12 @@ process amrfinder_summary {
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
-  file(predictions) from ar_predictions.collect()
+  path("data*/*")
 
   output:
-  file("ar_predictions.tsv")
-  file("ar_summary.tsv") into ar_tsv
-  file("selected_ar_genes.tsv") into selected_ar_tsv
+  path("amrfinder_predictions.tsv")
+  path("amrfinder_summary.tsv"), emit: amrfinder_tsv
+  path("selected_ar_genes.tsv"), emit: selected_ar_tsv
 
   script:
   """
@@ -703,7 +747,7 @@ process amrfinder_summary {
   import pandas as pd
 
   # get amrfinder output files and set up lists
-  files = glob.glob('*.amr.tsv')
+  files = glob.glob('data*/*.amr.tsv')
   dfs = []
   all_ar_dfs = []
   selected_ar_dfs = []
@@ -754,64 +798,15 @@ process amrfinder_summary {
 
   # concatenate results and write to tsv
   concat_dfs = pd.concat(dfs)
-  concat_dfs.to_csv('ar_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_dfs.to_csv('amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
   # concatenate joined restults and write to tsv
   concat_all_ar_dfs = pd.concat(all_ar_dfs)
   concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
 
   # concatenate selected genes and write to tsv
-  concat_all_ar_dfs.to_csv('ar_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  """
-}
-
-process bbduk_summary {
-  errorStrategy 'ignore'
-  publishDir "${params.outdir}/trimming",mode:'copy'
-
-  input:
-  file(files) from bbduk_files.collect()
-
-  output:
-  file("bbduk_results.tsv") into bbduk_tsv
-
-  script:
-  """
-  #!/usr/bin/env python3
-  import os
-  import glob
-  import pandas as pd
-  from pandas import DataFrame
-
-  # function for summarizing bbduk output
-  def summarize_bbduk(file):
-      # get sample id from file name and set up data list
-      sample_id = os.path.basename(file).split(".")[0]
-      data = []
-      data.append(sample_id)
-      with open(file,"r") as inFile:
-          for i, line in enumerate(inFile):
-              # get total number of reads
-              if i == 0:
-                  num_reads = line.strip().split("\\t")[1].replace(" reads ","")
-                  data.append(num_reads)
-              # get total number of reads removed
-              if i == 3:
-                  rm_reads = line.strip().split("\\t")[1].replace("reads ","")
-                  rm_reads = rm_reads.rstrip()
-                  data.append(rm_reads)
-      return data
-
-  # get all bbduk output files
-  files = glob.glob("*.trim.txt")
-
-  # summarize bbduk output files
-  results = map(summarize_bbduk,files)
-
-  # convert results to data frame and write to tsv
-  df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
-  df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -820,18 +815,18 @@ process merge_results {
   publishDir "${params.outdir}/", mode: 'copy'
 
   input:
-  file(bbduk) from bbduk_tsv
-  file(quast) from quast_tsv
-  file(coverage) from coverage_tsv
-  file(mlst) from mlst_tsv
-  file(kraken) from kraken_tsv
-  file(amr) from ar_tsv
-  file(selected_ar) from selected_ar_tsv
-  file(vkraken) from kraken_version.first()
-  file(vamrfinder) from amrfinder_version.first()
+  path("bbduk_results.tsv")
+  path("coverage_stats.tsv")
+  path("quast_results.tsv")
+  path("mlst_results.tsv")
+  path("kraken_results.tsv")
+  path("amrfinder_summary.tsv")
+  path("selected_ar_genes.tsv")
+  path("Kraken2_DB.txt")
+  path("AMRFinderPlus_DB.txt")
 
   output:
-  file('spriggan_report.csv')
+  path('spriggan_report.csv')
 
   script:
   """
@@ -871,18 +866,63 @@ process multiqc {
   publishDir "${params.outdir}",mode:'copy'
 
   input:
-  file(a) from multiqc_clean_reads.collect()
-  file(b) from fastqc_multiqc.collect()
-  file(c) from stats_multiqc.collect()
-  file(d) from kraken_multiqc.collect()
-  file(e) from quast_multiqc.collect()
-  file(config) from multiqc_config
+  path("data*/*") //from multiqc_clean_reads.collect()
+  // path("data*/*") //from fastqc_multiqc.collect()
+  // path(c) from stats_multiqc.collect()
+  // path(d) from kraken_multiqc.collect()
+  // path(e) from quast_multiqc.collect()
+  path(config)
 
   output:
-  file("*.html") into multiqc_output
+  path("*.html"), emit: multiqc_output
 
   script:
   """
   multiqc -c ${config} .
   """
+}
+
+workflow {
+
+    preProcess(raw_reads)
+
+    clean_reads(preProcess.out.processed_reads)
+
+    bbduk_summary(clean_reads.out.bbduk_files.collect())
+
+    processed = preProcess.out.processed_reads
+    cleaned = clean_reads.out.cleaned_reads
+    combined_reads = processed.concat(cleaned)
+
+    fastqc(combined_reads)
+
+    fastqc_summary(fastqc.out.collect())
+
+    shovill(clean_reads.out.cleaned_reads)
+
+    samtools(shovill.out.sam_files)
+
+    coverage_stats(samtools.out.cov_files.collect())
+
+    quast(shovill.out.assembled_genomes)
+
+    quast_summary(quast.out.quast_files.collect())
+
+    mlst(shovill.out.assembled_genomes)
+
+    mlst_summary(mlst.out.mlst_files.collect())
+
+    kraken(clean_reads.out.cleaned_reads)
+
+    kraken_summary(kraken.out.kraken_files.collect())
+
+    amrfinder_setup(kraken_summary.out.kraken_tsv,shovill.out.assembled_genomes)
+
+    amrfinder(amrfinder_setup.out.amrfinder_input)
+
+    amrfinder_summary(amrfinder.out.amrfinder_predictions.collect())
+
+    merge_results(bbduk_summary.out.bbduk_tsv,coverage_stats.out.coverage_tsv,quast_summary.out.quast_tsv,mlst_summary.out.mlst_tsv,kraken_summary.out.kraken_tsv,amrfinder_summary.out.amrfinder_tsv,amrfinder_summary.out.selected_ar_tsv,kraken.out.kraken_version,amrfinder.out.amrfinder_version)
+
+    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.quast_files).collect(),multiqc_config)
 }
