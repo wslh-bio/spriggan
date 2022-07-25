@@ -68,7 +68,7 @@ process clean_reads {
   output:
   tuple val(name), path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads
   path("${name}.trim.txt"), emit: bbduk_files
-  path("${name}.adapter.stats.txt"), emit: multiqc_adapters
+  path("${name}.adapter.stats.txt"), emit: bbduk_stats
 
   script:
   """
@@ -183,7 +183,7 @@ process shovill {
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
-  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/mapping/sams", mode: 'copy', pattern:"*.sam"
 
   input:
   tuple val(name), path(cleaned_reads)
@@ -206,10 +206,9 @@ process samtools {
   //errorStrategy 'ignore'
   tag "$name"
 
-  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sorted.*"
-  publishDir "${params.outdir}/alignments", mode: 'copy', pattern:"*.stats.txt*"
-  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*.depth.tsv*"
+  publishDir "${params.outdir}/mapping/bams", mode: 'copy', pattern:"*.sorted.bam*"
+  publishDir "${params.outdir}/mapping/depth", mode: 'copy', pattern:"*.depth.tsv"
+  publishDir "${params.outdir}/mapping/stats", mode: 'copy', pattern:"*.stats.txt"
 
   input:
   tuple val(name), path(sam_files)
@@ -291,7 +290,7 @@ process quast {
 
   output:
   path("*.transposed.quast.tsv"), emit: quast_files
-  path("*.report.quast.tsv"), emit: multiqc_quast
+  path("*.report.quast.tsv"), emit: quast_reports
 
   script:
   """
@@ -518,7 +517,7 @@ process kraken {
   tuple val(name), path(cleaned_reads)
 
   output:
-  path("${name}.kraken2.txt"), emit: kraken_files
+  path("${name}.kraken2.txt"), emit: kraken_reports
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
@@ -918,7 +917,7 @@ workflow {
 
     kraken(clean_reads.out.cleaned_reads)
 
-    kraken_summary(kraken.out.kraken_files.collect())
+    kraken_summary(kraken.out.kraken_reports.collect())
 
     amrfinder_setup(kraken_summary.out.kraken_tsv,shovill.out.assembled_genomes)
 
@@ -928,5 +927,5 @@ workflow {
 
     merge_results(bbduk_summary.out.bbduk_tsv,coverage_stats.out.coverage_tsv,quast_summary.out.quast_tsv,mlst_summary.out.mlst_tsv,kraken_summary.out.kraken_tsv,amrfinder_summary.out.amrfinder_tsv,amrfinder_summary.out.selected_ar_tsv,kraken.out.kraken_version,amrfinder.out.amrfinder_version)
 
-    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.multiqc_quast).collect(),multiqc_config)
+    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_stats,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_reports,quast.out.quast_reports).collect(),multiqc_config)
 }
