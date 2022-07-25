@@ -127,7 +127,6 @@ process bbduk_summary {
   """
 }
 
-
 //QC Step: Run FastQC on processed and cleaned reads
 process fastqc {
   //errorStrategy 'ignore'
@@ -228,7 +227,7 @@ process samtools {
   """
 }
 
-//Calculate coverage stats
+//QC Step: Calculate coverage stats
 process coverage_stats {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/coverage", mode: 'copy'
