@@ -869,11 +869,7 @@ process multiqc {
   publishDir "${params.outdir}",mode:'copy'
 
   input:
-  path("data*/*") //from multiqc_clean_reads.collect()
-  // path("data*/*") //from fastqc_multiqc.collect()
-  // path(c) from stats_multiqc.collect()
-  // path(d) from kraken_multiqc.collect()
-  // path(e) from quast_multiqc.collect()
+  path("data*/*")
   path(config)
 
   output:
