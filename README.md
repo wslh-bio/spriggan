@@ -62,10 +62,6 @@ Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://cc
 
 ```
 spriggan_results
-├── alignments
-│   ├── *.(sorted).bam(.bai)
-│   ├── *.sam
-│   └── *.txt
 ├── amrfinder
 │   ├── ar_predictions.tsv
 │   ├── ar_summary.tsv
@@ -84,6 +80,17 @@ spriggan_results
 ├── kraken
 │   ├── kraken_results.tsv
 │   └── *.kraken2.txt
+├── mapping
+│   ├── bams
+│   │   ├── *.bam
+│   │   └── *.bai
+│   ├── coverage_stats.tsv
+│   ├── depth
+│   │   └── *.depth.tsv
+│   ├── sams
+│   │   └── *.sam
+│   └── stats
+│       └── *.stats.txt
 ├── mlst
 │   ├── mlst_results.tsv
 │   └── *.mlst.tsv
@@ -97,9 +104,6 @@ spriggan_results
     └── *.trim.txt
 ```
 
-**\*.(sorted).bam(.bai)** - Alignments in BAM format (sorted and unsorted; includes \*.bai index files)  
-**\*.sam** - Alignments in SAM format  
-**\*.txt** - Samtools stats output  
 **ar_predictions.tsv** - Long-format table of AMRFinderPlus results  
 **ar_summary.tsv** - Wide-format table of AMRFinderPlus results  
 **\*.amr.tsv** - Raw AMRFinderPlus output for each sample  
@@ -112,6 +116,12 @@ spriggan_results
 **\*.zip** - Zipped folders of FastQC output    
 **kraken_results.tsv** - Summary table of Kraken results  
 **\*.kraken2.txt** - Report of Kraken results for each sample  
+**\*.bam** - Alignments to an assembly BAM format  
+**\*.bai** - Index file of alignments to an assembly  
+**coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
+**\*.depth.tsv** - Raw Samtools depth output for reads mapped to an assembly  
+**\*.sam** - Alignments to an assembly SAM format  
+**\*.stats.txt** - Output of Samtools stats for reads mapped to an assembly  
 **mlst_results.tsv** - Summary table of MLST results  
 **\*.mlst.tsv** - Raw MLST output for each sample  
 **quast_results.tsv** - Summary table of QUAST results  
