@@ -4,7 +4,7 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
-nextflow.preview.dsl=2
+nextflow.enable.dsl=2
 
 params.test = false
 
@@ -28,7 +28,7 @@ if(params.test){
 }
 
 Channel
-  .fromPath("$baseDir/multiqc_config.yaml")
+  .fromPath("$baseDir/configs/multiqc_config.yaml")
   .set { multiqc_config }
 
 //Preprocessing Step: Change read names
@@ -68,7 +68,7 @@ process clean_reads {
   output:
   tuple val(name), path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads
   path("${name}.trim.txt"), emit: bbduk_files
-  path("${name}.adapter.stats.txt"), emit: bbduk_stats
+  path("${name}.adapter.stats.txt"), emit: multiqc_adapters
 
   script:
   """
@@ -126,6 +126,7 @@ process bbduk_summary {
   df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
+
 
 //QC Step: Run FastQC on processed and cleaned reads
 process fastqc {
@@ -188,8 +189,8 @@ process shovill {
   tuple val(name), path(cleaned_reads)
 
   output:
-  tuple name, path("${name}.contigs.fa"), emit: assembled_genomes
-  tuple name, path("${name}.sam"), emit: sam_files
+  tuple val(name), path("${name}.contigs.fa"), emit: assembled_genomes
+  tuple val(name), path("${name}.sam"), emit: sam_files
 
   script:
   """
@@ -227,7 +228,7 @@ process samtools {
   """
 }
 
-//QC Step: Calculate coverage stats
+//Calculate coverage stats
 process coverage_stats {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/coverage", mode: 'copy'
@@ -289,7 +290,7 @@ process quast {
 
   output:
   path("*.transposed.quast.tsv"), emit: quast_files
-  path("*.report.quast.tsv"), emit: quast_reports
+  path("*.report.quast.tsv"), emit: multiqc_quast
 
   script:
   """
@@ -516,7 +517,7 @@ process kraken {
   tuple val(name), path(cleaned_reads)
 
   output:
-  path("${name}.kraken2.txt"), emit: kraken_reports
+  path("${name}.kraken2.txt"), emit: kraken_files
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
@@ -635,7 +636,7 @@ process amrfinder_setup {
   tuple val(name), path(assembly)
 
   output:
-  tuple name, path("${name}.*.fa"), emit: amrfinder_input
+  tuple val(name), path("${name}.*.fa"), emit: amrfinder_input
 
   script:
   """
@@ -868,7 +869,11 @@ process multiqc {
   publishDir "${params.outdir}",mode:'copy'
 
   input:
-  path("data*/*")
+  path("data*/*") //from multiqc_clean_reads.collect()
+  // path("data*/*") //from fastqc_multiqc.collect()
+  // path(c) from stats_multiqc.collect()
+  // path(d) from kraken_multiqc.collect()
+  // path(e) from quast_multiqc.collect()
   path(config)
 
   output:
@@ -912,7 +917,7 @@ workflow {
 
     kraken(clean_reads.out.cleaned_reads)
 
-    kraken_summary(kraken.out.kraken_reports.collect())
+    kraken_summary(kraken.out.kraken_files.collect())
 
     amrfinder_setup(kraken_summary.out.kraken_tsv,shovill.out.assembled_genomes)
 
@@ -920,7 +925,7 @@ workflow {
 
     amrfinder_summary(amrfinder.out.amrfinder_predictions.collect())
 
-    merge_results(bbduk_summary.out.bbduk_tsv,coverage_stats.out.coverage_tsv,quast_summary.out.quast_tsv,mlst_summary.out.mlst_tsv,kraken_summary.out.kraken_tsv,amrfinder_summary.out.amrfinder_tsv,amrfinder_summary.out.selected_ar_tsv,kraken.out.kraken_version,amrfinder.out.amrfinder_version)
+    merge_results(bbduk_summary.out.bbduk_tsv,coverage_stats.out.coverage_tsv,quast_summary.out.quast_tsv,mlst_summary.out.mlst_tsv,kraken_summary.out.kraken_tsv,amrfinder_summary.out.amrfinder_tsv,amrfinder_summary.out.selected_ar_tsv,kraken.out.kraken_version.first(),amrfinder.out.amrfinder_version.first())
 
-    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_stats,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_reports,quast.out.quast_reports).collect(),multiqc_config)
+    multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.multiqc_quast).collect(),multiqc_config)
 }
