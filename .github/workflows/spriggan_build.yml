@@ -34,7 +34,7 @@ jobs:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
           cd ./tests
-          ../nextflow run ../spriggan.nf --test -c autobuild.config
+          ../nextflow run ../spriggan.nf --test -profile docker -c autobuild.config
 
       - name: Setup Python
         uses: actions/setup-python@v2
