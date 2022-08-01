@@ -30,7 +30,7 @@ nextflow sprriggan.nf --test
 
 You can specify a version of the pipeline and run it directly from the github repository by using:
 ```
-nextflow wslh-bio/spriggan -r <version> --reads [path-to-reads]
+nextflow wslh-bio/spriggan -r <version> --reads [path-to-reads] -profile [docker,singularity,aws]
 ```
 
 ### Workflow outline
