@@ -231,7 +231,7 @@ process samtools {
 //Calculate coverage stats
 process coverage_stats {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/coverage", mode: 'copy'
+  publishDir "${params.outdir}/mapping", mode: 'copy', pattern:"*.tsv"
 
   input:
   path("data*/*")
@@ -647,7 +647,7 @@ process amrfinder_setup {
 
   # species and genus lists
   species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faecium','Staphylococcus_aureus','Staphylococcus_pseudintermedius','Streptococcus_agalactiae','Streptococcus_pneumoniae','Streptococcus_pyogenes']
-  genus = ['Campylobacter','Escherichia','Klebsiella','Salmonella']
+  genus = ['Escherichia','Salmonella']
 
   # get sample name from fasta file
   genomeFile = '${assembly}'
@@ -672,13 +672,22 @@ process amrfinder_setup {
   # add taxa or genus name to file name if present in lists
   if any(x in taxa_species for x in species):
       shutil.copyfile(genomeFile, f'{sid}.{taxa_species}.fa')
-  elif any(x in taxa_genus for x in genus):
-      shutil.copyfile(genomeFile, f'{sid}.{taxa_genus}.fa')
+  elif taxa_species == 'Campylobacter_coli' or taxa_species == 'Campylobacter_jejuni':
+      shutil.copyfile(genomeFile, f'{sid}.Campylobacter.fa')
+  elif taxa_species == 'Enterococcus_hirae':
+      shutil.copyfile(genomeFile, f'{sid}.Enterococcus_faecium.fa')
   elif taxa_genus == 'Shigella':
       shutil.copyfile(genomeFile, f'{sid}.Escherichia.fa')
+  elif taxa_species == 'Klebsiella_aerogenes':
+      shutil.copyfile(genomeFile, f'{sid}.Klebsiella.fa')
+  elif taxa_species == 'Neisseria_gonorrhoeae' or taxa_species == 'Neisseria_meningitidis':
+      shutil.copyfile(genomeFile, f'{sid}.Neisseria.fa')
+  elif taxa_species == 'Streptococcus_mitis':
+        shutil.copyfile(genomeFile, f'{sid}.Streptococcus_pneumoniae.fa')
+  elif any(x in taxa_genus for x in genus):
+      shutil.copyfile(genomeFile, f'{sid}.{taxa_genus}.fa')
   else:
       shutil.copyfile(genomeFile, f'{sid}.NA.fa')
-
   """
 }
 
