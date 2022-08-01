@@ -128,4 +128,4 @@ spriggan_results
 
 ### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
-[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics and Data Scientist
+[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatician and Data Scientist
