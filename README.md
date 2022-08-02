@@ -89,8 +89,11 @@ spriggan_results
 │   └── stats
 │       └── *.stats.txt
 ├── mlst
+│   ├── alleles
+│   │   └── *.alleles.tsv
 │   ├── mlst_results.tsv
-│   └── *.mlst.tsv
+│   └── schemes
+│       └── *.mlst.tsv
 ├── quast
 │   ├── quast_results.tsv
 │   └── *.quast.tsv
