@@ -50,7 +50,7 @@ Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bi
 Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
 #### Antimicrobial resistance gene detection
-Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr). Spriggan can generate a table of AMRFinderPlus results for AR genes of interest with the selected_genes parameter. Spriggan will search for matches to the AR genes of interest in the AMRFinderPlus results and make a table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. By default the selected_genes parameter is set to: 'NDM|OXA|KPC|IMP|VIM'
+Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.10.30](https://github.com/ncbi/amr). Spriggan can generate a table of AMRFinderPlus results for AR genes of interest with the selected_genes parameter. Spriggan will search for matches to the AR genes of interest in the AMRFinderPlus results and make a table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. By default the selected_genes parameter is set to: 'NDM|OXA|KPC|IMP|VIM'
 
 #### MLST scheme
 MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst). Multiple schemes are available for specific organisms, and STs from all available schemes are reported for those organisms.
