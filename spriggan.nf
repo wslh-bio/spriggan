@@ -76,7 +76,7 @@ process clean_reads {
 
 //Summary Step: Summarize BBDuk results
 process bbduk_summary {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming",mode:'copy'
 
   input:
@@ -227,7 +227,7 @@ process samtools {
 
 //Calculate coverage stats
 process coverage_stats {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/mapping", mode: 'copy', pattern:"*.tsv"
 
   input:
@@ -277,23 +277,23 @@ process coverage_stats {
 
 //QC Step: Run QUAST on assemblies
 process quast {
-//  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/quast",mode:'copy',pattern: "*.quast.tsv"
+  publishDir "${params.outdir}/quast",mode:'copy',pattern: "*.quast.report.tsv"
 
   input:
   tuple val(name), path(assembled_genomes)
 
   output:
-  path("*.transposed.quast.tsv"), emit: quast_files
-  path("*.report.quast.tsv"), emit: multiqc_quast
+  path("*.transposed.quast.report.tsv"), emit: quast_files
+  path("*.quast.report.tsv"), emit: multiqc_quast
 
   script:
   """
   quast.py ${name}.contigs.fa -o .
-  mv report.tsv ${name}.report.quast.tsv
-  mv transposed_report.tsv ${name}.transposed.quast.tsv
+  mv report.tsv ${name}.quast.report.tsv
+  mv transposed_report.tsv ${name}.transposed.quast.report.tsv
   """
 }
 
@@ -333,7 +333,7 @@ process quast_summary {
       return df
 
   # get quast output files
-  files = glob.glob("data*/*.transposed.quast.tsv")
+  files = glob.glob("data*/*.transposed.quast.report.tsv")
 
   # summarize quast output files
   dfs = map(summarize_quast,files)
@@ -346,7 +346,7 @@ process quast_summary {
 
 //MLST Step 1: Run mlst
 process mlst {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/mlst/schemes", mode: 'copy', pattern: "*.mlst.tsv"
@@ -528,7 +528,7 @@ process kraken {
 //Summary Step: Summarize kraken results
 process kraken_summary {
   tag "$name"
-//   errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
@@ -737,7 +737,7 @@ process amrfinder {
 
 //AR Step 3: Summarize amrfinder+ results
 process amrfinder_summary {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/amrfinder",mode:'copy'
 
   input:
