@@ -25,7 +25,7 @@ nextflow spriggan.nf --reads [path-to-reads] -profile [docker,singularity,aws]
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
 ```
-nextflow sprriggan.nf --test
+nextflow spriggan.nf --test -profile [docker,singularity,aws]
 ```
 
 You can specify a version of the pipeline and run it directly from the github repository by using:
