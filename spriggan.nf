@@ -27,10 +27,6 @@ if(params.test){
       .set { raw_reads }
 }
 
-Channel
-  .fromPath("$baseDir/configs/multiqc_config.yaml")
-  .set { multiqc_config }
-
 //Preprocessing Step: Change read names
 process preProcess {
   //publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
@@ -873,6 +869,10 @@ process merge_results {
   merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
   """
 }
+
+Channel
+  .fromPath("$baseDir/configs/multiqc_config.yaml")
+  .set { multiqc_config }
 
 //QC Step: MultiQC
 process multiqc {
