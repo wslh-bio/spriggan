@@ -280,7 +280,7 @@ process quast {
 //  errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.transposed.quast.tsv"
+  publishDir "${params.outdir}/quast",mode:'copy',pattern: "*.quast.tsv"
 
   input:
   tuple val(name), path(assembled_genomes)
