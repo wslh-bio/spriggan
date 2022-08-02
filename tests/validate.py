@@ -38,7 +38,7 @@ def check_compare(y_std,x_data,range=2):
     else:
         return False
 
-### Validate AR results
+### Validate AMRFinderPlus results
 ar_hits = []
 for sample in list(ar_std.index):
 
