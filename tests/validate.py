@@ -19,7 +19,7 @@ parser.add_argument('spriggan_result_path',help='Path to spriggan_results output
 args = parser.parse_args()
 
 ar_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"amrfinder/amrfinder_summary.tsv"))
-cov_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"coverage/coverage_stats.tsv"))
+cov_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"mapping/coverage_stats.tsv"))
 kraken_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"kraken/kraken_results.tsv"))
 mlst_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"mlst/mlst_results.tsv"))
 quast_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"quast/quast_results.tsv"))
