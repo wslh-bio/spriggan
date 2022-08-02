@@ -134,7 +134,7 @@ spriggan_results
 **spriggan_report.csv** - Summary table of each step in Spriggan  
 **bbduk_results.tsv** - Summary table of trimming with BBDuk  
 **\*\_clean\_\*** - Trimmed and cleaned reads  
-**\*.trim.txt** - Trimming results from BBduk each sample  
+**\*.trim.txt** - Trimming results from BBDuk each sample  
 
 ### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
