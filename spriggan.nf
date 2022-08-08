@@ -337,10 +337,15 @@ process quast_summary {
 
   # summarize quast output files
   dfs = map(summarize_quast,files)
+  dfs = list(dfs)
 
   # concatenate dfs and write data frame to file
-  dfs_concat = pd.concat(dfs)
-  dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  if len(dfs) > 1:
+    dfs_concat = pd.concat(dfs)
+    dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    dfs = dfs[0]
+    dfs.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -498,9 +503,16 @@ process mlst_summary {
   for file in files:
       df = pd.read_csv(file, sep='\\t')
       dfs.append(df)
-  dfs_concat = pd.concat(dfs)
-  dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'No Scheme Available')
-  dfs_concat.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+
+  # concatenate dfs and write data frame to file
+  if len(dfs) > 1:
+    dfs_concat = pd.concat(dfs)
+    dfs_concat['MLST Scheme'] = dfs_concat['MLST Scheme'].str.replace('-:NA', 'No Scheme Available')
+    dfs_concat.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    dfs = dfs[0]
+    dfs['MLST Scheme'] = dfs['MLST Scheme'].str.replace('-:NA', 'No Scheme Available')
+    dfs.to_csv(f'mlst_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -615,11 +627,19 @@ process kraken_summary {
       return combined_df
   # get all kraken2 report files
   files = glob.glob("data*/*.kraken2.txt")
+
   # summarize kraken2 report files
   results = map(summarize_kraken, files)
+
   # concatenate summary results and write to tsv
-  data_concat = pd.concat(results)
-  data_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  results = list(results)
+
+  if len(results) > 1:
+    data_concat = pd.concat(results)
+    data_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    results = results[0]
+    results.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -806,16 +826,31 @@ process amrfinder_summary {
       selected_ar_dfs.append(selected_ar_df)
 
   # concatenate results and write to tsv
-  concat_dfs = pd.concat(dfs)
-  concat_dfs.to_csv('amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  dfs = list(dfs)
+  if len(dfs) > 1:
+    dfs_concat = pd.concat(dfs)
+    dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    dfs = dfs[0]
+    dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
   # concatenate joined restults and write to tsv
-  concat_all_ar_dfs = pd.concat(all_ar_dfs)
-  concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
+  all_ar_dfs = list(all_ar_dfs)
+  if len(dfs) > 1:
+    concat_all_ar_dfs = pd.concat(all_ar_dfs)
+    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    concat_all_ar_dfs = all_ar_dfs[0]
+    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
   # concatenate selected genes and write to tsv
-  concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
-  concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  selected_ar_dfs = list(selected_ar_dfs)
+  if len(dfs) > 1:
+    concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
+    concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+  else:
+    selected_ar_dfs = selected_ar_dfs[0]
+    selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
