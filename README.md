@@ -6,7 +6,7 @@
 Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes.
 
 ### Table of Contents:
-[Usage](#using-the-pipeline)  
+[Usage](#usage)  
 [Workflow outline](#workflow-outline)  
 [Read trimming and quality assessment](#read-trimming-and-quality-assessment)  
 [Genome assembly](#genome-assembly)  
@@ -14,10 +14,11 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 [Genome coverage](#genome-coverage)  
 [Antimicrobial resistance gene detection](#antimicrobial-resistance-gene-detection)  
 [MLST scheme](#mlst-scheme)  
-[Contamination detection](#contamination-detection)                                                                                                                                   
-[Output](#output-files)  
+[Contamination detection](#contamination-detection)  
+[Summary](#summary)  
+[Output files](#output-files)  
 
-### Using the workflow
+### Usage
 The pipeline is designed to start from raw Illumina reads. All reads must be in the same directory. Then start the pipeline using:
 ```
 nextflow main.nf --reads [path-to-reads] -profile [docker,singularity,aws]
@@ -57,6 +58,9 @@ MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
 
 #### Contamination detection
 Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database.
+
+#### Summary
+Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/).
 
 ### Output files
 
