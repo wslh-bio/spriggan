@@ -35,7 +35,7 @@ process preProcess {
   tuple val(name), path(reads)
 
   output:
-  tuple val(name), path("*_R{1,2}.fastq.gz"), emit: processed_reads
+  tuple val(name), path(outfiles), emit: processed_reads
 
   script:
   if(params.name_split_on!=""){
