@@ -55,7 +55,7 @@ process preProcess {
 //QC Step: Trim reads and remove adapters and remove PhiX contamination
 process clean_reads {
   tag "$name"
-  //errorStrategy 'ignore'
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming/stats", mode: 'copy', pattern:"*.trim.txt"
   publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
 
@@ -176,7 +176,7 @@ process fastqc_summary {
 
 //Assembly step: Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
-  //errorStrategy 'ignore'
+  errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
