@@ -832,7 +832,7 @@ process amrfinder_summary {
     dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   else:
     dfs = dfs[0]
-    dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    dfs.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
 
   # concatenate joined restults and write to tsv
   all_ar_dfs = list(all_ar_dfs)
