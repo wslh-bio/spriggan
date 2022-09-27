@@ -6,8 +6,6 @@
 
 nextflow.enable.dsl=2
 
-params.test = false
-
 if(params.test){
   testIDS = ['SRR14131356','SRR14131352','SRR14311556','SRR14568713',
   'SRR14131354','SRR14613517','SRR14613503','SRR14613708','SRR14613700',
