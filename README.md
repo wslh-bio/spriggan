@@ -21,7 +21,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 ### Usage
 The pipeline is designed to start from raw Illumina reads. All reads must be in the same directory. Then start the pipeline using:
 ```
-nextflow main.nf --reads [path-to-reads] -profile [docker,singularity,aws]
+nextflow main.nf --reads [path-to-reads]
 ```
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
@@ -31,7 +31,7 @@ nextflow main.nf --test -profile [docker,singularity,aws]
 
 You can specify a version of the pipeline and run it directly from the github repository by using:
 ```
-nextflow wslh-bio/spriggan -r <version> --reads [path-to-reads] -profile [docker,singularity,aws]
+nextflow wslh-bio/spriggan -r <version> --reads [path-to-reads]
 ```
 
 ### Workflow outline
