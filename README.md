@@ -26,7 +26,7 @@ nextflow main.nf --reads [path-to-reads]
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
 ```
-nextflow main.nf --test -profile [docker,singularity,aws]
+nextflow main.nf --test
 ```
 
 You can specify a version of the pipeline and run it directly from the github repository by using:
