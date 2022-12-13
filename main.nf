@@ -25,6 +25,10 @@ if(params.test){
       .set { raw_reads }
 }
 
+Channel
+    .fromPath(params.kraken_db)
+    .set { kraken_db }
+
 //Preprocessing Step: Change read names
 process preProcess {
   //publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
@@ -522,6 +526,7 @@ process kraken {
 
   input:
   tuple val(name), path(cleaned_reads)
+  path(db)
 
   output:
   path("${name}.kraken2.txt"), emit: kraken_files
@@ -529,9 +534,14 @@ process kraken {
 
   script:
   """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
+  dbname=${db}
+  dbname=\${dbname%.*.*}
+  
+  mkdir kraken2-db
+  tar -xvf ${db} --directory kraken2-db
+  echo \$dbname > Kraken2_DB.txt
 
-  ls /kraken2-db/ > Kraken2_DB.txt
+  kraken2 --db ./kraken2-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
   """
 }
 
@@ -954,7 +964,7 @@ workflow {
 
     mlst_summary(mlst.out.mlst_files.collect())
 
-    kraken(clean_reads.out.cleaned_reads)
+    kraken(clean_reads.out.cleaned_reads,kraken_db.first())
 
     kraken_summary(kraken.out.kraken_files.collect())
 
