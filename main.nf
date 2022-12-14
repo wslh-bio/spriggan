@@ -25,9 +25,13 @@ if(params.test){
       .set { raw_reads }
 }
 
-Channel
-    .fromPath(params.kraken_db)
-    .set { kraken_db }
+if (params.kraken_db != "") {
+    Channel
+        .fromPath(params.kraken_db)
+        .set { kraken_db }
+} else {
+    kraken_db = file('NO_FILE')
+}
 
 //Preprocessing Step: Change read names
 process preProcess {
@@ -533,16 +537,25 @@ process kraken {
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
-  """
-  dbname=${db}
-  dbname=\${dbname%.*.*}
-  
-  mkdir kraken2-db
-  tar -xvf ${db} --directory kraken2-db
-  echo \$dbname > Kraken2_DB.txt
+  //based on this solution: https://nextflow-io.github.io/patterns/optional-input/
+  def kraken_db = db.name != 'NO_FILE' ? "--kraken_db $db" : ''
+  if (params.kraken_db != "") {
+      """
+      dbname=${db}
+      dbname=\${dbname%.*.*}
 
-  kraken2 --db ./kraken2-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
-  """
+      mkdir kraken2-db
+      tar -xvf ${db} --directory kraken2-db
+      echo \$dbname > Kraken2_DB.txt
+
+      kraken2 --db ./kraken2-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
+      """
+  } else {
+      """
+      kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
+      ls /kraken2-db/ > Kraken2_DB.txt
+      """
+  }
 }
 
 //Summary Step: Summarize kraken results
