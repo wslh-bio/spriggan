@@ -544,11 +544,11 @@ process kraken {
       dbname=${db}
       dbname=\${dbname%.*.*}
 
-      mkdir kraken2-db
-      tar -xvf ${db} --directory kraken2-db
+      mkdir custom-db
+      tar -xvf ${db} --directory custom-db
       echo \$dbname > Kraken2_DB.txt
 
-      kraken2 --db ./kraken2-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
+      kraken2 --db ./custom-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
       """
   } else {
       """
