@@ -599,6 +599,7 @@ process kraken_summary {
       # remove left leading spaces from the Name column
       data_df['Name'] = data_df['Name'].str.lstrip()
       # sort data frame by percentages (largest to smallest)
+      data_df['Percentage'] = pd.to_numeric(data_df['Percentage'], downcast='float')
       data_df = data_df.sort_values(by=['Percentage'], ascending=False)
       # make new data frame for unclassified reads only
       unclass = data_df[data_df['Name']=='unclassified']
