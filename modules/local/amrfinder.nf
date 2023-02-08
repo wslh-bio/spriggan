@@ -9,7 +9,7 @@ process AMRFINDER {
 
     output:
     path("${meta}.amr.tsv"), emit: amrfinder_predictions
-    path("AMRFinderPlus_DB.txt"), emit: amrfinder_version
+    path "versions.yml"    , emit: versions
 
     script:
     """
@@ -39,8 +39,10 @@ process AMRFINDER {
         cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
         sub.Popen(cmd, stdout=outFile).wait()
 
-    # get version information from version file
-    versionFile = "/amrfinder/data/latest/version.txt"
-    shutil.copy(versionFile,"AMRFinderPlus_DB.txt")
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        amrfinder: \$(echo \$(amrfinder --version)
+        amrfinder DB: \$(echo \$(cat /amrfinder/data/latest/version.txt) )
+    END_VERSIONS
     """
 }

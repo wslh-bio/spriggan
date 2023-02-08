@@ -12,8 +12,8 @@ process RESULTS {
     path("kraken_results.tsv")
     path("amrfinder_summary.tsv")
     path("selected_ar_genes.tsv")
-    path("Kraken2_DB.txt")
-    path("AMRFinderPlus_DB.txt")
+    path(kraken_version, stageAs:"kraken_version.yml")
+    path(amrfinder_version stageAs:"amrfinder_version.yml")
 
     output:
     path('spriggan_report.csv')
@@ -27,11 +27,15 @@ process RESULTS {
     import pandas as pd
     from functools import reduce
 
-    with open('AMRFinderPlus_DB.txt', 'r') as amrFile:
-        amrfinderDB_version = amrFile.readline().strip()
+    with open('${amrfinder_version}', 'r') as amrFile:
+        for l in amrFile.readlines():
+            if "amrfinder DB:" in l.strip():
+                amrfinderDB_version = l.strip().split(':')[1].strip()
 
-    with open('Kraken2_DB.txt', 'r') as krakenFile:
-        krakenDB_version = krakenFile.readline().strip()
+    with open('${kraken_version}', 'r') as krakenFile:
+        for l in krakenFile.readlines():
+            if "kraken DB:" in l.strip():
+                krakenDB_version = l.strip().split(':')[1].strip()
 
     files = glob.glob('*.tsv')
 

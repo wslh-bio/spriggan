@@ -85,13 +85,154 @@ workflow SPRIGGAN {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+//
+    // MODULE: BBDUK
     //
-    // MODULE: Run FastQC
+    BBDUK (
+        ch_input_reads.sample,
+        params.contaminants
+    )
+    ch_versions = ch_versions.mix(BBDUK.out.versions.first())
+
+    //
+    // MODULE: BBDUK_SUMMARY
+    //
+    BBDUK_SUMMARY (
+        BBDUK.out.bbduk_trim.collect()
+    )
+
+    //
+    // MODULE: FASTQC
     //
     FASTQC (
-        INPUT_CHECK.out.reads
+        BBDUK.out.reads
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+    //
+    // MODULE: FASTQC_SUMMARY
+    //
+    FASTQC_SUMMARY (
+        FASTQC.out.zip.collect{it[1]}
+    )
+
+    //
+    // MODULE: SHOVILL
+    //
+    SHOVILL (
+        BBDUK.out.reads
+    )
+    ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
+
+    //
+    // MODULE: SAMTOOLS
+    //
+    SAMTOOLS (
+        SHOVILL.out.sam_files
+    )
+    ch_versions = ch_versions.mix(SAMTOOLS.out.versions.first())
+
+    //
+    // MODULE: COVERAGE_STATS
+    //
+    COVERAGE_STATS (
+        SAMTOOLS.out.cov_files.collect()
+    )
+
+    //
+    // MODULE: QUAST
+    //
+    QUAST (
+        SHOVILL.out.contigs
+    )
+    ch_versions = ch_versions.mix(QUAST.out.versions.first())
+
+    //
+    // MODULE: QUAST_SUMMARY
+    //
+    QUAST_SUMMARY (
+        QUAST.out.transposed_report.collect()
+    )
+
+    //
+    // MODULE: MLST
+    //
+    MLST (
+        SHOVILL.out.contigs
+    )
+    ch_versions = ch_versions.mix(MLST.out.versions.first())
+
+    //
+    // MODULE: MLST_SUMMARY
+    //
+    MLST_SUMMARY (
+        MLST.out.mlst_files.collect()
+    )
+
+    //
+    // MODULE: KRAKEN
+    //
+    KRAKEN (
+        ch_input_reads.sample
+    )
+    ch_versions = ch_versions.mix(KRAKEN_SAMPLE.out.versions.first())
+
+    //
+    // MODULE: KRAKEN_SUMMARY
+    //
+    KRAKEN_SUMMARY (
+        KRAKEN.out.kraken_files.collect()
+    )
+
+    //
+    // MODULE: AMRFINDER_SETUP
+    //
+    AMRFINDER_SETUP (
+        KRAKEN_SUMMARY.out.kraken_tsv,
+        SHOVILL.out.contigs
+    )
+
+    //
+    // MODULE: AMRFINDER
+    //
+    AMRFINDER (
+        AMRFINDER_SETUP.out.amrfinder_input
+    )
+    ch_versions = ch_versions.mix(AMRFINDER.out.versions.first())
+
+    //
+    // MODULE: AMRFINDER_SUMMARY
+    //
+    AMRFINDER_SUMMARY (
+        AMRFINDER.out.amrfinder_predictions.collect()
+    )
+    ch_versions = ch_versions.mix(SEROBA.out.versions.first())
+
+    //
+    // MODULE: RESULTS
+    //
+    RESULTS (
+        BBDUK_SUMMARY.out.bbduk_tsv,
+        COVERAGE_STATS.out.coverage_tsv,
+        QUAST_SUMMARY.out.quast_tsv,
+        MLST_SUMMARY.out.mlst_tsv,
+        KRAKEN_SUMMARY.out.kraken_tsv,
+        AMRFINDER_SUMMARY.out.amrfinder_tsv,
+        AMRFINDER_SUMMARY.out.selected_ar_tsv,
+        KRAKEN.out.versions.first(),
+        AMRFINDER.out.versions.first()
+    )
+
+    //
+    // MODULE: WORKFLOW_TEST
+    //
+    /*
+    ch_valid_dataset = Channel.fromPath("$projectDir/test-dataset/validation/spntypeid_report_valid.csv", checkIfExists: true)
+    WORKFLOW_TEST (
+        ch_valid_dataset.collect(),
+        RESULTS.out.result_csv
+    )
+    */
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
@@ -100,10 +241,10 @@ workflow SPRIGGAN {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowSpriggan.paramsSummaryMultiqc(workflow, summary_params)
+    workflow_summary    = WorkflowSpntypeid.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    methods_description    = WorkflowSpriggan.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
+    methods_description    = WorkflowSpntypeid.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
     ch_methods_description = Channel.value(methods_description)
 
     ch_multiqc_files = Channel.empty()
@@ -111,6 +252,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_adapters.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN_SAMPLE.out.kraken_results.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN_NTC.out.kraken_results.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
