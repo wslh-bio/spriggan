@@ -44,13 +44,14 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-//
-// MODULE: Installed directly from nf-core/modules
-//
-include { FASTQC                      } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { BBDUK                         } from '../modules/local/bbduk.nf'
+include { FASTQC                        } from '../modules/local/fastqc.nf'
+include { KRAKEN                        } from '../modules/local/kraken.nf'
+include { MULTIQC                       } from '../modules/local/multiqc.nf'
+include { QUAST                         } from '../modules/local/quast.nf'
+include { SAMTOOLS                      } from '../modules/local/samtools.nf'
+include { SHOVILL                       } from '../modules/local/shovill.nf'
+include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

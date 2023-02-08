@@ -148,6 +148,9 @@ process fastqc {
   fastqc -q  ${reads}
   """
 }
+//
+// MODULE: Installed directly from nf-core/modules
+//
 
 //Summary Step: Summarize FastQC results
 process fastqc_summary {
