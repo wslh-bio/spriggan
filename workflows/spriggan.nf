@@ -6,12 +6,8 @@
 
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
-// Validate input parameters
-WorkflowSpriggan.initialise(params, log)
-
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -47,7 +43,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { BBDUK                         } from '../modules/local/bbduk.nf'
 include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
 include { FASTQC                        } from '../modules/local/fastqc.nf'
-include { FASTQC_SUMMARY                } from '../modules/local/fastq_summary.nf'
+include { FASTQC_SUMMARY                } from '../modules/local/fastqc_summary.nf'
 include { SHOVILL                       } from '../modules/local/shovill.nf'
 include { SAMTOOLS                      } from '../modules/local/samtools.nf'
 include { COVERAGE_STATS                } from '../modules/local/coverage_stats.nf'
@@ -85,7 +81,14 @@ workflow SPRIGGAN {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
-//
+    INPUT_CHECK.out.reads
+        .branch {
+            ntc: it[0]['id'].contains('NTC')
+            sample: !it[0]['id'].contains('NTC')
+        }
+        .set{ ch_input_reads }
+
+    //
     // MODULE: BBDUK
     //
     BBDUK (
@@ -173,15 +176,15 @@ workflow SPRIGGAN {
     // MODULE: KRAKEN
     //
     KRAKEN (
-        ch_input_reads.sample
+        BBDUK.out.reads
     )
-    ch_versions = ch_versions.mix(KRAKEN_SAMPLE.out.versions.first())
+    ch_versions = ch_versions.mix(KRAKEN.out.versions.first())
 
     //
     // MODULE: KRAKEN_SUMMARY
     //
     KRAKEN_SUMMARY (
-        KRAKEN.out.kraken_files.collect()
+        KRAKEN.out.kraken_results.collect()
     )
 
     //
@@ -206,7 +209,6 @@ workflow SPRIGGAN {
     AMRFINDER_SUMMARY (
         AMRFINDER.out.amrfinder_predictions.collect()
     )
-    ch_versions = ch_versions.mix(SEROBA.out.versions.first())
 
     //
     // MODULE: RESULTS
@@ -241,10 +243,10 @@ workflow SPRIGGAN {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowSpntypeid.paramsSummaryMultiqc(workflow, summary_params)
+    workflow_summary    = WorkflowSpriggan.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    methods_description    = WorkflowSpntypeid.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
+    methods_description    = WorkflowSpriggan.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
     ch_methods_description = Channel.value(methods_description)
 
     ch_multiqc_files = Channel.empty()
@@ -255,8 +257,7 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_adapters.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN_SAMPLE.out.kraken_results.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN_NTC.out.kraken_results.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
 
     MULTIQC (

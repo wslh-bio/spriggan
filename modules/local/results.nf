@@ -13,7 +13,7 @@ process RESULTS {
     path("amrfinder_summary.tsv")
     path("selected_ar_genes.tsv")
     path(kraken_version, stageAs:"kraken_version.yml")
-    path(amrfinder_version stageAs:"amrfinder_version.yml")
+    path(amrfinder_version, stageAs:"amrfinder_version.yml")
 
     output:
     path('spriggan_report.csv')

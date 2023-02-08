@@ -8,7 +8,8 @@ process MLST {
     tuple val(meta), path(input)
 
     output:
-    path("*.mlst.tsv"), emit: mlst_files
+    path("*.mlst.tsv")     , emit: mlst_files
+    path "versions.yml"    , emit: versions
     path("*.alleles.tsv")
 
 
@@ -127,5 +128,11 @@ process MLST {
         sid = file.split('.')[0]
         scheme = file.split('.')[1]
         shutil.move(f'{file}', f'{sid}.{scheme}.alleles.tsv')
+
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mlst: \$(echo \$(mlst --version 2>&1) | sed 's/^.*mlst //')
+    END_VERSIONS
     """
 }
