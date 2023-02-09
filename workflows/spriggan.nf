@@ -175,8 +175,18 @@ workflow SPRIGGAN {
     //
     // MODULE: KRAKEN
     //
+
+    if (params.kraken_db != "") {
+        Channel
+            .fromPath(params.kraken_db)
+            .set { kraken_db }
+    } else {
+        kraken_db = file('NO_FILE')
+    }
+
     KRAKEN (
-        BBDUK.out.reads
+        BBDUK.out.reads,
+        kraken_db
     )
     ch_versions = ch_versions.mix(KRAKEN.out.versions.first())
 

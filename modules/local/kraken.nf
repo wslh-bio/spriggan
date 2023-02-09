@@ -6,10 +6,11 @@ process KRAKEN {
 
     input:
     tuple val(meta), path(reads)
+    path(db)
 
     output:
-    path("${meta.id}.kraken.txt")   , emit: kraken_results
-    path("kraken.log")              , optional: true, emit: log
+    path("${meta.id}.kraken2.txt")   , emit: kraken_results
+    path("kraken2.log")              , optional: true, emit: log
     path "versions.yml"             , emit: versions
 
     when:
@@ -18,15 +19,32 @@ process KRAKEN {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    """
-    kraken $args --db /kraken-database/minikraken_20171013_4GB --threads ${task.cpus} --paired ${reads[0]} ${reads[1]} > ${prefix}_raw.txt 2> kraken.log
-    kraken-report --db /kraken-database/minikraken_20171013_4GB ${prefix}_raw.txt > ${prefix}.kraken.txt 2> kraken.log
-    find -name kraken.log -size 0 -exec rm {} +
+    def kraken_db = db.name != 'NO_FILE' ? "--kraken_db $db" : ''
+    if (params.kraken_db != "") {
+        """
+        dbname=${db}
+        dbname=\${dbname%.*.*}
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        kraken: \$(echo \$(kraken --version 2>&1) | sed 's/^.*Kraken //')
-        kraken DB: \$(echo \$(ls /kraken-database/) )
-    END_VERSIONS
-    """
+        mkdir custom-db
+        tar -xvf ${db} --directory custom-db
+
+        kraken2 --db ./custom-db --threads ${task.cpus} --report ${prefix}.kraken2.txt --paired ${reads[0]} ${reads[1]} | tee kraken2.log
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            kraken2: \$(echo \$(kraken2 --version 2>&1) | sed 's/^.*Kraken version //; s/ .*\$//')
+            kraken DB: \$(echo \${db:-\$(ls /kraken2-db/)})
+        END_VERSIONS
+        """
+    } else {
+        """
+        kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${prefix}.kraken2.txt --paired ${reads[0]} ${reads[1]} | tee kraken2.log
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            kraken2: \$(echo \$(kraken2 --version 2>&1) | sed 's/^.*Kraken version //; s/ .*\$//')
+            kraken DB: \$(echo \${db:-\$(ls /kraken2-db/)})
+        END_VERSIONS
+        """
+    }
 }
