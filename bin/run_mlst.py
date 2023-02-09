@@ -39,7 +39,7 @@ ids = {'mlstID':['abaumannii','abaumannii_2','ecoli','ecoli_2','leptospira','lep
 ids = dict(zip(ids['mlstID'], ids['PubMLSTID']))
 
 # read in mlst output and get scheme
-df = pd.read_csv(f'{sid}.tsv', header=None, delimiter='\\t')
+df = pd.read_csv(f'{sid}.tsv', header=None, delimiter='\t')
 scheme = df.iloc[0][1]
 
 # Add scheme to mlst file name
@@ -65,7 +65,7 @@ mlst_files = glob.glob('*.tsv')
 
 # Reformat MLST results and append to empty list
 for file in mlst_files:
-    df = pd.read_csv(file, header=None, delimiter='\\t')
+    df = pd.read_csv(file, header=None, delimiter='\t')
     df[0] = df[0].str.replace('.contigs.fa', '')
     df[2] = 'ST' + df[2].astype(str)
     df[2] = df[2].str.replace('ST-', 'NA')
@@ -92,13 +92,13 @@ if len(dfs) > 1:
     merged = merged.reindex(sorted(merged.columns,reverse=True), axis=1)
     merged['MLST Scheme'] = merged.iloc[: , 1:].agg(';'.join, axis=1)
     merged = merged[['Sample','MLST Scheme']]
-    merged.to_csv(f'{sid}.mlst.tsv', index=False, sep='\\t', encoding='utf-8')
+    merged.to_csv(f'{sid}.mlst.tsv', index=False, sep='\t', encoding='utf-8')
 
 else:
     df = dfs[0]
     df['MLST Scheme'] = df['MLST Scheme'].str.replace(' S', 'S')
     df['MLST Scheme'] = df['MLST Scheme'].str.replace(' N', 'N')
-    df.to_csv(f'{sid}.mlst.tsv', index=False, sep='\\t', encoding='utf-8')
+    df.to_csv(f'{sid}.mlst.tsv', index=False, sep='\t', encoding='utf-8')
 
 # rename raw mlst output (scheme files) with scheme name and add "alleles" to file name
 mlst_files = glob.glob('*.tsv')
