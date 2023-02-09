@@ -9,7 +9,7 @@ process AMRFINDER_SETUP {
     tuple val(meta), path(assembly)
 
     output:
-    tuple val(meta), path("${meta}.*.fa"), emit: amrfinder_input
+    tuple val(meta), path("${meta}.*.fa"), emit: amrfinder_input optional true
 
     script:
     """
