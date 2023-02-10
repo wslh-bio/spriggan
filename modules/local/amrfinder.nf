@@ -8,7 +8,7 @@ process AMRFINDER {
     tuple val(meta), path(amrfinder_input)
 
     output:
-    path("${meta}.amr.tsv"), emit: amrfinder_predictions
+    path("${meta.id}.amr.tsv"), emit: amrfinder_predictions
     path "versions.yml"    , emit: versions
 
     script:
