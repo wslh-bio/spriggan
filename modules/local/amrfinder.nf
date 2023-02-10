@@ -17,7 +17,7 @@ process AMRFINDER {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        amrfinder: \$(echo \$(amrfinder --version)
+        amrfinder: \$(echo \$(amrfinder --version) )
         amrfinder DB: \$(echo \$(cat /amrfinder/data/latest/version.txt) )
     END_VERSIONS
     """
