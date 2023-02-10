@@ -4,191 +4,101 @@ import sys,os
 import pandas as pd
 import argparse
 
-base_path =  os.path.dirname(os.path.realpath(__file__))
-
-### Load validation data
-ar_std = pd.read_csv(os.path.join(base_path,"validation/ar_summary_std.tsv"),sep='\t',index_col="Sample")
-cov_std = pd.read_csv(os.path.join(base_path,"validation/coverage_stats_std.tsv"),sep='\t',index_col="Sample")
-kraken_std = pd.read_csv(os.path.join(base_path,"validation/kraken_results_std.tsv"),sep='\t',index_col="Sample")
-mlst_std = pd.read_csv(os.path.join(base_path,"validation/mlst_results_std.tsv"),sep='\t',index_col="Sample")
-quast_std = pd.read_csv(os.path.join(base_path,"validation/quast_results_std.tsv"),sep='\t',index_col="Sample")
+#this gets us the root dir of the project
+base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 ### Load in result data
 parser = argparse.ArgumentParser(description='Validate pipeline results.')
-parser.add_argument('spriggan_result_path',help='Path to spriggan_results output directory.')
+parser.add_argument('spriggan_report_valid',help='Path to validated spriggan_report.csv')
+parser.add_argument('spriggan_report_test',help='Path to test spriggan_report.csv')
 args = parser.parse_args()
 
-ar_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"amrfinder/amrfinder_summary.tsv"))
-cov_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"mapping/coverage_stats.tsv"))
-kraken_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"kraken/kraken_results.tsv"))
-mlst_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"mlst/mlst_results.tsv"))
-quast_data_path = os.path.abspath(os.path.join(args.spriggan_result_path,"quast/quast_results.tsv"))
+valid_results = pd.read_csv(os.path.abspath(args.spriggan_report_valid),sep=',',index_col="Sample").sort_index()
+test_results = pd.read_csv(os.path.abspath(args.spriggan_report_test),sep=',',index_col="Sample").sort_index()
 
-ar_data = pd.read_csv(ar_data_path,sep='\t',index_col="Sample")
-cov_data = pd.read_csv(cov_data_path,sep='\t',index_col="Sample")
-kraken_data = pd.read_csv(kraken_data_path,sep='\t',index_col="Sample")
-mlst_data = pd.read_csv(mlst_data_path,sep='\t',index_col="Sample")
-quast_data = pd.read_csv(quast_data_path,sep='\t',index_col="Sample")
+### Sort Columns By name
+valid_results = valid_results.reindex(sorted(valid_results.columns),axis=1)
+test_results = test_results.reindex(sorted(test_results.columns),axis=1)
 
-def check_compare(y_std,x_data,range=2):
-    x_data = round(float(x_data),2)
-    y_std = round(float(y_std),2)
-    if x_data >= y_std - range and x_data <= y_std + range:
-        return True
-    else:
-        return False
+### Validate Results
+validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-### Validate AMRFinderPlus results
-ar_hits = []
-for sample in list(ar_std.index):
+### If no difference validation is successful
+if validation.empty:
+    print("Validation check Successful!")
+    sys.exit()
 
-    if pd.isnull(ar_data.loc[sample].Gene):
-        continue
-    # get sample data and sort in list
-    genes_data = ar_data.loc[sample].Gene.split(";")
-    coverage_data = ar_data.loc[sample].Coverage.split(";")
-    identity_data = ar_data.loc[sample].Identity.split(";")
-    data = list(zip(genes_data,coverage_data,identity_data))
-    data.sort()
+### If assembly length differs by less than 1000 bp then remove from dataframe
+if "Assembly Length (bp)" in validation.columns:
+    for sample in validation["Assembly Length (bp)"].index.get_level_values('Sample').unique():
+        valid_data = validation["Assembly Length (bp)"].loc[sample,"Valid Data"]
+        test_data = validation["Assembly Length (bp)"].loc[sample,"Test Data"]
+        diff = abs(valid_data-test_data)
+        if diff < 1000:
+            test_results.loc[sample,"Assembly Length (bp)"] = valid_results.loc[sample,"Assembly Length (bp)"]
+            validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-    # get sample standard data and sort in list
-    genes_std = ar_std.loc[sample].Gene.split(";")
-    coverage_std = ar_std.loc[sample].Coverage.split(";")
-    identity_std = ar_std.loc[sample].Identity.split(";")
-    std = list(zip(genes_std,coverage_std,identity_std))
-    std.sort()
+### If contig number differs by less than 10 then set test equal to valid
+if "Contigs (#)" in validation.columns:
+    for sample in validation["Contigs (#)"].index.get_level_values('Sample').unique():
+        valid_data = validation["Contigs (#)"].loc[sample,"Valid Data"]
+        test_data = validation["Contigs (#)"].loc[sample,"Test Data"]
+        diff = abs(valid_data-test_data)
+        if diff < 10:
+            test_results.loc[sample,"Contigs (#)"] = valid_results.loc[sample,"Contigs (#)"]
+            validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-    #compare data
-    for a,b in zip(std,data):
-        gene = a[0]
-        coverage = check_compare(a[1],b[1])
-        identity = check_compare(a[2],b[2])
-        if not coverage:
-            ar_hits.append({sample+"_"+gene+"_coverage":" != ".join([a[1],b[1]])})
-        if not identity:
-            ar_hits.append({sample+"_"+gene+"_identity":" != ".join([a[2],b[2]])})
+if "AMR" in validation.columns:
+    for sample in validation["AMR"].index.get_level_values('Sample').unique():
+        passing = True
+        valid_data_mech = validation["AMR"].loc[sample,"Valid Data"].split(';')
+        test_data_mech = validation["AMR"].loc[sample,"Test Data"].split(';')
+        valid_data_coverage = valid_results.loc[sample,"AMR Coverage"].split(';')
+        test_data_coverage = test_results.loc[sample,"AMR Coverage"].split(';')
+        valid_data_identity = valid_results.loc[sample,"AMR Identity"].split(';')
+        test_data_identity = test_results.loc[sample,"AMR Identity"].split(';')
 
-### Validate Coverage results
-cov_hits = []
-for sample in list(cov_std.index):
-    med_cov = check_compare(cov_std.loc[sample]["Median Coverage"],cov_data.loc[sample]["Median Coverage"])
-    avg_cov = check_compare(cov_std.loc[sample]["Average Coverage"],cov_data.loc[sample]["Average Coverage"])
-    if not med_cov:
-        cov_hits.append({sample+"_"+"Median Coverage":" != ".join([str(cov_std.loc[sample]["Median Coverage"]),str(cov_data.loc[sample]["Median Coverage"])])})
-    if not avg_cov:
-        cov_hits.append({sample+"_"+"Average Coverage":" != ".join([str(cov_std.loc[sample]["Average Coverage"]),str(cov_data.loc[sample]["Average Coverage"])])})
+        valid_data = sorted(list(zip(valid_data_mech,valid_data_coverage,valid_data_identity)), key=lambda x: x[0])
+        test_data = sorted(list(zip(test_data_mech,test_data_coverage,test_data_identity)), key=lambda x: x[0])
 
-### Validate Kraken results
-kraken_hits = []
-for sample in list(kraken_std.index):
-    unclass_pct_std = kraken_std.loc[sample]["Unclassified Reads (%)"].strip("%")
-    primary_name_std = kraken_std.loc[sample]["Primary Species (%)"].split('(')[0]
-    primary_pct_std = kraken_std.loc[sample]["Primary Species (%)"].split('(')[1].strip("()%")
-    secondary_name_std = kraken_std.loc[sample]["Secondary Species (%)"].split('(')[0]
-    secondary_pct_std = kraken_std.loc[sample]["Secondary Species (%)"].split('(')[1].strip("()%")
+        for v,t in zip(valid_data,test_data):
+            if v != t:
+                passing = False
+        
+        if passing:
+            test_results.loc[sample,"AMR"] = valid_results.loc[sample,"AMR"]
+            test_results.loc[sample,"AMR Coverage"] = valid_results.loc[sample,"AMR Coverage"]
+            test_results.loc[sample,"AMR Identity"] = valid_results.loc[sample,"AMR Identity"]
+    validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-    unclass_pct = kraken_data.loc[sample]["Unclassified Reads (%)"].strip("%")
-    primary_name = kraken_data.loc[sample]["Primary Species (%)"].split('(')[0]
-    primary_pct = kraken_data.loc[sample]["Primary Species (%)"].split('(')[1].strip("()%")
-    secondary_name = kraken_data.loc[sample]["Secondary Species (%)"].split('(')[0]
-    secondary_pct = kraken_data.loc[sample]["Secondary Species (%)"].split('(')[1].strip("()%")
+if "Selected AMR Genes" in validation.columns:
+    for sample in validation["Selected AMR Genes"].index.get_level_values('Sample').unique():
+        passing = True
+        valid_data_mech = validation["Selected AMR Genes"].loc[sample,"Valid Data"].split(';')
+        test_data_mech = validation["Selected AMR Genes"].loc[sample,"Test Data"].split(';')
+        valid_data_coverage = valid_results.loc[sample,"Selected AMR Genes Coverage"].split(';')
+        test_data_coverage = test_results.loc[sample,"Selected AMR Genes Coverage"].split(';')
+        valid_data_identity = valid_results.loc[sample,"Selected AMR Genes Identity"].split(';')
+        test_data_identity = test_results.loc[sample,"Selected AMR Genes Identity"].split(';')
 
-    primary_pct_result = check_compare(primary_pct_std,primary_pct)
-    secondary_pct_result = check_compare(secondary_pct_std,secondary_pct)
-    unclass_pct_result = check_compare(unclass_pct_std,unclass_pct)
+        valid_data = sorted(list(zip(valid_data_mech,valid_data_coverage,valid_data_identity)), key=lambda x: x[0])
+        test_data = sorted(list(zip(test_data_mech,test_data_coverage,test_data_identity)), key=lambda x: x[0])
 
-    if not primary_pct_result:
-        kraken_hits.append({sample+"-Primary":" != ".join([primary_name_std+" @ "+primary_pct_std,primary_name+" @ "+primary_pct])})
-    if not secondary_pct_result:
-        kraken_hits.append({sample+"-Secondary":" != ".join([secondary_name_std+" @ "+secondary_pct_std,secondary_name+" @ "+secondary_pct])})
-    if not unclass_pct_result:
-        kraken_hits.append({sample+"-Unclassified":" != ".join([unclass_pct_std,unclass_pct])})
+        for v,t in zip(valid_data,test_data):
+            if v != t:
+                passing = False
+        
+        if passing:
+            test_results.loc[sample,"Selected AMR Genes"] = valid_results.loc[sample,"Selected AMR Genes"]
+            test_results.loc[sample,"Selected AMR Genes Coverage"] = valid_results.loc[sample,"Selected AMR Genes Coverage"]
+            test_results.loc[sample,"Selected AMR Genes Identity"] = valid_results.loc[sample,"Selected AMR Genes Identity"]
+    validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-### Validate MLST results
-mlst_hits = []
-for sample in list(mlst_std.index):
-    if ";" in mlst_data.loc[sample]["MLST Scheme"]:
-        std = mlst_std.loc[sample]["MLST Scheme"].split(";")
-        test = mlst_data.loc[sample]["MLST Scheme"].split(";")
-        std.sort()
-        test.sort()
-        std = ";".join(std)
-        test = ";".join(test)
-    else:
-        std = mlst_std.loc[sample]["MLST Scheme"]
-        test = mlst_data.loc[sample]["MLST Scheme"]
-
-    if std != test:
-        mlst_hits.append({sample:" != ".join([std,test])})
-
-### Validate QUAST results
-quast_hits = []
-for sample in list(quast_std.index):
-
-    contigs_std = str(quast_std.loc[sample]["Contigs"])
-    length_std = str(quast_std.loc[sample]["Assembly Length (bp)"])
-
-    contigs = str(quast_data.loc[sample]["Contigs"])
-    length = str(quast_data.loc[sample]["Assembly Length (bp)"])
-
-    contig_result = check_compare(contigs_std,contigs,50)
-    length_result = check_compare(length_std,length,50000)
-
-    if not contig_result:
-        quast_hits.append({sample+"_contigs":contigs_std+" != "+contigs})
-    if not length_result:
-        quast_hits.append({sample+"_length":length_std+" != "+length})
-
-### Report Results
-validation_pass = True
-
-print("##")
-print("## Comparing Standard to Sample")
-print("##")
-# AR
-print("AR Validation")
-if not ar_hits:
-    print("--Pass--")
+### If no difference validation is successful
+if validation.empty:
+    print("Validation check Successful!")
+    sys.exit()
 else:
-    for hit in ar_hits:
-        print(hit)
-    validation_pass = False
-
-# Coverage
-print("Coverage Validation")
-if not cov_hits:
-    print("--Pass--")
-else:
-    for hit in cov_hits:
-        print(hit)
-    validation_pass = False
-
-# Kraken
-print("Kraken Validation")
-if not kraken_hits:
-    print("--Pass--")
-else:
-    for hit in kraken_hits:
-        print(hit)
-    validation_pass = False
-
-# MLST
-print("MLST Validation")
-if not mlst_hits:
-    print("--Pass--")
-else:
-    for hit in mlst_hits:
-        print(hit)
-    validation_pass = False
-
-# QUAST
-print("QUAST Validation")
-if not quast_hits:
-    print("--Pass--")
-else:
-    for hit in quast_hits:
-        print(hit)
-    validation_pass = False
-
-if not validation_pass:
+    print("Validation Failed")
+    print(validation)
     sys.exit(1)
