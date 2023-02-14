@@ -29,8 +29,9 @@ if (params.kraken_db != "") {
     Channel
         .fromPath(params.kraken_db)
         .set { kraken_db }
-} else {
-    kraken_db = file('NO_FILE')
+}
+else {
+  kraken_db = []
 }
 
 //Preprocessing Step: Change read names
@@ -537,17 +538,13 @@ process kraken {
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
-  //based on this solution: https://nextflow-io.github.io/patterns/optional-input/
-  def kraken_db = db.name != 'NO_FILE' ? "--kraken_db $db" : ''
   if (params.kraken_db != "") {
       """
       dbname=${db}
       dbname=\${dbname%.*.*}
-
       mkdir custom-db
       tar -xvf ${db} --directory custom-db
       echo \$dbname > Kraken2_DB.txt
-
       kraken2 --db ./custom-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
       """
   } else {
@@ -978,7 +975,12 @@ workflow {
 
     mlst_summary(mlst.out.mlst_files.collect())
 
-    kraken(clean_reads.out.cleaned_reads,kraken_db.first())
+    if (params.kraken_db != "") {
+      kraken(clean_reads.out.cleaned_reads,kraken_db.first())
+    }
+    else {
+      kraken(clean_reads.out.cleaned_reads,kraken_db)
+    }
 
     kraken_summary(kraken.out.kraken_files.collect())
 
