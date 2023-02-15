@@ -61,8 +61,8 @@ process preProcess {
 
 //QC Step: Trim reads and remove adapters and remove PhiX contamination
 process clean_reads {
+  //errorStrategy 'ignore'
   tag "$name"
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming/stats", mode: 'copy', pattern:"*.trim.txt"
   publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
 
@@ -183,7 +183,7 @@ process fastqc_summary {
 
 //Assembly step: Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
@@ -525,8 +525,8 @@ process mlst_summary {
 
 //Classification Step: Run Kraken
 process kraken {
-  tag "$name"
   //errorStrategy 'ignore'
+  tag "$name"
   publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*.kraken2.txt*"
 
   input:
@@ -557,8 +557,8 @@ process kraken {
 
 //Summary Step: Summarize kraken results
 process kraken_summary {
-  tag "$name"
   //errorStrategy 'ignore'
+  tag "$name"
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
