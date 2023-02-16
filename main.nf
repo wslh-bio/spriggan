@@ -29,8 +29,9 @@ if (params.kraken_db != "") {
     Channel
         .fromPath(params.kraken_db)
         .set { kraken_db }
-} else {
-    kraken_db = file('NO_FILE')
+}
+else {
+  kraken_db = []
 }
 
 //Preprocessing Step: Change read names
@@ -60,8 +61,8 @@ process preProcess {
 
 //QC Step: Trim reads and remove adapters and remove PhiX contamination
 process clean_reads {
+  //errorStrategy 'ignore'
   tag "$name"
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming/stats", mode: 'copy', pattern:"*.trim.txt"
   publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
 
@@ -182,7 +183,7 @@ process fastqc_summary {
 
 //Assembly step: Assemble trimmed reads with Shovill and map reads back to assembly
 process shovill {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
@@ -524,8 +525,8 @@ process mlst_summary {
 
 //Classification Step: Run Kraken
 process kraken {
-  tag "$name"
   //errorStrategy 'ignore'
+  tag "$name"
   publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*.kraken2.txt*"
 
   input:
@@ -537,17 +538,13 @@ process kraken {
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
-  //based on this solution: https://nextflow-io.github.io/patterns/optional-input/
-  def kraken_db = db.name != 'NO_FILE' ? "--kraken_db $db" : ''
   if (params.kraken_db != "") {
       """
       dbname=${db}
       dbname=\${dbname%.*.*}
-
       mkdir custom-db
       tar -xvf ${db} --directory custom-db
       echo \$dbname > Kraken2_DB.txt
-
       kraken2 --db ./custom-db --threads ${task.cpus} --report ${name}.kraken2.txt --paired ${cleaned_reads[0]} ${cleaned_reads[1]}
       """
   } else {
@@ -560,8 +557,8 @@ process kraken {
 
 //Summary Step: Summarize kraken results
 process kraken_summary {
-  tag "$name"
   //errorStrategy 'ignore'
+  tag "$name"
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
@@ -978,7 +975,12 @@ workflow {
 
     mlst_summary(mlst.out.mlst_files.collect())
 
-    kraken(clean_reads.out.cleaned_reads,kraken_db.first())
+    if (params.kraken_db != "") {
+      kraken(clean_reads.out.cleaned_reads,kraken_db.first())
+    }
+    else {
+      kraken(clean_reads.out.cleaned_reads,kraken_db)
+    }
 
     kraken_summary(kraken.out.kraken_files.collect())
 
