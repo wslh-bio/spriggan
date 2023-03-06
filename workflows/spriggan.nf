@@ -176,7 +176,7 @@ workflow SPRIGGAN {
     // MODULE: KRAKEN
     //
 
-    if (params.kraken_db != "") {
+    if (params.kraken_db != null) {
         Channel
             .fromPath(params.kraken_db)
             .set { kraken_db }
