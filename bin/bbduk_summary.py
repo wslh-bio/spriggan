@@ -13,11 +13,11 @@ def summarize_bbduk(file):
         for line in inFile:
             # get total number of reads
             if "Result:" in line:
-                num_reads = line.split("reads")[0].strip()
+                num_reads = line.split("reads")[0].split('\t')[1].strip()
                 data.append(num_reads)
             # get total number of reads removed
             if "Total Removed:" in line:
-                rm_reads = line.split("reads")[0].strip()
+                rm_reads = line.split("reads")[0].split('\t')[1].strip()
                 rm_reads = rm_reads.rstrip()
                 data.append(rm_reads)
     return data
