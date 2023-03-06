@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import pandas as pd
 import shutil
 
@@ -7,7 +8,7 @@ species = ['Acinetobacter_baumannii','Enterococcus_faecalis','Enterococcus_faeci
 genus = ['Escherichia','Salmonella']
 
 # get sample name from fasta file
-genomeFile = '${assembly}'
+genomeFile = sys.argv[1]
 sid = genomeFile.split('.')[0]
 
 # read in kraken results as data frame

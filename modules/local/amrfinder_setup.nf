@@ -13,6 +13,6 @@ process AMRFINDER_SETUP {
 
     script:
     """
-    amrfinder_setup.py
+    amrfinder_setup.py ${assembly}
     """
 }
