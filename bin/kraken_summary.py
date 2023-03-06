@@ -84,7 +84,7 @@ results = list(results)
 
 if len(results) > 1:
     data_concat = pd.concat(results)
-    data_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    data_concat.to_csv(f'kraken_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 else:
     results = results[0]
-    results.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    results.to_csv(f'kraken_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')

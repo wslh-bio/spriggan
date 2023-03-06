@@ -11,7 +11,7 @@ genomeFile = '${assembly}'
 sid = genomeFile.split('.')[0]
 
 # read in kraken results as data frame
-df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\t')
 
 # subset data frame by sample id
 df = df[df['Sample'] == sid]

@@ -33,7 +33,7 @@ for file in files:
     # get sample id from file name
     sample_id = os.path.basename(file).split('.')[0]
     # read in amrfinder results as data frame
-    df = pd.read_csv(file, header=0, delimiter='\\t')
+    df = pd.read_csv(file, header=0, delimiter='\t')
 
     # clean up data frame
     df = pretty_df(df,sample_id)
@@ -75,7 +75,7 @@ for file in files:
     # get sample id from file name
     sample_id = os.path.basename(file).split('.')[0]
     # read in amrfinder results as data frame
-    df = pd.read_csv(file, header=0, delimiter='\\t')
+    df = pd.read_csv(file, header=0, delimiter='\t')
 
     # clean up data frame
     if masked_df.empty:
@@ -88,25 +88,25 @@ for file in files:
 dfs = list(dfs)
 if len(dfs) > 1:
     dfs_concat = pd.concat(dfs)
-    dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    dfs_concat.to_csv(f'amrfinder_predictions.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 else:
     dfs = dfs[0]
-    dfs.to_csv(f'amrfinder_predictions.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    dfs.to_csv(f'amrfinder_predictions.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 
 # concatenate joined restults and write to tsv
 all_ar_dfs = list(all_ar_dfs)
 if len(dfs) > 1:
     concat_all_ar_dfs = pd.concat(all_ar_dfs)
-    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 else:
     concat_all_ar_dfs = all_ar_dfs[0]
-    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    concat_all_ar_dfs.to_csv('amrfinder_summary.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 
 # concatenate selected genes and write to tsv
 selected_ar_dfs = list(selected_ar_dfs)
 if len(dfs) > 1:
     concat_selected_ar_dfs = pd.concat(selected_ar_dfs)
-    concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    concat_selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\t', index=False, header=True, na_rep='NaN')
 else:
     selected_ar_dfs = selected_ar_dfs[0]
-    selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+    selected_ar_dfs.to_csv('selected_ar_genes.tsv',sep='\t', index=False, header=True, na_rep='NaN')

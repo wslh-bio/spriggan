@@ -1,7 +1,9 @@
 #!/usr/bin/python3.7
-import os
+import os,sys
 from numpy import median
 from numpy import average
+
+mincoverage = sys.argv[1]
 
 # function for summarizing samtools depth files
 def summarize_depth(file):
@@ -16,10 +18,10 @@ def summarize_depth(file):
     med = int(median(data))
     avg = int(average(data))
     # return sample id, median and average depth, and check for coverage fail
-    if avg >= int(${params.mincoverage}):
-        result = f"{sid}\\t{med}\\t{avg}\\tTRUE\\t\\n"
-    if avg < int(${params.mincoverage}):
-        result = f"{sid}\\t{med}\\t{avg}\\tFALSE\\tAverage coverage < ${params.mincoverage}X\\n"
+    if avg >= mincoverage:
+        result = f"{sid}\t{med}\t{avg}\tTRUE\t\n"
+    if avg < mincoverage:
+        result = f"{sid}\t{med}\t{avg}\tFALSE\tAverage coverage < {mincoverage}X\n"
     return result
 
 # get all samtools depth files
@@ -30,6 +32,6 @@ results = map(summarize_depth,files)
 
 # write results to file
 with open('coverage_stats.tsv', 'w') as outFile:
-    outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\tPass Coverage\\tComments\\n")
+    outFile.write("Sample\tMedian Coverage\tAverage Coverage\tPass Coverage\tComments\n")
     for result in results:
         outFile.write(result)

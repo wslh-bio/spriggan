@@ -10,14 +10,14 @@ def summarize_bbduk(file):
     data = []
     data.append(sample_id)
     with open(file,"r") as inFile:
-        for i, line in enumerate(inFile):
+        for line in inFile:
             # get total number of reads
-            if i == 2:
-                num_reads = line.strip().split("\\t")[1].replace(" reads ","")
+            if "Result:" in line:
+                num_reads = line.split("reads")[0].strip()
                 data.append(num_reads)
             # get total number of reads removed
-            if i == 1:
-                rm_reads = line.strip().split("\\t")[1].replace("reads ","")
+            if "Total Removed:" in line:
+                rm_reads = line.split("reads")[0].strip()
                 rm_reads = rm_reads.rstrip()
                 data.append(rm_reads)
     return data
@@ -31,4 +31,4 @@ results = map(summarize_bbduk,files)
 # convert results to data frame and write to tsv
 df = DataFrame(results,columns=['Sample','Reads Removed','Total Reads'])
 print(df)
-df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
+df.to_csv(f'bbduk_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')

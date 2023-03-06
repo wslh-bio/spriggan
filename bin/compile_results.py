@@ -19,7 +19,7 @@ files = glob.glob('*.tsv')
 dfs = []
 
 for file in files:
-    df = pd.read_csv(file, header=0, delimiter='\\t')
+    df = pd.read_csv(file, header=0, delimiter='\t')
     dfs.append(df)
 
 merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
