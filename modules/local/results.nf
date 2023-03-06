@@ -19,6 +19,6 @@ process RESULTS {
 
     script:
     """
-    compile_results.py
+    compile_results.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version}
     """
 }
