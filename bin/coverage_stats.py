@@ -4,7 +4,7 @@ import glob
 from numpy import median
 from numpy import average
 
-mincoverage = sys.argv[1]
+mincoverage = int(sys.argv[1])
 
 # function for summarizing samtools depth files
 def summarize_depth(file):
