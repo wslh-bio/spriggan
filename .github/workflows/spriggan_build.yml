@@ -1,52 +1,35 @@
-name: spriggan_build
-on: [push]
+name: Build Test
+
+# Manually trigger the action with a button in GitHub
+# Alternatively, trigger on release / push etc.
+on:
+  push:
+  workflow_dispatch:
+
 jobs:
-  run-check:
-    if: "contains(github.event.head_commit.message, '[ci]')"
+  test-full:
+    name: Test on Nextflow Tower
+    # Don't try to run on forked repos
+    # run when commit message contains [test]
+    if: github.repository == 'wslh-bio/spriggan' && contains(github.event.head_commit.message, '[test]')
     runs-on: ubuntu-latest
-    env:
-      NXF_VER: 21.07.0-edge
-    defaults:
-      run:
-        shell: bash
     steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - uses: k-florek/tower-action@main
+        # Use repository secrets for sensitive fields
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-
-      - name: Cache Nextflow Version
-        uses: actions/cache@v2
+          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          access_token: ${{ secrets.NEXTFLOW_TOWER_ACCESS_TOKEN }}
+          compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
+          run_name: ${{ github.job }}_${{ github.run_attempt }}
+          workdir: ${{ secrets.AWS_S3_BUCKET }}/work/${{ github.sha }}
+          # Set any custom pipeline params here - JSON object as a string
+          parameters: |
+            {
+                "outdir": "${{ secrets.AWS_S3_BUCKET }}/results/${{ github.sha }}"
+            }
+          # List of pipeline config profiles to use - comma separated list as a string
+          profiles: test_full,aws_tower
+      - uses: actions/upload-artifact@v3
         with:
-          path: ~/.nextflow
-          key: ${{ runner.os }}-build-${{ env.NXF_VER }}
-
-      - name: Get Nextflow
-        run: curl -s https://get.nextflow.io | bash
-
-      - name: Run Spriggan with test data
-        env:
-          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
-        run: |
-          cd ./tests
-          ../nextflow run ../main.nf --test -profile docker -c autobuild.config
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pandas
-
-      - name: Check Results
-        run: |
-          cd ./tests
-          ./validate.py spriggan_results
+          name: Tower debug log file
+          path: tower_action_*.log
