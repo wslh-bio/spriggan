@@ -14,6 +14,6 @@ process COVERAGE_STATS {
 
     script:
     """
-    coverage_stats.py
+    coverage_stats.py ${params.mincoverage}
     """
 }
