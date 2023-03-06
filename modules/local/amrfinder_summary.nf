@@ -13,6 +13,6 @@ process AMRFINDER_SUMMARY {
 
     script:
     """
-    amrfinder_summary.py
+    amrfinder_summary.py ${params.selected_genes}
     """
 }
