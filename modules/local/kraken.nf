@@ -20,7 +20,7 @@ process KRAKEN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def kraken_db = db.name != 'NO_FILE' ? "--kraken_db $db" : ''
-    if (params.kraken_db != "") {
+    if (params.kraken_db != null) {
         """
         dbname=${db}
         dbname=\${dbname%.*.*}
