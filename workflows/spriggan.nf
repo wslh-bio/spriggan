@@ -181,7 +181,7 @@ workflow SPRIGGAN {
             .fromPath(params.kraken_db)
             .set { kraken_db }
     } else {
-        kraken_db = file('NO_FILE')
+        kraken_db = file("$baseDir/assets/empty.txt",checkIfExists:true)
     }
 
     KRAKEN (
