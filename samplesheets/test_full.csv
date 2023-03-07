@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2
+Sample01,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample01_R1.fastq.gz,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample01_R2.fastq.gz
+Sample02,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample02_R1.fastq.gz,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample02_R2.fastq.gz
+Sample03,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample03_R1.fastq.gz,https://github.com/wslh-bio/spriggan/raw/nf-core/test-dataset/Sample03_R2.fastq.gz

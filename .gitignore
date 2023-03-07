@@ -1,1 +1,8 @@
-test/spriggan_results/
+.nextflow*
+work/
+data/
+results/
+.DS_Store
+testing/
+testing*
+*.pyc
