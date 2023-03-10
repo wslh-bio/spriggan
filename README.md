@@ -67,49 +67,67 @@ Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas 
 ```
 spriggan_results
 ├── amrfinder
+│   ├── *.amr.tsv
+│   ├── *.fa
 │   ├── amrfinder_predictions.tsv
 │   ├── amrfinder_summary.tsv
-│   ├── *.amr.tsv
 │   └── selected_ar_genes.tsv
-├── assembled
-│   └── *.contigs.fa
+├── bbduk
+│   ├── *.fastq.gz
+│   ├── *.adapter.stats.txt
+│   ├── *.bbduk.log
+│   ├── *.trim.txt
+│   └── bbduk_results.tsv
+├── coverage
+│   └── coverage_stats.tsv
 ├── fastqc
-│   ├── fastqc_summary.tsv
 │   ├── *.html
-│   └── zips
-│       └── *.zip
+│   ├── *.zip
+│   └── fastqc_summary.tsv
 ├── kraken
+│   ├── *.kraken2.txt
 │   ├── kraken_results.tsv
-│   └── *.kraken2.txt
-├── mapping
-│   ├── bams
-│   │   ├── *.bam
-│   │   └── *.bai
-│   ├── coverage_stats.tsv
-│   ├── depth
-│   │   └── *.depth.tsv
-│   ├── sams
-│   │   └── *.sam
-│   └── stats
-│       └── *.stats.txt
+│   └── kraken2.log
 ├── mlst
-│   ├── alleles
-│   │   └── *.alleles.tsv
-│   ├── mlst_results.tsv
-│   └── schemes
-│       └── *.mlst.tsv
+│   ├── *.alleles.tsv
+│   ├── *.mlst.tsv
+│   └── mlst_results.tsv
+├── multiqc
+│   ├── multiqc_data
+│   │   ├── *.json
+│   │   ├── *.txt
+│   │   └── multiqc.log
+│   ├── multiqc_plots
+│   │   ├── pdf
+│   │   │   └── *.pdf
+│   │   ├── png
+│   │   │   └── *.png
+│   │   └── svg
+│   │       └── *.svg
+│   └── spriggan_multiqc_report.html
+├── pipeline_info
+│   ├── *.html
+│   ├── *.txt
+│   ├── samplesheet.valid.csv
+│   └── software_versions.yml
 ├── quast
-│   ├── quast_results.tsv
 │   ├── *.quast.report.tsv
-│   └── *.transposed.quast.report.tsv
-├── multiqc_report.html
-├── spriggan_report.csv
-└── trimming
-    ├── bbduk_results.tsv
-    ├── reads
-    │   └── *_clean_*    
-    └── stats
-        └── *.trim.txt
+│   ├── *.transposed.quast.report.tsv
+│   └── quast_results.tsv
+├── results
+│   └── spriggan_report.csv
+├── samtools
+│   ├── *.bam
+│   ├── *.depth.tsv
+│   └── *.stats.txt
+└── shovill
+    ├── *.contigs.fa
+    ├── *.sam
+    └── shovill_output
+          ├── contigs.gfa
+          ├── shovill.corrections
+          ├── shovill.log
+          └── spades.fasta
 ```
 
 **amrfinder_predictions.tsv** - Long-format table of AMRFinderPlus results  
