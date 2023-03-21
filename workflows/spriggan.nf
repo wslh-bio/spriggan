@@ -186,7 +186,7 @@ workflow SPRIGGAN {
 
     KRAKEN (
         BBDUK.out.reads,
-        kraken_db
+        kraken_db.first()
     )
     ch_versions = ch_versions.mix(KRAKEN.out.versions.first())
 
