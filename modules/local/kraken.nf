@@ -32,7 +32,7 @@ process KRAKEN {
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             kraken2: \$(echo \$(kraken2 --version 2>&1) | sed 's/^.*Kraken version //; s/ .*\$//')
-            kraken DB: \$(echo \${db:-\$(echo dbname)})
+            kraken DB: \$(echo \${db:-\$(echo \$dbname)})
         END_VERSIONS
         """
     } else {
