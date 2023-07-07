@@ -8,6 +8,6 @@ reports:
   amrfinder/selected_ar_genes.tsv:
     display: "Selected AR genes"
   multiqc/spriggan_multiqc_report.html:
-    Display: "Spriggan MultiQC Report"
+    display: "Spriggan MultiQC Report"
   "shovill/*.contigs.fa":
-    Display: "Shovill assembly for each sample"  
+    display: "Shovill assembly for each sample"  
