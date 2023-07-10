@@ -56,6 +56,11 @@
                     "description": "Read score for quality trimming",
                     "default": 10
                 },
+                "plus": {
+                    "type": "boolean",
+                    "description": "Use AMRFinderPlus --plus option",
+                    "default": false
+                },
                 "selected_genes": {
                     "type": "string",
                     "description": "AR Genes of interest",
