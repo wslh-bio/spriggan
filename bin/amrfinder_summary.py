@@ -15,8 +15,8 @@ selected_ar_dfs = []
 def pretty_df(data,sample):
     data.columns = data.columns.str.replace(' ', '_')
     data = data.assign(Sample=sample)
-    data = data[['Sample','Gene_symbol','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
-    pretty_data = data.set_axis(['Sample', 'Gene', 'Coverage', 'Identity'], axis=1, inplace=False)
+    data = data[['Sample','Gene_symbol','Sequence_name','Element_type','%_Coverage_of_reference_sequence','%_Identity_to_reference_sequence']]
+    pretty_data = data.set_axis(['Sample', 'Gene','Gene Name','Gene Type', 'Coverage', 'Identity'], axis=1, inplace=False)
     return pretty_data
 
 # function for joining amrfinder results by a delimiter

@@ -13,7 +13,7 @@ process AMRFINDER {
 
     script:
     """
-    run_amrfinder.py ${amrfinder_input}
+    run_amrfinder.py ${amrfinder_input} ${params.plus}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
