@@ -1,0 +1,13 @@
+reports:
+  "amrfinder/*.amr.tsv":
+    display: "AMR genes identified from AMRFinderPlus"
+  amrfinder/amrfinder_predictions.tsv:
+    display: "AMRFinder Predictions"
+  amrfinder/amrfinder_summary.tsv:
+    display: "AMRFinder Summary"
+  amrfinder/selected_ar_genes.tsv:
+    display: "Selected AR genes"
+  multiqc/spriggan_multiqc_report.html:
+    display: "Spriggan MultiQC Report"
+  "shovill/*.contigs.fa":
+    display: "Shovill assembly for each sample"  
