@@ -50,12 +50,12 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | contaminants | Path to FASTA file of contaminating sequences for trimming |
 | mincoverage | Minimum coverage threshold to pass a sample (default: 40) |
 | kraken_db | Path to kraken database for classification |
-| plus | Use AMRFinderPlus --plus option (default: false) |
-| selected_genes | Genes of interest pulled from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
+| plus | Use AMRFinderPlus' --plus option (default: false) |
+| selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
 
 ### Inputs
 
-Spriggan's are the paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
+Spriggan's inputs are the paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
 
 | sample  | fastq_1 | fastq_2 |
 | ------------- | ------------- | ------------- |
@@ -78,13 +78,15 @@ Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bi
 Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
 
 #### Antimicrobial resistance gene detection
-Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.10.30](https://github.com/ncbi/amr). Spriggan can generate a table of AMRFinderPlus results for AR genes of interest with the selected_genes parameter. Spriggan will search for matches to the AR genes of interest in the AMRFinderPlus results and make a table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. By default the selected_genes parameter is set to: 'NDM|OXA|KPC|IMP|VIM'
+Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.10.30](https://github.com/ncbi/amr). Using the plus parameter provides results from the AMRFinderPlus "--plus" option, which includes genes such as virulence factors, stress-response, etc.  
+  
+Spriggan can also generate a table of results for genes of interest with the selected_genes parameter. Spriggan will search for matches to the gene(s) of interest in the AMRFinderPlus results and make a separate table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. 
 
 #### MLST scheme
 MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst). Multiple schemes are available for specific organisms, and STs from all available schemes are reported for those organisms.
 
 #### Contamination detection
-Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database.
+Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database. A custom Kraken database can be used with the kraken_db parameter.
 
 #### Summary
 Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/).
