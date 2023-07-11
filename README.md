@@ -40,7 +40,7 @@ nextflow spriggan/main.nf --outdir [path-to-outdir] -profile test[_full],[docker
 
 Spriggan's main parameters and their defaults are shown in the table below:
 
-| Parameter  | Parameter descriptions and defaults |
+| Parameter  | Parameter description and default |
 | ------------- | ------------- |
 | input  | Path to comma-separated file containing information about the samples in the experiment. |
 | outdir  | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure. |
