@@ -78,7 +78,7 @@ Mean and median genome coverage is determined by mapping the cleaned reads back 
 #### Antimicrobial resistance gene detection
 Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.10.30](https://github.com/ncbi/amr). Using the plus parameter provides results from the AMRFinderPlus "--plus" option, which includes genes such as virulence factors, stress-response, etc.  
   
-Spriggan can also generate a table of results for genes of interest with the selected_genes parameter. Spriggan will search for matches to the gene(s) of interest in the AMRFinderPlus results and make a separate table called 'selected_ar_genes.tsv.' The list of genes must be separated by | and enclosed in single quotes in the config file. 
+Spriggan can also generate a table of results for genes of interest with the selected_genes parameter. Spriggan will search for matches to the gene(s) of interest in the AMRFinderPlus results and make a separate table called **selected_ar_genes.tsv**. The list of genes must be separated by | and enclosed in single quotes in the config file. 
 
 #### MLST scheme
 MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst). Multiple schemes are available for specific organisms, and STs from all available schemes are reported for those organisms.
@@ -87,7 +87,7 @@ MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
 Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database. A custom Kraken database can be used with the kraken_db parameter.
 
 #### Summary
-Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/).
+Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/). The main outputs of Spriggan are a csv file named **spriggan_report.csv** and an HTML report file named **spriggan_multiqc_report.html**. The **spriggan_report.csv** file summarizes the results of the QC, classification, and MLST steps of the pipeline.
 
 ### Output
 An example of Spriggan's output directory structure and its output files can be seen below:
