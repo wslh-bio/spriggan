@@ -3,10 +3,12 @@
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/spriggan)
 ![GitHub Release](https://img.shields.io/github/release/wslh-bio/spriggan)
 
-Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes.
+Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes.
 
 ### Table of Contents:
 [Usage](#usage)  
+[Parameters](#parameters)  
+[Inputs](#inputs)  
 [Workflow outline](#workflow-outline)  
 [Read trimming and quality assessment](#read-trimming-and-quality-assessment)  
 [Genome assembly](#genome-assembly)  
@@ -19,7 +21,7 @@ Spriggan is a [NextFlow](https://www.nextflow.io/) pipeline used for assembly of
 [Output files](#output-files)  
 
 ### Usage
-The pipeline is designed to start from raw Illumina reads. All reads must be in the same directory. Then start the pipeline using:
+The pipeline is designed to start from raw, paired-end Illumina reads. Start the pipeline using:
 ```
 nextflow spriggan/main.nf --input [path-to-samplesheet] --outdir [path-to-outdir] -profile [docker,singularity,aws]
 ```
@@ -33,6 +35,31 @@ You can also test the pipeline with example data using `-profile test` or `-prof
 ```
 nextflow spriggan/main.nf --outdir [path-to-outdir] -profile test[_full],[docker/singularity]
 ```
+
+### Parameters
+
+Spriggan's main parameters and their defaults are shown in the table below:
+
+| Parameter  | Parameter descriptions and defaults |
+| ------------- | ------------- |
+| input  | Path to comma-separated file containing information about the samples in the experiment. |
+| outdir  | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure. |
+| qualitytrimscore | Minimum read quality for trimming (default: 10) |
+| trimdirection | Read trimming direction (default: "lr") |
+| minlength | Minimum read length for trimming (default: 10) |
+| contaminants | Path to FASTA file of contaminating sequences for trimming |
+| mincoverage | Minimum coverage threshold to pass a sample (default: 40) |
+| kraken_db | Path to kraken database for classification |
+| plus | Use AMRFinderPlus --plus option (default: false) |
+| selected_genes | Genes of interest pulled from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
+
+### Inputs
+
+Spriggan's are the paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
+
+| sample  | fastq_1 | fastq_2 |
+| ------------- | ------------- | ------------- |
+| sample_name  | /path/to/sample_name_R1.fastq.gz | /path/to/sample_name_R2.fastq.gz |
 
 ### Workflow outline
 
