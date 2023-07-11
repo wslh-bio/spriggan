@@ -49,7 +49,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | minlength | Minimum read length for trimming (default: 10) |
 | contaminants | Path to FASTA file of contaminating sequences for trimming |
 | mincoverage | Minimum coverage threshold to pass a sample (default: 40) |
-| kraken_db | Path to kraken database for classification |
+| kraken_db | Path to Kraken database for classification |
 | plus | Use AMRFinderPlus' --plus option (default: false) |
 | selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
 
