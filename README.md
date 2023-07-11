@@ -87,7 +87,7 @@ MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
 Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database. A custom Kraken database can be used with the kraken_db parameter.
 
 #### Summary
-Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/). The main outputs of Spriggan are a csv file named **spriggan_report.csv** and an HTML report file named **spriggan_multiqc_report.html**. The **spriggan_report.csv** file summarizes the results of the QC, classification, and MLST steps of the pipeline. The **spriggan_multiqc_report.html** contains tables and figures of quality metrics from the FastQC, BBDuk, Samtools, Kraken, and QUAST steps of the pipeline. 
+Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/). The main outputs of Spriggan are a csv file named **spriggan_report.csv** and an HTML report file named **spriggan_multiqc_report.html**. The **spriggan_report.csv** file summarizes the results of the QC, classification, and MLST steps of the pipeline. The **spriggan_multiqc_report.html** file contains tables and figures of quality metrics from the FastQC, BBDuk, Samtools, Kraken, and QUAST steps of the pipeline. 
 
 ### Output
 An example of Spriggan's output directory structure and its output files can be seen below:
