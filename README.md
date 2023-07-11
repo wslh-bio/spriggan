@@ -7,8 +7,8 @@ Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of 
 
 ### Table of Contents:
 [Usage](#usage)  
-[Parameters](#parameters)  
 [Inputs](#inputs)  
+[Parameters](#parameters)  
 [Workflow outline](#workflow-outline)  
 [Read trimming and quality assessment](#read-trimming-and-quality-assessment)  
 [Genome assembly](#genome-assembly)  
@@ -35,9 +35,15 @@ You can also test the pipeline with example data using `-profile test` or `-prof
 ```
 nextflow spriggan/main.nf --outdir [path-to-outdir] -profile test[_full],[docker/singularity]
 ```
+### Inputs
+
+Spriggan's inputs are paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
+
+| sample  | fastq_1 | fastq_2 |
+| ------------- | ------------- | ------------- |
+| sample_name  | /path/to/sample_name_R1.fastq.gz | /path/to/sample_name_R2.fastq.gz |
 
 ### Parameters
-
 Spriggan's main parameters and their defaults are shown in the table below:
 
 | Parameter  | Parameter description and default |
@@ -52,14 +58,6 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | kraken_db | Path to Kraken database for classification |
 | plus | Use AMRFinderPlus' --plus option (default: false) |
 | selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
-
-### Inputs
-
-Spriggan's inputs are paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
-
-| sample  | fastq_1 | fastq_2 |
-| ------------- | ------------- | ------------- |
-| sample_name  | /path/to/sample_name_R1.fastq.gz | /path/to/sample_name_R2.fastq.gz |
 
 ### Workflow outline
 
