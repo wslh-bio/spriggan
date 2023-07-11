@@ -55,7 +55,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 
 ### Inputs
 
-Spriggan's inputs are the paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
+Spriggan's inputs are paired Illumina FASTQ files for each sample and a comma separated sample sheet containing the sample name, the path to the forward reads file, and the path to the reverse reads file for each sample. An example of the sample sheet's format can be seen in the table below and found [here](https://github.com/wslh-bio/spriggan/blob/main/samplesheets/test_full.csv).
 
 | sample  | fastq_1 | fastq_2 |
 | ------------- | ------------- | ------------- |
