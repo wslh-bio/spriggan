@@ -53,26 +53,8 @@
             "properties": {
                 "qualitytrimscore": {
                     "type": "integer",
-                    "description": "Read score for quality trimming",
+                    "description": "Minimum read quality for trimming",
                     "default": 10
-                },
-                "plus": {
-                    "type": "boolean",
-                    "description": "Use AMRFinderPlus --plus option",
-                    "default": false
-                },
-                "selected_genes": {
-                    "type": "string",
-                    "description": "AR Genes of interest",
-                    "default": "'NDM|OXA|KPC|IMP|VIM'"
-                },
-                "contaminants": {
-                    "type": "string",
-                    "description": "Path to fasta containing contaminated sequences"
-                },
-                "savetrimmedreads": {
-                    "type": "boolean",
-                    "description": "Save the trimmed reads"
                 },
                 "trimdirection": {
                     "type": "string",
@@ -81,17 +63,32 @@
                 },
                 "minlength": {
                     "type": "integer",
-                    "description": "Minimum read length",
+                    "description": "Minimum read length for trimming",
                     "default": 10
                 },
+                "contaminants": {
+                    "type": "string",
+                    "description": "Path to FASTA file of contaminating sequences for trimming"
+                },
+
                 "mincoverage": {
                     "type": "integer",
-                    "description": "Minimum coverage threshold to pass an isolate",
+                    "description": "Minimum coverage threshold to pass a sample",
                     "default": 40
                 },
                 "kraken_db": {
                     "type": "string",
-                    "description": "Path to kraken database"
+                    "description": "Path to Kraken database for classification"
+                },
+                "plus": {
+                    "type": "boolean",
+                    "description": "Use AMRFinderPlus --plus option",
+                    "default": false
+                },
+                "selected_genes": {
+                    "type": "string",
+                    "description": "Genes of interest to pull from AMRFinderPlus output",
+                    "default": "'NDM|OXA|KPC|IMP|VIM'"
                 }
             }
         },
