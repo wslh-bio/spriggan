@@ -24,6 +24,11 @@ if any(x in organism for x in organisms):
         sub.Popen(cmd, stdout=outFile).wait()
 # otherwise run amrfinder without --organism
 else:
-    outFile = open(f'{sid}.amr.tsv','w')
-    cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
-    sub.Popen(cmd, stdout=outFile).wait()
+    if plus.lower() == "true":
+        outFile = open(f'{sid}.amr.tsv','w')
+        cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa --plus')
+        sub.Popen(cmd, stdout=outFile).wait()
+    else:
+        outFile = open(f'{sid}.amr.tsv','w')
+        cmd = shlex.split(f'amrfinder -n {sid}.{organism}.fa')
+        sub.Popen(cmd, stdout=outFile).wait()
