@@ -31,6 +31,13 @@
                     "fa_icon": "fas fa-folder-open",
                     "hidden": true
                 },
+                "bucket": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output bucket where the results will be saved.",
+                    "fa_icon": "fas fa-folder-open",
+                    "hidden": true
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
