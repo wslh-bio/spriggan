@@ -30,19 +30,21 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open",
-                    "default": "s3://dev-wslh-sequencing-analysis/${workflow.runName}"
+                    "hidden": true
                 },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "hidden": true
                 },
                 "multiqc_title": {
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
-                    "fa_icon": "fas fa-file-signature"
+                    "fa_icon": "fas fa-file-signature",
+                    "hidden": true
                 }
             }
         },
@@ -69,7 +71,8 @@
                 },
                 "contaminants": {
                     "type": "string",
-                    "description": "Path to FASTA file of contaminating sequences for trimming"
+                    "description": "Path to FASTA file of contaminating sequences for trimming",
+                    "hidden": true
                 },
 
                 "mincoverage": {
@@ -79,7 +82,8 @@
                 },
                 "kraken_db": {
                     "type": "string",
-                    "description": "Path to Kraken database for classification"
+                    "description": "Path to Kraken database for classification",
+                    "hidden": true
                 },
                 "plus": {
                     "type": "boolean",
@@ -207,7 +211,8 @@
                 "multiqc_methods_description": {
                     "type": "string",
                     "description": "Custom MultiQC yaml file containing HTML including a methods description.",
-                    "fa_icon": "fas fa-cog"
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
                 },
                 "tracedir": {
                     "type": "string",
