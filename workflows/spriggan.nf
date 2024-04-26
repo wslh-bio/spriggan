@@ -14,7 +14,8 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 
 // Set Outdir Default to run name
-params.outdir = "s3://${params.bucket}/${workflow.runName}"
+params.outdir = "s3://$params.bucket/$workflow.runName"
+log.info "outdir set to: $params.outdir"
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
