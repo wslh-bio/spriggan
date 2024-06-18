@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -115,18 +115,29 @@ def fastq_s3_to_samplesheet(
 
     read_dict = {}
 
-    ## Get read 1 files
-    for read1_file in get_fastqs(read1_extension):
-        sample = sanitize_sample(read1_file, read1_extension)
-        if sample not in read_dict:
-            read_dict[sample] = {"R1": [], "R2": []}
-        read_dict[sample]["R1"].append(read1_file)
-
-    ## Get read 2 files
     if not single_end:
+        ## Get read 1 files
+        for read1_file in get_fastqs(read1_extension):
+            sample = sanitize_sample(read1_file, read1_extension)
+            if sample not in read_dict:
+                read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample]["R1"].append(read1_file)
+
+        ## Get read 2 files
         for read2_file in get_fastqs(read2_extension):
             sample = sanitize_sample(read2_file, read2_extension)
             read_dict[sample]["R2"].append(read2_file)
+    else:
+        for read_file in get_fastqs(".fastq.gz"):
+            sample = sanitize_sample(read_file,".fastq.gz")
+            if sample not in read_dict:
+                read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample]["R1"].append(read_file)
+        for read_file in get_fastqs(".fq.gz"):
+            sample = sanitize_sample(read_file,".fq.gz")
+            if sample not in read_dict:
+                read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample]["R1"].append(read_file)
 
     ## Write to file
     if len(read_dict) > 0:
@@ -135,15 +146,23 @@ def fastq_s3_to_samplesheet(
             os.makedirs(out_dir)
 
         with open(samplesheet_file, "w") as fout:
-            header = ["sample", "fastq_1", "fastq_2"]
-            fout.write(",".join(header) + "\n")
-            for sample, reads in sorted(read_dict.items()):
-                for idx, read_1 in enumerate(reads["R1"]):
-                    read_2 = ""
-                    if idx < len(reads["R2"]):
-                        read_2 = reads["R2"][idx]
-                    sample_info = ",".join([sample, read_1, read_2])
-                    fout.write(f"{sample_info}\n")
+            if not single_end:
+                header = ["sample", "fastq_1", "fastq_2"]
+                fout.write(",".join(header) + "\n")
+                for sample, reads in sorted(read_dict.items()):
+                    for idx, read_1 in enumerate(reads["R1"]):
+                        read_2 = ""
+                        if idx < len(reads["R2"]):
+                            read_2 = reads["R2"][idx]
+                        sample_info = ",".join([sample, read_1, read_2])
+                        fout.write(f"{sample_info}\n")
+            else:
+                header = ["sample", "fastq"]
+                fout.write(",".join(header) + "\n")
+                for sample, reads in sorted(read_dict.items()):
+                    for idx, read_1 in enumerate(reads["R1"]):
+                        sample_info = ",".join([sample, read_1])
+                        fout.write(f"{sample_info}\n")
     else:
         error_str = (
             "\nWARNING: No FastQ files found so samplesheet has not been created!\n\n"
