@@ -67,11 +67,11 @@ total_tax = "NA"
 # Process database path
 NCBI_ratio_date = args.path_database[::-1].split('_')[0][::-1].split('.')[1]
 
-if os.path.isfile(args.database):
+if os.path.isfile(args.path_database):
 
     db_path_update = args.path_database + "_update.txt"
 
-    with open(args.d, 'r') as infile, open(db_path_update, 'w') as outfile:
+    with open(args.path_database, 'r') as infile, open(db_path_update, 'w') as outfile:
         for line in infile:
             outfile.write(line.capitalize().replace('[', '').replace(']', ''))
 
@@ -80,6 +80,8 @@ if os.path.isfile(args.database):
 else:
 
     logging.CRITICAL("No ratio DB, exiting")
+
+    logging.DEBUG("Writing NA for all information in output files.")
 
     with open(f"{args.sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
         outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio: -2")
