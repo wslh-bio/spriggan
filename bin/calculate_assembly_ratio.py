@@ -5,7 +5,7 @@ import logging
 import sys
 
 
-logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
@@ -45,6 +45,7 @@ def parse_args(args=None):
         action='store_true', 
         help='Print version and exit'
         )
+    return parser.parse_args(args)
 
 def does_quast_exist(quast_report):
     # Check if quast report exists
@@ -289,7 +290,9 @@ def print_version(version):
 def main(args=None):
     args = parse_args(args)
 
-    print_version(args.version)
+    if args.version == True:
+        print_version(args.version)
+
     does_quast_exist(args.quast_report)
     taxid, stdev, stdevs, assembly_length, expected_length, total_tax = initialize_variables()
     NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
