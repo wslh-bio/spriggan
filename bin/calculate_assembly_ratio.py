@@ -58,10 +58,10 @@ def initialize_variables():
 
     # Initialize variables
     taxid = "NA"
-    stdev = "NA"
-    stdevs = "NA"
-    assembly_length = "NA"
-    expected_length = "NA"
+    stdev = "NA" #CALCULATED
+    stdevs = "NA" #CALCULATED
+    assembly_length = "NA" #spriggan report, quast_results, 
+    expected_length = "NA" #CALCULATED
     total_tax = "NA"
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
@@ -70,7 +70,8 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
 
     # Process database path
     NCBI_ratio_date = path_database[::-1].split('_')[0][::-1].split('.')[1]
-
+    print(NCBI_ratio_date)
+    
     if os.path.isfile(path_database):
 
         db_path_update = path_database + "_update.txt"
