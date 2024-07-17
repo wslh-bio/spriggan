@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import re
 import os
 import logging
 import sys
@@ -47,13 +48,6 @@ def parse_args(args=None):
         )
     return parser.parse_args(args)
 
-def does_quast_exist(quast_report):
-    # Check if quast report exists
-    if not os.path.isfile(quast_report):
-        logging.CRITICAL(f"No quast report '{quast_report}' found, cannot continue")
-
-        sys.exit(1)
-
 def initialize_variables():
 
     # Initialize variables
@@ -66,12 +60,20 @@ def initialize_variables():
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
 
+def does_quast_exist(quast_report):
+    # Check if quast report exists
+    if not os.path.isfile(quast_report):
+        logging.CRITICAL(f"No quast report '{quast_report}' found, cannot continue")
+
+        sys.exit(1)
+
 def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
 
     # Process database path
-    NCBI_ratio_date = path_database[::-1].split('_')[0][::-1].split('.')[1]
-    print(NCBI_ratio_date)
-    
+    NCBI_ratio_date = path_database
+    match = re.search(r"(\d{8})", NCBI_ratio_date)
+    NCBI_ratio_date = match.group(1)
+
     if os.path.isfile(path_database):
 
         db_path_update = path_database + "_update.txt"
@@ -142,13 +144,31 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax):    # Initialize variables fo
 
         with open(tax, 'r') as infile:
             lines = infile.readlines()
+            print(len(lines))
 
-            if len(lines) >= 8:
+            # Extract genus from the 7th line
+            genus = lines[6].strip().split('\t')[1] if len(lines) > 6 else ""
 
-                genus = lines[6].split('\t')[1].strip()
+            if genus == "":
+                genus = "No genus found"
 
-                if genus == "":
-                    genus = "No genus found"
+            # Extract species from the 8th line
+            species = lines[7].strip().split('\t')[1] if len(lines) > 7 else ""
+        
+            # Handling species with 'sp.' in the name
+            if 'sp.' in species:
+                species = species.replace('sp. ', 'sp.')
+                species = species.replace('sp.', 'sp. ' + species.split('sp. ')[1].capitalize())
+                species = species.replace(' ', '-')  # Change spaces to dashes
+        
+            if species == "":
+                species = "No species found"
+
+            total_tax = f"{genus} {species}"
+            print(total_tax)
+            sys.exit(0)
+            if genus == "":
+                genus = "No genus found"
 
                 species = lines[7].split('\t')[1].strip()
 
@@ -170,10 +190,10 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax):    # Initialize variables fo
         species = in_species
         total_tax = f"{genus} {species}    (selected manually)"
 
-    # Initialize variables for matching
-    found = False
+        # Initialize variables for matching
+        found = False
 
-    return total_tax, genus, species, found
+        return total_tax, genus, species, found
 
 def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax):
 
@@ -243,7 +263,7 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
         sys.exit(0)
 
-def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, taxid, assembly_length):
+def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
 
     # Calculate and print ratio
     if expected_length == "NA" or not expected_length:
@@ -294,12 +314,13 @@ def main(args=None):
     if args.version == True:
         print_version(args.version)
 
-    does_quast_exist(args.quast_report)
     taxid, stdev, stdevs, assembly_length, expected_length, total_tax = initialize_variables()
+    does_quast_exist(args.quast_report)
     NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
     does_tax_file_exist(args.tax_file)
     total_tax, genus, species = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file)
-    ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length)
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax)
+    ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
     write_output(args.sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio)
 
 if __name__ == "__main__":
