@@ -143,7 +143,7 @@ def does_tax_file_exist(tax):
 
 def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
-    logging.debug("Checking for taxonomy information in taxonomy file")
+    logging.debug("Checking for taxonomy information in taxonomy file.")
 
     genus = None
     species = None
@@ -190,7 +190,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
         return total_tax, genus, species, found
 
-def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent):
+def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found):
 
     # Search in NCBI_ratio file
     with open(NCBI_ratio, 'r') as infile:
@@ -307,14 +307,31 @@ def main(args=None):
     if args.version == True:
         print_version(args.version)
 
+    #Initializing the variables
     taxid, stdev, stdevs, assembly_length, expected_length, total_tax = initialize_variables()
+
+    #Grabbing assembly length and gc percentage from quast file
     assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+
+    #Getting database names and dates
     NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+
+    #Making sure tax file exists
     does_tax_file_exist(args.tax_file)
+
+    #Getting taxonomy info
     total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, args.sample_name)
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent)
+
+    #Grabbing stats 
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+
+    #Calculating ratio 
     ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
+
+    #Writing final output
     write_output(args.sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio)
+
+    logging.info("Finished writing assembly ratio file.")
 
 if __name__ == "__main__":
     sys.exit(main())
