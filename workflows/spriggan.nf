@@ -58,6 +58,7 @@ include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
 include { RESULTS                       } from '../modules/local/results.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
+include { CALCULATE_ASSEMBLY            } from '../modules/local/calculate_assembly.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -278,6 +279,14 @@ workflow SPRIGGAN {
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
+    ch_NCBI_assembly_stats = Channel.fromPath("/assets/databases/NCBI_Assembly_stats_20240124.txt", checkIfExists: true)
+
+    CALCULATE_ASSEMBLY (
+        tuple val(meta) path(quast_report_tsv),
+        ch_NCBI_assembly_stats,
+        KRAKEN_SUMMARY.out.kraken_tsv,
+    )
 }
 
 /*
