@@ -62,27 +62,23 @@ def initialize_variables():
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
 
-def does_quast_exist(quast_report):
-    logging.debug("Checking if quast exists.")
-
-    # Check if quast report exists
-    if not os.path.isfile(quast_report):
-        logging.critical(f"No quast report '{quast_report}' found, cannot continue")
-
-        sys.exit(1)
-
 def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
 
     logging.debug("Processing database dates and paths.")
 
     # Process database path
-    NCBI_ratio_date = path_database
-    match = re.search(r"(\d{8})", NCBI_ratio_date)
+    get_date = path_database
+    match = re.search(r"(\d{8})", get_date)
     NCBI_ratio_date = match.group(1)
+
+    file_name_txt = os.path.basename(path_database)
+    file_name = file_name_txt.strip(".txt")
+
+    dir_name = os.path.dirname(path_database) + "/"
 
     if os.path.isfile(path_database):
 
-        db_path_update = path_database + "_update.txt"
+        db_path_update = dir_name + file_name + "_update.txt"
 
         with open(path_database, 'r') as infile, open(db_path_update, 'w') as outfile:
             for line in infile:
@@ -109,29 +105,30 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
     logging.debug("Checking quast results.")
 
-    # Check if quast assembly stats exist
-    with open(quast_report, 'r') as infile:
+    if quast_report:
 
-        lines = infile.readlines()
+        # Check if quast assembly stats exist
+        with open(quast_report, 'r') as infile:
 
-        if len(lines) >= 17:
+            df = pd.read_csv(quast_report,sep='\t')
 
-            assembly_length = lines[16].split('\t')[2]
-            sample_gc_percent = lines[17].split('\t')[2]
+            assembly_length = df.iloc[6].values[1]
+            sample_gc_percent = df.iloc[15].values[1]
+
 
             return assembly_length, sample_gc_percent
 
-        else:
+    else:
 
-            logging.critical("No quast exists, cannot continue")
+        logging.critical("No quast exists, cannot continue")
 
-            with open(f"{sample_name}_Assembly_ratio_{NCBI}.txt", 'w') as outfile:
-                outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio: -2")
+        with open(f"{sample_name}_Assembly_ratio_{NCBI}.txt", 'w') as outfile:
+            outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio: -2")
 
-            with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
-                outfile.write("Tax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
+        with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
+            outfile.write("Tax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
-            sys.exit(1)
+        sys.exit(1)
 
 def does_tax_file_exist(tax):
 
@@ -144,7 +141,7 @@ def does_tax_file_exist(tax):
 
         sys.exit(1)
 
-def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):    # Initialize variables for tax lookup
+def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
     logging.debug("Checking for taxonomy information in taxonomy file")
 
@@ -193,7 +190,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):    # Initialize
 
         return total_tax, genus, species, found
 
-def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax):
+def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent):
 
     # Search in NCBI_ratio file
     with open(NCBI_ratio, 'r') as infile:
@@ -214,19 +211,18 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                 reference_count = line[6]
                 stdev = int(1000000 * float(line[5])) // 1
 
-                if reference_count < 10:
+                if int(reference_count) < 10:
                     stdev = "Not calculated on species with n<10 references"
                     stdevs = "NA"
 
                 else:
-
-                    if int(assembly_length) > expected_length:
+                    if int(assembly_length) > int(expected_length):
                         bigger = int(assembly_length)
-                        smaller = expected_length
+                        smaller = int(expected_length)
 
                     else:
                         smaller = int(assembly_length)
-                        bigger = expected_length
+                        bigger = int(expected_length)
 
                     stdevs = (bigger - smaller) / stdev
 
@@ -235,7 +231,7 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                 gc_mean = line[10]
                 gc_count = line[12]
 
-                if gc_count < 10:
+                if int(gc_count) < 10:
                     gc_stdev = "Not calculated on species with n<10 references"
 
                 else:
@@ -246,7 +242,7 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
                 found = True
 
-                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count
+                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length
 
     # Handle unmatched cases
     if not found:
@@ -312,11 +308,11 @@ def main(args=None):
         print_version(args.version)
 
     taxid, stdev, stdevs, assembly_length, expected_length, total_tax = initialize_variables()
-    does_quast_exist(args.quast_report)
+    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
     NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
     does_tax_file_exist(args.tax_file)
-    total_tax, genus, species = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, args.sample_name)
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax)
+    total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, args.sample_name)
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent)
     ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
     write_output(args.sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio)
 
