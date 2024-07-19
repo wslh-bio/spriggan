@@ -242,7 +242,7 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
                 found = True
 
-                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length
+                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid
 
     # Handle unmatched cases
     if not found:
@@ -323,7 +323,7 @@ def main(args=None):
     total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, args.sample_name)
 
     #Grabbing stats 
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
 
     #Calculating ratio 
     ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
