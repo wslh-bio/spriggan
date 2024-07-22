@@ -280,12 +280,12 @@ workflow SPRIGGAN {
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 
-    ch_NCBI_assembly_stats = Channel.fromPath("/assets/databases/NCBI_Assembly_stats_20240124.txt", checkIfExists: true)
+    ch_NCBI_assembly_stats = Channel.fromPath("$projectDir/assets/databases/NCBI_Assembly_stats_20240124.txt", checkIfExists: true)
 
     CALCULATE_ASSEMBLY (
-        tuple val(meta) path(quast_report_tsv),
+        QUAST.out.result,
         ch_NCBI_assembly_stats,
-        KRAKEN_SUMMARY.out.kraken_tsv,
+        KRAKEN_SUMMARY.out.kraken_tsv
     )
 }
 
