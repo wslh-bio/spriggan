@@ -1,17 +1,15 @@
 process CALCULATE_ASSEMBLY {
-
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/biopython:1.81' :
-        'quay.io/biocontainers/biopython:1.81' }"
+    tag "$each.id"
+    container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
 
     input:
-    path quast_report_tsv
+    tuple val(each), path(quast_report_tsv)
     path NCBI_assembly_stats_file
     path kraken_results_tsv
 
     output:
     path "*_Assembly_ratio_*"   , emit: assembly_ratio
-    path "*GC_content_*"   , emit: gc_content
+    path "*_GC_content_*"   , emit: gc_content
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,6 +19,7 @@ process CALCULATE_ASSEMBLY {
     calculate_assembly_ratio.py \\
     -d $NCBI_assembly_stats_file \\
     -q $quast_report_tsv \\
-    -t $kraken_results_tsv
+    -t $kraken_results_tsv \\
+    -s $each.id
     """
 }
