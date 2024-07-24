@@ -1,11 +1,13 @@
 process CALCULATE_ASSEMBLY {
-    tag "$each.id"
+    tag"$meta.id"
     container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
 
+    label 'process_single'
+
     input:
-    tuple val(each), path(quast_report_tsv)
+    tuple val(meta), path(quast_report_tsv)
+    path(kraken_results_tsv)
     path NCBI_assembly_stats_file
-    path kraken_results_tsv
 
     output:
     path "*_Assembly_ratio_*"   , emit: assembly_ratio
@@ -19,7 +21,6 @@ process CALCULATE_ASSEMBLY {
     calculate_assembly_ratio.py \\
     -d $NCBI_assembly_stats_file \\
     -q $quast_report_tsv \\
-    -t $kraken_results_tsv \\
-    -s $each.id
+    -t $kraken_results_tsv
     """
 }
