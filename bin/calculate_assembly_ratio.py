@@ -7,7 +7,7 @@ import sys
 import pandas as pd
 
 
-logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
@@ -37,12 +37,6 @@ def parse_args(args=None):
         help='Specific taxonomy to compare against in the database', 
         default=None
         )
-    parser.add_argument('-s', '--sample_name',
-        metavar='sample_name', 
-        type=str, 
-        help='Sample name', 
-        required=True
-        )
     parser.add_argument('-V', '--version',
         action='store_true', 
         help='Print version and exit'
@@ -61,6 +55,13 @@ def initialize_variables():
     total_tax = "NA"
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
+
+def extract_sample_name(quast_report):
+    logging.debug("Extracting sample name from quast report")
+    sample_name = quast_report.split('.')[0]
+    sample_name = sample_name.split('/')[-1]
+
+    return sample_name
 
 def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
 
@@ -127,17 +128,6 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
         with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
             outfile.write("Tax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
-
-        sys.exit(1)
-
-def does_tax_file_exist(tax):
-
-    logging.debug("Checking to ensure taxonomy file exists.")
-
-    # Check for tax summary file
-    if not os.path.isfile(tax):
-
-        logging.critical("No Tax file to find accession for lookup, exiting")
 
         sys.exit(1)
 
@@ -310,26 +300,26 @@ def main(args=None):
     #Initializing the variables
     taxid, stdev, stdevs, assembly_length, expected_length, total_tax = initialize_variables()
 
+    #Extracting sample name
+    sample_name = extract_sample_name(args.quast_report)
+
     #Grabbing assembly length and gc percentage from quast file
-    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
 
     #Getting database names and dates
-    NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, args.sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
-
-    #Making sure tax file exists
-    does_tax_file_exist(args.tax_file)
+    NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
 
     #Getting taxonomy info
-    total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, args.sample_name)
+    total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, sample_name)
 
     #Grabbing stats 
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, args.sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
 
     #Calculating ratio 
-    ratio = calculate_ratio(args.sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
+    ratio = calculate_ratio(sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
 
     #Writing final output
-    write_output(args.sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio)
+    write_output(sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio)
 
     logging.info("Finished writing assembly ratio file.")
 
