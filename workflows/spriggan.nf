@@ -199,6 +199,20 @@ workflow SPRIGGAN {
     )
 
     //
+    // MODULE: CALCULATE_ASSEMBLY
+    //
+    // ch_assembly_ratios = KRAKEN_SUMMARY.out.kraken_tsv.join(QUAST.out.result)
+    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
+    ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
+
+    CALCULATE_ASSEMBLY (
+        ch_quast,
+        ch_kraken_tsv,
+        params.ncbi_assembly_stats
+    )
+
+
+    //
     // MODULE: AMRFINDER_SETUP
     //
     AMRFINDER_SETUP (
@@ -269,7 +283,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(QUAST
+        .out
+        .result
+        .map {meta, path -> path}
+        .collect()
+        .ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
@@ -280,13 +299,7 @@ workflow SPRIGGAN {
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 
-    ch_NCBI_assembly_stats = Channel.fromPath("$projectDir/assets/databases/NCBI_Assembly_stats_20240124.txt", checkIfExists: true)
 
-    CALCULATE_ASSEMBLY (
-        QUAST.out.result,
-        ch_NCBI_assembly_stats,
-        KRAKEN_SUMMARY.out.kraken_tsv
-    )
 }
 
 /*
