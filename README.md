@@ -109,6 +109,9 @@ spriggan_results
 │   ├── *.bbduk.log
 │   ├── *.trim.txt
 │   └── bbduk_results.tsv
+├── calculate
+│   ├── *_Assembly_ratio_20240124.txt
+│   ├── *_GC_content_20240124.txt
 ├── coverage
 │   └── coverage_stats.tsv
 ├── fastqc
