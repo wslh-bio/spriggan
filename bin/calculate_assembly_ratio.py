@@ -7,7 +7,7 @@ import sys
 import pandas as pd
 
 
-logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
