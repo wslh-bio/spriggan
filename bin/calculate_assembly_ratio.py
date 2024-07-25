@@ -94,10 +94,10 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
         logging.critical("No ratio DB, exiting")
         logging.debug("Writing NA for all information in output files.")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write("Tax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
         sys.exit(1)
@@ -123,10 +123,10 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
         logging.critical("No quast exists, cannot continue")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{NCBI}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{NCBI}.tsv", 'w') as outfile:
             outfile.write("Tax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
         sys.exit(1)
@@ -227,7 +227,7 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                 else:
                     gc_stdev = line[11]
 
-                with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+                with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.tsv", 'w') as outfile:
                     outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {gc_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
 
                 found = True
@@ -239,10 +239,10 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
         logging.info(f"No match found for '{genus} {species}'")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: NA\nIsolate_St.Devs: NA\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -1\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
         sys.exit(0)
@@ -254,10 +254,10 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, ta
 
         logging.info("No expected length was found to compare to")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: NA\nIsolate_St.Devs: NA\nActual_length: {assembly_length}\nExpected_length: NA\nRatio Actual:Expected: -1\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
         sys.exit(0)
@@ -266,10 +266,10 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, ta
 
         logging.info("No assembly length was found to compare with")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: NA\nActual_length: NA\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.tsv", 'w') as outfile:
             outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {gc_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: NA")
         sys.exit(0)
 
@@ -285,7 +285,7 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, ta
 
 def write_output(sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a):
 
-    with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+    with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.tsv", 'w') as outfile:
         outfile.write(f"Tax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_St.Dev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: {ratio_a_e}\nRatio Expected:Actual: {ratio_e_a}")
 
 def print_version(version):
