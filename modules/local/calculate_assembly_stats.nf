@@ -1,4 +1,4 @@
-process CALCULATE_ASSEMBLY {
+process CALCULATE_ASSEMBLY_STATS {
     tag"$meta.id"
     container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
 
