@@ -26,7 +26,7 @@ merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'
 merged = merged.assign(krakenDB=krakenDB_version)
 merged = merged.assign(amrDB=amrfinderDB_version)
 merged = merged.assign(spriggan=sys.argv[3])
-merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','Selected AMR Genes','Selected AMR Genes Coverage','Selected AMR Genes Identity','amrDB','spriggan']]
+merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','krakenDB','MLST Scheme','Gene','Coverage','Identity','Selected AMR Genes','Selected AMR Genes Coverage','Selected AMR Genes Identity','Ratio Actual:Expected']]
 merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage','Gene':'AMR','Coverage':'AMR Coverage','Identity':'AMR Identity','krakenDB':'Kraken Database Verion','amrDB':'AMRFinderPlus Database Version','spriggan':'Spriggan Version'})
 
 merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
