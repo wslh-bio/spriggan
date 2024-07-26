@@ -58,7 +58,8 @@ include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
 include { RESULTS                       } from '../modules/local/results.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
-include { CALCULATE_ASSEMBLY            } from '../modules/local/calculate_assembly.nf'
+include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
+include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -199,18 +200,24 @@ workflow SPRIGGAN {
     )
 
     //
-    // MODULE: CALCULATE_ASSEMBLY
+    // MODULE: CALCULATE_ASSEMBLY_STATS
     //
     // ch_assembly_ratios = KRAKEN_SUMMARY.out.kraken_tsv.join(QUAST.out.result)
     ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
     ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
 
-    CALCULATE_ASSEMBLY (
+    CALCULATE_ASSEMBLY_STATS (
         ch_quast,
         ch_kraken_tsv,
         params.ncbi_assembly_stats
     )
 
+    //
+    // MODULE: ASSEMBLY_STATS_SUMMARY
+    //
+    ASSEMBLY_STATS_SUMMARY (
+        CALCULATE_ASSEMBLY_STATS.out.assembly_ratio.collect()
+    )
 
     //
     // MODULE: AMRFINDER_SETUP
@@ -247,7 +254,8 @@ workflow SPRIGGAN {
         AMRFINDER_SUMMARY.out.amrfinder_tsv,
         AMRFINDER_SUMMARY.out.selected_ar_tsv,
         KRAKEN.out.versions.first(),
-        AMRFINDER.out.versions.first()
+        AMRFINDER.out.versions.first(),
+        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv
     )
 
     //
