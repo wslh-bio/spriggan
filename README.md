@@ -62,7 +62,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 
 ### Workflow outline
 
-<img src ='/assets/spriggan.jpg'>
+<img src ='/assets/sprigganUpdate.drawio.png'>
 
 #### Read trimming and quality assessment
 Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
