@@ -2,9 +2,8 @@
 import os
 import glob
 from pandas import DataFrame
-import sys
 
-# function for summarizing bbduk output
+# function for summarizing assembly output
 def summarize_assembly_file(file):
     # get sample id from file name and set up data list
     sample_id = os.path.basename(file).split("_")[0]
@@ -12,19 +11,23 @@ def summarize_assembly_file(file):
     data.append(sample_id)
     with open(file,"r") as inFile:
         for line in inFile:
-            # get total number of reads
+            # Get Expected genome length
+            if "Expected_length:" in line:
+                expected_length = line.split(" ")[1].strip("\n")
+                data.append(expected_length)
+            # Get ratio
             if "Ratio Actual:Expected:" in line:
                 ratio = line.split(" ")[2].strip("\n")
                 data.append(ratio)
     return data
 
-# get all bbduk output files
-files = glob.glob("data/*_Assembly_ratio_*")
+# get all calculate output files
+assembly_files = glob.glob("data/*_Assembly_ratio_*")
 
-# summarize bbduk output files
-results = map(summarize_assembly_file,files)
+# summarize output files
+assembly_results = map(summarize_assembly_file, assembly_files)
 
 # convert results to data frame and write to tsv
-df = DataFrame(results,columns=['Sample','Ratio Actual:Expected'])
+df = DataFrame(assembly_results,columns=['Sample','Expected Genome Length','Genome Length Ratio (Actual/Expected)'])
 print(df)
 df.to_csv(f'assembly_stats_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
