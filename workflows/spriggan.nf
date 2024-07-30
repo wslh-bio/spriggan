@@ -60,6 +60,7 @@ include { RESULTS                       } from '../modules/local/results.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
 include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
 include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
+include { GC_STATS_SUMMARY              } from '../modules/local/gc_stats_summary.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -202,7 +203,7 @@ workflow SPRIGGAN {
     //
     // MODULE: CALCULATE_ASSEMBLY_STATS
     //
-    // ch_assembly_ratios = KRAKEN_SUMMARY.out.kraken_tsv.join(QUAST.out.result)
+    // 
     ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
     ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
 
@@ -217,6 +218,13 @@ workflow SPRIGGAN {
     //
     ASSEMBLY_STATS_SUMMARY (
         CALCULATE_ASSEMBLY_STATS.out.assembly_ratio.collect()
+    )
+
+    //
+    // MODULE: GC_STATS_SUMMARY
+    //
+    GC_STATS_SUMMARY(
+        CALCULATE_ASSEMBLY_STATS.out.gc_content.collect()
     )
 
     //
@@ -255,7 +263,8 @@ workflow SPRIGGAN {
         AMRFINDER_SUMMARY.out.selected_ar_tsv,
         KRAKEN.out.versions.first(),
         AMRFINDER.out.versions.first(),
-        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv
+        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv,
+        GC_STATS_SUMMARY.out.gc_stats_tsv
     )
 
     //

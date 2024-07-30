@@ -14,6 +14,7 @@ process RESULTS {
     path(kraken_version, stageAs:"kraken_version.yml")
     path(amrfinder_version, stageAs:"amrfinder_version.yml")
     path("assembly_stats_summary.tsv")
+    path("gc_stats_summary.tsv")
 
     output:
     path('spriggan_report.csv')
