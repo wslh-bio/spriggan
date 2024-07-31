@@ -3,22 +3,35 @@
 import sys,os
 import pandas as pd
 import argparse
+import logging
+import sys
+
+#Setting up logging structure
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
 #this gets us the root dir of the project
 base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 ### Load in result data
-parser = argparse.ArgumentParser(description='Validate pipeline results.')
-parser.add_argument('spriggan_report_valid',help='Path to validated spriggan_report.csv')
-parser.add_argument('spriggan_report_test',help='Path to test spriggan_report.csv')
+parser = argparse.ArgumentParser(description='Validate pipeline results.', 
+                                 epilog='use like so: python validate.py $VALID_REPORT $TEST_REPORT $VALID_STDEV_FILE $TEST_STDEV_FILE')
+parser.add_argument('spriggan_report_valid',
+                    help='Path to validated spriggan_report.csv')
+parser.add_argument('spriggan_report_test',
+                    help='Path to test spriggan_report.csv')
+parser.add_argument('valid_stdev_file',
+                    help='Path to validate calculate folder')
+
 args = parser.parse_args()
 
 valid_results = pd.read_csv(os.path.abspath(args.spriggan_report_valid),sep=',',index_col="Sample").sort_index()
 test_results = pd.read_csv(os.path.abspath(args.spriggan_report_test),sep=',',index_col="Sample").sort_index()
+stdev = pd.read_csv(os.path.abspath(args.valid_stdev_file),sep=',',index_col="Sample").sort_index()
 
 ### Sort Columns By name
 valid_results = valid_results.reindex(sorted(valid_results.columns),axis=1)
 test_results = test_results.reindex(sorted(test_results.columns),axis=1)
+stdev = stdev.reindex(sorted(stdev.columns),axis=1)
 
 ### Validate Results
 validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
@@ -98,15 +111,20 @@ if "Genome Length Ratio (Actual/Expected)" in validation.columns:
     for sample in validation["Genome Length Ratio (Actual/Expected)"].index.get_level_values('Sample').unique():
         valid_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Valid Data"]
         test_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Test Data"]
+        stdev_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,""]
+        print(stdev_data)
+        sys.ext(0)
         diff = abs(valid_data-test_data)
-        if diff < 0.5:
+        if diff < stdev_data:
             test_results.loc[sample,"Genome Length Ratio (Actual/Expected)"] = valid_results.loc[sample,"Genome Length Ratio (Actual/Expected)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 if "Sample GC Content (%)" in validation.columns:
+    print('here2')
     for sample in validation["Sample GC Content (%)"].index.get_level_values('Sample').unique():
         valid_data = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
         test_data = validation["Sample GC Content (%)"].loc[sample,"Test Data"]
+        stdev_data = validation["Sample GC Content (%)"].loc[sample,"st"]
         diff = abs(valid_data-test_data)
         if diff < 0.5:
             test_results.loc[sample,"Sample GC Content (%)"] = valid_results.loc[sample,"Sample GC Content (%)"]
