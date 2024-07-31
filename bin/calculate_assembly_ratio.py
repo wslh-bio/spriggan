@@ -111,7 +111,7 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
         # Check if quast assembly stats exist
         with open(quast_report, 'r') as infile:
 
-            df = pd.read_csv(quast_report,sep='\t')
+            df = pd.read_csv(infile,sep='\t')
 
             assembly_length = df.iloc[6].values[1]
             sample_gc_percent = df.iloc[15].values[1]
