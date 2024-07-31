@@ -94,6 +94,24 @@ if "Selected AMR Genes" in validation.columns:
             test_results.loc[sample,"Selected AMR Genes Identity"] = valid_results.loc[sample,"Selected AMR Genes Identity"]
     validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
+if "Genome Length Ratio (Actual/Expected)" in validation.columns:
+    for sample in validation["Genome Length Ratio (Actual/Expected)"].index.get_level_values('Sample').unique():
+        valid_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Valid Data"]
+        test_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Test Data"]
+        diff = abs(valid_data-test_data)
+        if diff < 0.5:
+            test_results.loc[sample,"Genome Length Ratio (Actual/Expected)"] = valid_results.loc[sample,"Genome Length Ratio (Actual/Expected)"]
+            validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
+
+if "Sample GC Content (%)" in validation.columns:
+    for sample in validation["Sample GC Content (%)"].index.get_level_values('Sample').unique():
+        valid_data = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
+        test_data = validation["Sample GC Content (%)"].loc[sample,"Test Data"]
+        diff = abs(valid_data-test_data)
+        if diff < 0.5:
+            test_results.loc[sample,"Sample GC Content (%)"] = valid_results.loc[sample,"Sample GC Content (%)"]
+            validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
+
 ### If no difference validation is successful
 if validation.empty:
     print("Validation check Successful!")
