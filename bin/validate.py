@@ -140,28 +140,29 @@ if "Genome Length Ratio (Actual/Expected)" in validation.columns:
         
         logging.debug("Check if test_data is within the bounds.")
 
-        if lower < test_data and test_data < higher or lower == test_data or higher == test_data:
+        if lower <= test_data and test_data <= higher:
             test_results.loc[sample,"Genome Length Ratio (Actual/Expected)"] = valid_results.loc[sample,"Genome Length Ratio (Actual/Expected)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
-
 if "Sample GC Content (%)" in validation.columns:
 
-    logging.debug("Sample GC content.")
+    logging.debug("Process sample GC content.")
 
     for sample in validation["Sample GC Content (%)"].index.get_level_values('Sample').unique():
-        valid_data_mean = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
-        test_data = validation["Sample GC Content (%)"].loc[sample,"Test Data"]
+
+        valid_sample_data = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
+        test_sample_data = validation["Sample GC Content (%)"].loc[sample,"Test Data"]
         gc_stdev = stdev.loc[sample, 'species_gc_stdev']
+        gc_mean = valid_results.loc[sample, 'Species GC Content (Mean)']
 
-        logging.debug(" Calculate lower and higher bounds.")
+        logging.debug("Calculate lower and higher bounds.")
 
-        lower = valid_data - gc_stdev
-        higher = valid_data + gc_stdev 
+        lower = gc_mean - gc_stdev
+        higher = gc_mean + gc_stdev 
 
         logging.debug("Check if test_data is within the bounds.")
 
-        if lower < test_data and test_data < higher or lower == test_data or higher == test_data:
+        if lower < test_sample_data < higher:
             test_results.loc[sample,"Sample GC Content (%)"] = valid_results.loc[sample,"Sample GC Content (%)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
@@ -171,5 +172,5 @@ if validation.empty:
     sys.exit()
 else:
     logging.info("Validation Failed")
-    # print(validation)
+    print(validation)
     sys.exit(1)
