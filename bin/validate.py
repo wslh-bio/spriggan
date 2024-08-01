@@ -7,7 +7,7 @@ import logging
 import sys
 
 #Setting up logging structure
-logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
 #this gets us the root dir of the project
 base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -129,6 +129,7 @@ if "Genome Length Ratio (Actual/Expected)" in validation.columns:
     logging.debug("Processing genome length ratios.")
 
     for sample in validation["Genome Length Ratio (Actual/Expected)"].index.get_level_values('Sample').unique():
+
         valid_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Valid Data"]
         test_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Test Data"]
         assembly_stdev = stdev.loc[sample, 'assembly_stdev']
@@ -140,7 +141,7 @@ if "Genome Length Ratio (Actual/Expected)" in validation.columns:
         
         logging.debug("Check if test_data is within the bounds.")
 
-        if lower <= test_data and test_data <= higher:
+        if lower < test_data < higher:
             test_results.loc[sample,"Genome Length Ratio (Actual/Expected)"] = valid_results.loc[sample,"Genome Length Ratio (Actual/Expected)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
