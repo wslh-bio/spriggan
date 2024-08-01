@@ -7,7 +7,7 @@ import logging
 import sys
 
 #Setting up logging structure
-logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
 
 #this gets us the root dir of the project
 base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -38,30 +38,44 @@ validation = valid_results.compare(test_results,align_axis=0,result_names=("Vali
 
 ### If no difference validation is successful
 if validation.empty:
-    print("Validation check Successful!")
+    logging.info("Validation check Successful!")
     sys.exit()
 
 ### If assembly length differs by less than 1000 bp then remove from dataframe
 if "Assembly Length (bp)" in validation.columns:
+
+    logging.debug("Processing assembly length.")
+
     for sample in validation["Assembly Length (bp)"].index.get_level_values('Sample').unique():
         valid_data = validation["Assembly Length (bp)"].loc[sample,"Valid Data"]
         test_data = validation["Assembly Length (bp)"].loc[sample,"Test Data"]
         diff = abs(valid_data-test_data)
+
+        logging.debug("Processing difference of assembly length")
         if diff < 1000:
             test_results.loc[sample,"Assembly Length (bp)"] = valid_results.loc[sample,"Assembly Length (bp)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 ### If contig number differs by less than 10 then set test equal to valid
 if "Contigs (#)" in validation.columns:
+    
+    logging.debug("Processing Contig numbers.")
+    
     for sample in validation["Contigs (#)"].index.get_level_values('Sample').unique():
         valid_data = validation["Contigs (#)"].loc[sample,"Valid Data"]
         test_data = validation["Contigs (#)"].loc[sample,"Test Data"]
         diff = abs(valid_data-test_data)
+        
+        logging.debug("Processing difference of contig numbers")
+
         if diff < 10:
             test_results.loc[sample,"Contigs (#)"] = valid_results.loc[sample,"Contigs (#)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 if "AMR" in validation.columns:
+    
+    logging.debug("Processing AMR genes.")
+
     for sample in validation["AMR"].index.get_level_values('Sample').unique():
         passing = True
         valid_data_mech = validation["AMR"].loc[sample,"Valid Data"].split(';')
@@ -85,6 +99,9 @@ if "AMR" in validation.columns:
     validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 if "Selected AMR Genes" in validation.columns:
+    
+    logging.debug("Processing selected AMR genes.")
+    
     for sample in validation["Selected AMR Genes"].index.get_level_values('Sample').unique():
         passing = True
         valid_data_mech = validation["Selected AMR Genes"].loc[sample,"Valid Data"].split(';')
@@ -108,33 +125,51 @@ if "Selected AMR Genes" in validation.columns:
     validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 if "Genome Length Ratio (Actual/Expected)" in validation.columns:
+    
+    logging.debug("Processing genome length ratios.")
+
     for sample in validation["Genome Length Ratio (Actual/Expected)"].index.get_level_values('Sample').unique():
         valid_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Valid Data"]
         test_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,"Test Data"]
-        stdev_data = validation["Genome Length Ratio (Actual/Expected)"].loc[sample,""]
-        print(stdev_data)
-        sys.ext(0)
-        diff = abs(valid_data-test_data)
-        if diff < stdev_data:
+        assembly_stdev = stdev.loc[sample, 'assembly_stdev']
+
+        logging.debug("Calculate lower and higher bounds.")
+
+        lower = valid_data - assembly_stdev
+        higher = valid_data + assembly_stdev
+        
+        logging.debug("Check if test_data is within the bounds.")
+
+        if lower < test_data and test_data < higher or lower == test_data or higher == test_data:
             test_results.loc[sample,"Genome Length Ratio (Actual/Expected)"] = valid_results.loc[sample,"Genome Length Ratio (Actual/Expected)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
+
 if "Sample GC Content (%)" in validation.columns:
-    print('here2')
+
+    logging.debug("Sample GC content.")
+
     for sample in validation["Sample GC Content (%)"].index.get_level_values('Sample').unique():
-        valid_data = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
+        valid_data_mean = validation["Sample GC Content (%)"].loc[sample,"Valid Data"]
         test_data = validation["Sample GC Content (%)"].loc[sample,"Test Data"]
-        stdev_data = validation["Sample GC Content (%)"].loc[sample,"st"]
-        diff = abs(valid_data-test_data)
-        if diff < 0.5:
+        gc_stdev = stdev.loc[sample, 'species_gc_stdev']
+
+        logging.debug(" Calculate lower and higher bounds.")
+
+        lower = valid_data - gc_stdev
+        higher = valid_data + gc_stdev 
+
+        logging.debug("Check if test_data is within the bounds.")
+
+        if lower < test_data and test_data < higher or lower == test_data or higher == test_data:
             test_results.loc[sample,"Sample GC Content (%)"] = valid_results.loc[sample,"Sample GC Content (%)"]
             validation = valid_results.compare(test_results,align_axis=0,result_names=("Valid Data","Test Data"))
 
 ### If no difference validation is successful
 if validation.empty:
-    print("Validation check Successful!")
+    logging.info("Validation check Successful!")
     sys.exit()
 else:
-    print("Validation Failed")
-    print(validation)
+    logging.info("Validation Failed")
+    # print(validation)
     sys.exit(1)
