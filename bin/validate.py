@@ -7,14 +7,14 @@ import logging
 import sys
 
 #Setting up logging structure
-logging.basicConfig(level = logging.DEBUG, format = '%(levelname)s : %(message)s')
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
 #this gets us the root dir of the project
 base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 ### Load in result data
 parser = argparse.ArgumentParser(description='Validate pipeline results.', 
-                                 epilog='Example usage: python validate.py $VALID_REPORT $TEST_REPORT $VALID_STDEV_FILE')
+                                 epilog='Example usage: python validate.py ${VALID_REPORT} ${TEST_REPORT} ${VALID_STDEV_FILE}')
 parser.add_argument('spriggan_report_valid',
                     help='Path to validated spriggan_report.csv')
 parser.add_argument('spriggan_report_test',
@@ -39,7 +39,7 @@ validation = valid_results.compare(test_results,align_axis=0,result_names=("Vali
 ### If no difference validation is successful
 if validation.empty:
     logging.info("Validation check Successful!")
-    sys.exit()
+    sys.exit(0)
 
 ### If assembly length differs by less than 1000 bp then remove from dataframe
 if "Assembly Length (bp)" in validation.columns:
@@ -129,7 +129,7 @@ if "MLST Scheme" in validation.columns:
 
     for sample in validation["MLST Scheme"].index.get_level_values('Sample').unique():
 
-        logging.debug("Setting up comparison")
+        logging.debug("Setting up comparison for MLST scheme")
         valid_data = validation["MLST Scheme"].loc[sample,"Valid Data"]
         test_data = validation["MLST Scheme"].loc[sample,"Test Data"]
 
@@ -203,7 +203,7 @@ if "Sample GC Content (%)" in validation.columns:
 ### If no difference validation is successful
 if validation.empty:
     logging.info("Validation check Successful!")
-    sys.exit()
+    sys.exit(0)
 else:
     logging.info("Validation Failed")
     logging.info(validation)
