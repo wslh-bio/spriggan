@@ -58,6 +58,9 @@ include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
 include { RESULTS                       } from '../modules/local/results.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
+include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
+include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
+include { GC_STATS_SUMMARY              } from '../modules/local/gc_stats_summary.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -198,6 +201,33 @@ workflow SPRIGGAN {
     )
 
     //
+    // MODULE: CALCULATE_ASSEMBLY_STATS
+    //
+    // 
+    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
+    ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
+
+    CALCULATE_ASSEMBLY_STATS (
+        ch_quast,
+        ch_kraken_tsv,
+        params.ncbi_assembly_stats
+    )
+
+    //
+    // MODULE: ASSEMBLY_STATS_SUMMARY
+    //
+    ASSEMBLY_STATS_SUMMARY (
+        CALCULATE_ASSEMBLY_STATS.out.assembly_ratio.collect()
+    )
+
+    //
+    // MODULE: GC_STATS_SUMMARY
+    //
+    GC_STATS_SUMMARY(
+        CALCULATE_ASSEMBLY_STATS.out.gc_content.collect()
+    )
+
+    //
     // MODULE: AMRFINDER_SETUP
     //
     AMRFINDER_SETUP (
@@ -232,7 +262,9 @@ workflow SPRIGGAN {
         AMRFINDER_SUMMARY.out.amrfinder_tsv,
         AMRFINDER_SUMMARY.out.selected_ar_tsv,
         KRAKEN.out.versions.first(),
-        AMRFINDER.out.versions.first()
+        AMRFINDER.out.versions.first(),
+        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv,
+        GC_STATS_SUMMARY.out.gc_stats_tsv
     )
 
     //
@@ -268,7 +300,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(QUAST
+        .out
+        .result
+        .map {meta, path -> path}
+        .collect()
+        .ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
@@ -278,6 +315,8 @@ workflow SPRIGGAN {
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
+
 }
 
 /*

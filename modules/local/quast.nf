@@ -8,9 +8,9 @@ process QUAST {
     tuple val(meta), path(contigs)
 
     output:
-    path("${meta.id}.transposed.quast.report.tsv")  , emit: transposed_report
-    path("${meta.id}.quast.report.tsv")             , emit: result
-    path "versions.yml"                             , emit: versions
+    path("${meta.id}.transposed.quast.report.tsv")                  , emit: transposed_report
+    tuple val(meta), path("${meta.id}.quast.report.tsv")            , emit: result
+    path "versions.yml"                                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
