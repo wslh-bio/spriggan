@@ -19,6 +19,9 @@ Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of 
 [Contamination detection](#contamination-detection)  
 [Summary](#summary)  
 [Output](#output)  
+[Credits](#credits)  
+[Contributions and Support](#contributions-and-support)  
+[Citations](#citations)  
 
 ### Usage
 The pipeline is designed to start from raw, paired-end Illumina reads. Start the pipeline using:
@@ -148,6 +151,8 @@ spriggan_results
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.report.tsv
 │   └── quast_results.tsv
+├── rejected_samples
+│   └── Empty_samples.csv
 ├── results
 │   └── spriggan_report.csv
 ├── samtools
@@ -169,7 +174,27 @@ Notable output files:
 **\*.contigs.fa** - Shovill assembly for each sample  
 **\*.amr.tsv** - AMR genes identified in each sample by AMRFinderPlus  
 **\*.mlst.tsv** - MLST scheme identified for each sample
+**Empty_samples.csv** - Lists any samples that are empty and were removed from the pipeline
 
-### Authors
-[Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
-[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatician and Data Scientist
+## Credits
+Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
+
+We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
+
+## Contributions and Support
+If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+
+## Citations
+If you use Spriggan for your analysis, please cite it using the following:
+
+` A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.5.0) [https://github.com/wslh-bio/dryad].`
+
+An extensive list of references for the tools used by Dryad can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+
+This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
+
+> **The nf-core framework for community-curated bioinformatics pipelines.**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+>
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
