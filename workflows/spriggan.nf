@@ -215,15 +215,24 @@ workflow SPRIGGAN {
     // MODULE: QUAST
     //
     QUAST (
-        SHOVILL.out.contigs
+        SHOVILL.out.contigs,
+        params.min_quast_contig
     )
     ch_versions = ch_versions.mix(QUAST.out.versions.first())
 
     //
     // MODULE: QUAST_SUMMARY
     //
+
+    QUAST.out.transposed_report
+        .map{ meta, path -> 
+            [path]
+        }
+        .collect()
+        .set{ ch_transposed }
+
     QUAST_SUMMARY (
-        QUAST.out.transposed_report.collect()
+        ch_transposed
     )
 
     //
@@ -271,7 +280,11 @@ workflow SPRIGGAN {
     //
     // 
     ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
-    ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
+    QUAST.out.transposed_report
+        .map{meta, result -> 
+            [[id:meta.id], result]
+            }
+            .set { ch_quast }
 
     CALCULATE_ASSEMBLY_STATS (
         ch_quast,
