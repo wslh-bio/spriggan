@@ -61,7 +61,8 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | kraken_db | Path to Kraken database for classification |
 | plus | Use AMRFinderPlus' --plus option (default: false) |
 | selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
-|ncbi_assembly_stats| Path to NCBI database (default: NCBI_Assembly_stats_20240124.txt)
+| ncbi_assembly_stats | Path to NCBI database (default: NCBI_Assembly_stats_20240124.txt)
+| min_quast_contig | Lower threshold for contig lenght in bp (default: 500) |
 
 ### Workflow outline
 
