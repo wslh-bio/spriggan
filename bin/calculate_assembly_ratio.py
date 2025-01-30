@@ -152,7 +152,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
             found = True
 
-            result = df.loc[df['Sample'] == sample_name,'Primary Species (%)'].values[0]            logging.info(f"Genus {result}")
+            result = df.loc[df['Sample'] == sample_name,'Primary Species (%)'].values[0]
             genus = result.split(' ')[0]
 
             if genus == "":
