@@ -53,7 +53,7 @@
           "properties": {
               "ncbi_assembly_stats": {
                   "type": "string",
-                  "default": "/home/gunawaea/documents/tools/spriggan/assets/databases/NCBI_Assembly_stats_20240124.txt"
+                  "default": "${baseDir}/assets/databases/NCBI_Assembly_stats_20240124.txt"
               },
               "min_quast_contig": {
                   "type": "integer",
