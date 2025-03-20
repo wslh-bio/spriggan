@@ -28,7 +28,7 @@ def parse_args(args=None):
     parser.add_argument('-t', '--tax_file',
         metavar='tax_file', 
         type=str, 
-        help='Tax file from determine_taxaID.sh output', 
+        help='Tax file from Kraken', 
         required=True
         )
     parser.add_argument('-f', '--taxonomy_to_compare',
@@ -47,17 +47,18 @@ def initialize_variables():
     logging.debug("Initializing variables")
 
     # Initialize variables
-    taxid = "NA"
+    taxid = "NA" #DATABASE
     stdev = "NA" #CALCULATED
     stdevs = "NA" #CALCULATED
     assembly_length = "NA" #spriggan report, quast_results, 
     expected_length = "NA" #CALCULATED
-    total_tax = "NA"
+    total_tax = "NA" #DATABASE
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
 
 def extract_sample_name(quast_report):
     logging.debug("Extracting sample name from quast report")
+
     sample_name = quast_report.split('.')[0]
     sample_name = sample_name.split('/')[-1]
 
@@ -67,7 +68,6 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
 
     logging.debug("Processing database dates and paths.")
 
-    # Process database path
     get_date = path_database
     match = re.search(r"(\d{8})", get_date)
     NCBI_ratio_date = match.group(1)
@@ -77,6 +77,7 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
 
     dir_name = os.path.dirname(path_database) + "/"
 
+    logging.debug("Create a new database file to read that is properly sanitized.")
     if os.path.isfile(path_database):
 
         db_path_update = dir_name + file_name + "_update.txt"
@@ -85,13 +86,13 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
             for line in infile:
                 outfile.write(line.capitalize().replace('[', '').replace(']', ''))
 
-        NCBI_ratio = db_path_update
+        NCBI_ratio_file = db_path_update
 
-        return NCBI_ratio, NCBI_ratio_date
+        return NCBI_ratio_file, NCBI_ratio_date
 
     else:
 
-        logging.critical("No ratio DB, exiting")
+        logging.critical("No ratio database found, exiting")
         logging.debug("Writing NA for all information in output files.")
 
         with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
@@ -111,11 +112,14 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
         # Check if quast assembly stats exist
         with open(quast_report, 'r') as infile:
 
-            df = pd.read_csv(infile,sep='\t')
+            logging.debug("Setting up column names here")
+            assembly_length_row_name = "Total length (>= 0 bp)"
+            gc_percent_row_name = "GC (%)"
 
-            assembly_length = df.iloc[6].values[1]
-            sample_gc_percent = df.iloc[15].values[1]
-
+            logging.debug("Going through quast file to get result for assembly length and sample gc")
+            df = pd.read_csv(infile,sep = '\t')
+            assembly_length = df[assembly_length_row_name][0]
+            sample_gc_percent = df[gc_percent_row_name][0]
 
             return assembly_length, sample_gc_percent
 
@@ -135,10 +139,11 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
     logging.debug("Checking for taxonomy information in taxonomy file.")
 
+    logging.debug("Initializing blank variables")
     genus = None
     species = None
 
-    # Process taxonomy information
+    logging.debug("If user did not enter a taxonomy to compare to")
     if not taxonomy_to_compare:
 
         df = pd.read_csv(tax,sep='\t')
@@ -148,7 +153,6 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
             found = True
 
             result = df.loc[df['Sample'] == sample_name,'Primary Species (%)'].values[0]
-
             genus = result.split(' ')[0]
 
             if genus == "":
@@ -167,7 +171,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
             return total_tax, genus, species, found
 
     else:
-
+        logging.debug("If user has a taxonomy they want to compare this to")
         in_genus = taxonomy_to_compare.split()[0].capitalize()
         in_species = taxonomy_to_compare.split()[1].lower().capitalize()
         genus = in_genus
@@ -206,6 +210,8 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                     stdevs = "NA"
 
                 else:
+
+                    logging.debug("If you have a reference count on more than 10")
                     if int(assembly_length) > int(expected_length):
                         bigger = int(assembly_length)
                         smaller = int(expected_length)
@@ -214,8 +220,10 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                         smaller = int(assembly_length)
                         bigger = int(expected_length)
 
+                    logging.debug("Calculating the standard deviations")
                     stdevs = (bigger - smaller) / stdev
 
+                logging.debug("Gathering GC information based on NCBI database")
                 gc_min = line[7]
                 gc_max = line[8]
                 gc_mean = line[10]
@@ -234,8 +242,8 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
                 return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid
 
-    # Handle unmatched cases
     if not found:
+        logging.debug("If it was not found, write no matching found")
 
         logging.info(f"No match found for '{genus} {species}'")
 
@@ -249,7 +257,6 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
 def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
 
-    # Calculate and print ratio
     if expected_length == "NA" or not expected_length:
 
         logging.info("No expected length was found to compare to")
@@ -273,6 +280,7 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, ta
             outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {gc_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: NA")
         sys.exit(0)
 
+    logging.debug("Calculating the assembly and expected ratios")
     ratio_a_e = float(assembly_length) / float(expected_length)
     ratio_e_a = float(expected_length) / float(assembly_length)
 
@@ -285,18 +293,19 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, ta
 
 def write_output(sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a):
 
+    logging.debug("Writing the output file")
     with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
         outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_St.Dev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: {ratio_a_e}\nRatio Expected:Actual: {ratio_e_a}")
 
 def print_version(version):
-
+    logging.debug("Took this version from the original script")
     if version:
         logging.info("calculate_assembly_ratio.py: 2.0")
 
 def main(args=None):
     args = parse_args(args)
 
-    if args.version == True:
+    if args.version:
         print_version(args.version)
 
     #Initializing the variables
@@ -309,20 +318,19 @@ def main(args=None):
     assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
 
     #Getting database names and dates
-    NCBI_ratio, NCBI_ratio_date = process_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+    NCBI_ratio_file, NCBI_ratio_date = process_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
 
     #Getting taxonomy info
     total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, sample_name)
 
     #Grabbing stats 
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
 
     #Calculating ratio 
-    ratio_a_e, ratio_e_a = calculate_ratio(sample_name, NCBI_ratio, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
+    ratio_a_e, ratio_e_a = calculate_ratio(sample_name, NCBI_ratio_file, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
 
     #Writing final output
     write_output(sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a)
-
     logging.info("Finished writing assembly ratio file.")
 
 if __name__ == "__main__":

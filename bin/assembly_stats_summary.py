@@ -29,5 +29,5 @@ assembly_results = map(summarize_assembly_file, assembly_files)
 
 # convert results to data frame and write to tsv
 df = DataFrame(assembly_results,columns=['Sample','Expected Genome Length','Genome Length Ratio (Actual/Expected)'])
-print(df)
+
 df.to_csv(f'assembly_stats_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')

@@ -82,9 +82,75 @@ workflow SPRIGGAN {
     INPUT_CHECK (
         ch_input
     )
+
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     INPUT_CHECK.out.reads
+        .branch{ meta, file -> 
+            single_end: meta.single_end
+            paired_end: !meta.single_end
+            }
+        .set{ ch_filtered }
+
+    ch_filtered.single_end
+        .map{ meta, file ->
+            [meta, file, file[0].countFastq()]}
+        .branch{ meta, file, count ->
+            pass: count > 0
+            fail: count == 0
+        }
+        .set{ ch_single_end }
+
+    ch_filtered.paired_end
+        .map{ meta, file ->
+            [meta, file, file[0].countFastq(), file[1].countFastq()]}
+        .branch{ meta, file, count1, count2 ->
+            pass: count1 > 0 && count2 > 0
+            fail: count1 == 0 || count2 == 0
+        }
+        .set{ ch_paired_end }
+
+    ch_paired_end.pass
+        .map { meta, file, count1, count2 -> 
+            [meta, file]
+            }
+        .set{ ch_paired_end_filtered }
+
+    ch_single_end.pass
+        .map { meta, file, count ->
+            [meta, file]
+        }
+        .set{ ch_single_end_filtered }
+
+    ch_paired_end_filtered
+        .mix(ch_single_end_filtered)
+        .set{ ch_filtered }
+
+    ch_paired_end.fail
+        .map { meta, file, count1, count2 ->
+            [meta.id]
+            }
+        .set{ ch_paired_end_fail }
+
+    ch_single_end.fail
+        .map{ meta, file, count -> 
+            [meta.id]
+            }
+        .set{ ch_single_end_fail }
+
+    ch_paired_end_fail
+        .mix( ch_single_end_fail )
+        .flatten()
+        .set{ ch_failed }
+
+    ch_failed
+        .collectFile(
+            storeDir: "${params.outdir}/rejected_samples",
+            name: 'Empty_samples.csv',
+            newLine: true
+        )
+
+    ch_filtered
         .branch {
             ntc: it[0]['id'].contains('NTC')
             sample: !it[0]['id'].contains('NTC')
@@ -149,15 +215,24 @@ workflow SPRIGGAN {
     // MODULE: QUAST
     //
     QUAST (
-        SHOVILL.out.contigs
+        SHOVILL.out.contigs,
+        params.min_quast_contig
     )
     ch_versions = ch_versions.mix(QUAST.out.versions.first())
 
     //
     // MODULE: QUAST_SUMMARY
     //
+
+    QUAST.out.transposed_report
+        .map{ meta, path -> 
+            [path]
+        }
+        .collect()
+        .set{ ch_transposed }
+
     QUAST_SUMMARY (
-        QUAST.out.transposed_report.collect()
+        ch_transposed
     )
 
     //
@@ -205,7 +280,11 @@ workflow SPRIGGAN {
     //
     // 
     ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
-    ch_quast = QUAST.out.result.map{meta, result -> [[id:meta.id], result]}
+    QUAST.out.transposed_report
+        .map{meta, result -> 
+            [[id:meta.id], result]
+            }
+            .set { ch_quast }
 
     CALCULATE_ASSEMBLY_STATS (
         ch_quast,
