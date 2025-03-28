@@ -246,16 +246,16 @@
   },
   "allOf": [
       {
-          "$ref": "#/$defs/input_output_options"
+          "$ref": "#/definitions/input_output_options"
       },
       {
-          "$ref": "#/$defs/workflow_options"
+          "$ref": "#/definitions/workflow_options"
       },
       {
-          "$ref": "#/$defs/max_job_request_options"
+          "$ref": "#/definitions/max_job_request_options"
       },
       {
-          "$ref": "#/$defs/generic_options"
+          "$ref": "#/definitions/generic_options"
       }
   ]
 }
