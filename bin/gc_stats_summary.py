@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import os
 import glob
+import re
+
 from pandas import DataFrame
 
 # function for summarizing assembly output
@@ -26,5 +28,5 @@ gc_files = glob.glob("data/*_GC_content_*")
 gc_results = map(summarize_gc_file, gc_files)
 
 df = DataFrame(gc_results,columns=['Sample', 'Species GC Content (Mean)', 'Sample GC Content (%)'])
-print(df)
+
 df.to_csv(f'gc_stats_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
