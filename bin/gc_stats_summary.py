@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 import os
 import glob
-import re
 
 from pandas import DataFrame
 
 # function for summarizing assembly output
 def summarize_gc_file(file):
     # get sample id from file name and set up data list
-    sample_id = os.path.basename(file).split("_")[0]
+    pattern = "_GC_content"
+    sample_id = os.path.basename(file).split(pattern)[0]
     data = []
     data.append(sample_id)
     with open(file,"r") as inFile:
