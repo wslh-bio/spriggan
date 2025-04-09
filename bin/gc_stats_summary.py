@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 import os
 import glob
+
 from pandas import DataFrame
 
 # function for summarizing assembly output
 def summarize_gc_file(file):
     # get sample id from file name and set up data list
-    sample_id = os.path.basename(file).split("_")[0]
+    pattern = "_GC_content"
+    sample_id = os.path.basename(file).split(pattern)[0]
     data = []
     data.append(sample_id)
     with open(file,"r") as inFile:
@@ -26,5 +28,5 @@ gc_files = glob.glob("data/*_GC_content_*")
 gc_results = map(summarize_gc_file, gc_files)
 
 df = DataFrame(gc_results,columns=['Sample', 'Species GC Content (Mean)', 'Sample GC Content (%)'])
-print(df)
+
 df.to_csv(f'gc_stats_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')

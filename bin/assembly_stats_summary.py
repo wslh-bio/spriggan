@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 import os
 import glob
+
 from pandas import DataFrame
 
 # function for summarizing assembly output
 def summarize_assembly_file(file):
     # get sample id from file name and set up data list
-    sample_id = os.path.basename(file).split("_")[0]
+    pattern = "_Assembly_ratio_"
+    sample_id = os.path.basename(file).split(pattern)[0]
     data = []
     data.append(sample_id)
     with open(file,"r") as inFile:
