@@ -1,4 +1,4 @@
-## Releasing a new version of DRYAD
+## Releasing a new version of SPRIGGAN
 
 - [ ] Make sure the development branch has been merged into the main branch and deleted.  
 - [ ] Verify the pipeline's version number in the nextflow.config file has been updated.  
