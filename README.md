@@ -175,7 +175,9 @@ If you would like to contribute to this pipeline, please see the [contributing g
 ## Citations
 If you use Spriggan for your analysis, please cite it using the following:
 
-` A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.5.0) [https://github.com/wslh-bio/spriggan/].`
+```
+A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.5.3) [https://github.com/wslh-bio/spriggan/].
+```
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
