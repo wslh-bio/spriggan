@@ -1,7 +1,6 @@
 process MLST_SUMMARY {
     label 'process_single'
 
-
     container 'quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2'
 
     input:
