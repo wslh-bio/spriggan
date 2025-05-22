@@ -166,3 +166,8 @@ Notable output files:
 ### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
 [Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatician and Data Scientist
+
+### Citations
+```
+K. Florek & A.C. Shockey (2021). Spriggan (Version 1.5.3) [https://github.com/wslh-bio/spriggan].
+```
