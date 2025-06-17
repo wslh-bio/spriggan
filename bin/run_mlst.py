@@ -67,8 +67,8 @@ mlst_files = glob.glob('*.tsv')
 for file in mlst_files:
     df = pd.read_csv(file, header=None, delimiter='\t')
     df[0] = df[0].str.replace('.contigs.fa', '')
-    df[2] = 'ST' + df[2].astype(str)
-    df[2] = df[2].str.replace('ST-', 'NA')
+    df[2] = 'MLST' + df[2].astype(str)
+    df[2] = df[2].str.replace('MLST-', 'NA')
 
     if len(mlst_files) > 1:
         # Replace mlst scheme names with PubMLST scheme names
