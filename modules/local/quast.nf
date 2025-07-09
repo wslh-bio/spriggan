@@ -6,11 +6,12 @@ process QUAST {
 
     input:
     tuple val(meta), path(contigs)
+    val(min_quast_contig)
 
     output:
-    path("${meta.id}.transposed.quast.report.tsv")  , emit: transposed_report
-    path("${meta.id}.quast.report.tsv")             , emit: result
-    path "versions.yml"                             , emit: versions
+    tuple val(meta), path("${meta.id}.transposed.quast.report.tsv") , emit: transposed_report
+    tuple val(meta), path("${meta.id}.quast.report.tsv")            , emit: result
+    path "versions.yml"                                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -19,7 +20,7 @@ process QUAST {
     def args = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    quast.py ${contigs} -o .
+    quast.py ${contigs} -m ${min_quast_contig} -o .
     mv report.tsv ${prefix}.quast.report.tsv
     mv transposed_report.tsv ${prefix}.transposed.quast.report.tsv
 

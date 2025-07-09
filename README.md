@@ -19,6 +19,9 @@ Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of 
 [Contamination detection](#contamination-detection)  
 [Summary](#summary)  
 [Output](#output)  
+[Credits](#credits)  
+[Contributions and Support](#contributions-and-support)  
+[Citations](#citations)  
 
 ### Usage
 The pipeline is designed to start from raw, paired-end Illumina reads. Start the pipeline using:
@@ -58,10 +61,12 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | kraken_db | Path to Kraken database for classification |
 | plus | Use AMRFinderPlus' --plus option (default: false) |
 | selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
+| ncbi_assembly_stats | Path to NCBI database (default: NCBI_Assembly_stats_20240124.txt)
+| min_quast_contig | Lower threshold for contig length in bp (default: 500) |
 
 ### Workflow outline
 
-<img src ='/assets/Spriggan.png'>
+<img src ='/assets/sprigganUpdate.drawio.png'>
 
 #### Read trimming and quality assessment
 Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
@@ -70,10 +75,10 @@ Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.g
 Assembly of the cleaned and trimmed reads is performed using [Shovill v1.1.0](https://github.com/tseemann/shovill).
 
 #### Assembly quality assessment
-Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bioinf.spbau.ru/quast)
+Quality assessment of the assemblies is performed using [QUAST v5.0.2](http://bioinf.spbau.ru/quast).
 
 #### Genome coverage
-Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/)
+Mean and median genome coverage is determined by mapping the cleaned reads back their the assembly using [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) and calculating depth using [samtools v1.10](http://www.htslib.org/).
 
 #### Antimicrobial resistance gene detection
 Antimicrobial resistance genes, as well as point mutations, are identified using [AMRFinderPlus v3.10.30](https://github.com/ncbi/amr). Using the plus parameter provides results from the AMRFinderPlus "--plus" option, which includes genes such as virulence factors, stress-response, etc.  
@@ -85,6 +90,9 @@ MLST scheme is classified using [MLST v2.17.6](https://github.com/tseemann/mlst)
 
 #### Contamination detection
 Contamination is detected by classifying reads using [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) with the Minikraken2_v1_8GB database. A custom Kraken database can be used with the kraken_db parameter.
+
+#### Assembly calculations
+Calculations are performed with [Pandas v1.3.2](https://pandas.pydata.org/pandas-docs/version/1.3.2/index.html) on [Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/) and [QUAST v5.0.2](http://bioinf.spbau.ru/quast) data to determine the expected : actual assembly length ratio, actual : expected assembly length ratio, and GC content statistics. The NCBI Assembly statistics database is referenced during these calculations. The expected : actual length ratio is included in the results/spriggan_report.csv.
 
 #### Summary
 Results are summarized using [MultiQC v1.11](https://multiqc.info/) and [Pandas v1.3.2](https://pandas.pydata.org/). The main outputs of Spriggan are a csv file named **spriggan_report.csv** and an HTML report file named **spriggan_multiqc_report.html**. The **spriggan_report.csv** file summarizes the results of the QC, classification, and MLST steps of the pipeline. The **spriggan_multiqc_report.html** file contains tables and figures of quality metrics from the FastQC, BBDuk, Samtools, Kraken, and QUAST steps of the pipeline. 
@@ -99,18 +107,25 @@ spriggan_results
 │   ├── amrfinder_predictions.tsv
 │   ├── amrfinder_summary.tsv
 │   └── selected_ar_genes.tsv
+├── assembly
+│   └── assembly_stats_results.tsv
 ├── bbduk
 │   ├── *.fastq.gz
 │   ├── *.adapter.stats.txt
 │   ├── *.bbduk.log
 │   ├── *.trim.txt
 │   └── bbduk_results.tsv
+├── calculate
+│   ├── *_Assembly_ratio_*.tsv
+│   ├── *_GC_content_*.tsv
 ├── coverage
 │   └── coverage_stats.tsv
 ├── fastqc
 │   ├── *.html
 │   ├── *.zip
 │   └── fastqc_summary.tsv
+├── gc
+│   └── gc_stats_results.tsv
 ├── kraken
 │   ├── *.kraken2.txt
 │   ├── kraken_results.tsv
@@ -141,6 +156,8 @@ spriggan_results
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.report.tsv
 │   └── quast_results.tsv
+├── rejected_samples
+│   └── Empty_samples.csv
 ├── results
 │   └── spriggan_report.csv
 ├── samtools

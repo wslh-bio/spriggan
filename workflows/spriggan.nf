@@ -58,6 +58,9 @@ include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
 include { RESULTS                       } from '../modules/local/results.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
+include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
+include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
+include { GC_STATS_SUMMARY              } from '../modules/local/gc_stats_summary.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -79,9 +82,75 @@ workflow SPRIGGAN {
     INPUT_CHECK (
         ch_input
     )
+
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     INPUT_CHECK.out.reads
+        .branch{ meta, file -> 
+            single_end: meta.single_end
+            paired_end: !meta.single_end
+            }
+        .set{ ch_filtered }
+
+    ch_filtered.single_end
+        .map{ meta, file ->
+            [meta, file, file[0].countFastq()]}
+        .branch{ meta, file, count ->
+            pass: count > 0
+            fail: count == 0
+        }
+        .set{ ch_single_end }
+
+    ch_filtered.paired_end
+        .map{ meta, file ->
+            [meta, file, file[0].countFastq(), file[1].countFastq()]}
+        .branch{ meta, file, count1, count2 ->
+            pass: count1 > 0 && count2 > 0
+            fail: count1 == 0 || count2 == 0
+        }
+        .set{ ch_paired_end }
+
+    ch_paired_end.pass
+        .map { meta, file, count1, count2 -> 
+            [meta, file]
+            }
+        .set{ ch_paired_end_filtered }
+
+    ch_single_end.pass
+        .map { meta, file, count ->
+            [meta, file]
+        }
+        .set{ ch_single_end_filtered }
+
+    ch_paired_end_filtered
+        .mix(ch_single_end_filtered)
+        .set{ ch_filtered }
+
+    ch_paired_end.fail
+        .map { meta, file, count1, count2 ->
+            [meta.id]
+            }
+        .set{ ch_paired_end_fail }
+
+    ch_single_end.fail
+        .map{ meta, file, count -> 
+            [meta.id]
+            }
+        .set{ ch_single_end_fail }
+
+    ch_paired_end_fail
+        .mix( ch_single_end_fail )
+        .flatten()
+        .set{ ch_failed }
+
+    ch_failed
+        .collectFile(
+            storeDir: "${params.outdir}/rejected_samples",
+            name: 'Empty_samples.csv',
+            newLine: true
+        )
+
+    ch_filtered
         .branch {
             ntc: it[0]['id'].contains('NTC')
             sample: !it[0]['id'].contains('NTC')
@@ -146,15 +215,24 @@ workflow SPRIGGAN {
     // MODULE: QUAST
     //
     QUAST (
-        SHOVILL.out.contigs
+        SHOVILL.out.contigs,
+        params.min_quast_contig
     )
     ch_versions = ch_versions.mix(QUAST.out.versions.first())
 
     //
     // MODULE: QUAST_SUMMARY
     //
+
+    QUAST.out.transposed_report
+        .map{ meta, path -> 
+            [path]
+        }
+        .collect()
+        .set{ ch_transposed }
+
     QUAST_SUMMARY (
-        QUAST.out.transposed_report.collect()
+        ch_transposed
     )
 
     //
@@ -198,6 +276,37 @@ workflow SPRIGGAN {
     )
 
     //
+    // MODULE: CALCULATE_ASSEMBLY_STATS
+    //
+    // 
+    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
+    QUAST.out.transposed_report
+        .map{meta, result -> 
+            [[id:meta.id], result]
+            }
+            .set { ch_quast }
+
+    CALCULATE_ASSEMBLY_STATS (
+        ch_quast,
+        ch_kraken_tsv,
+        params.ncbi_assembly_stats
+    )
+
+    //
+    // MODULE: ASSEMBLY_STATS_SUMMARY
+    //
+    ASSEMBLY_STATS_SUMMARY (
+        CALCULATE_ASSEMBLY_STATS.out.assembly_ratio.collect()
+    )
+
+    //
+    // MODULE: GC_STATS_SUMMARY
+    //
+    GC_STATS_SUMMARY(
+        CALCULATE_ASSEMBLY_STATS.out.gc_content.collect()
+    )
+
+    //
     // MODULE: AMRFINDER_SETUP
     //
     AMRFINDER_SETUP (
@@ -232,7 +341,9 @@ workflow SPRIGGAN {
         AMRFINDER_SUMMARY.out.amrfinder_tsv,
         AMRFINDER_SUMMARY.out.selected_ar_tsv,
         KRAKEN.out.versions.first(),
-        AMRFINDER.out.versions.first()
+        AMRFINDER.out.versions.first(),
+        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv,
+        GC_STATS_SUMMARY.out.gc_stats_tsv
     )
 
     //
@@ -268,7 +379,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(QUAST
+        .out
+        .result
+        .map {meta, path -> path}
+        .collect()
+        .ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
@@ -278,6 +394,8 @@ workflow SPRIGGAN {
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
+
 }
 
 /*
