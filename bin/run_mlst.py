@@ -75,11 +75,9 @@ for file in mlst_files:
         for old, new in ids.items():
             df[1] = df[1].replace(to_replace=old, value=new)
     else:
-        # Remove scheme name
-        df.iloc[0,1] = ''
         df[2] = df[2].str.replace('NA', 'No scheme available')
-    # Join ST to PubMLST scheme names
-    df['MLST Scheme'] = df[[1,2]].agg(' '.join, axis=1)
+    # Join ST to PubMLST scheme names, putting MLST{Scheme} in front of scheme name
+    df['MLST Scheme'] = df[2] + '_' + df[1]
     df = df[[0,'MLST Scheme']]
     df.columns =['Sample','MLST Scheme']
     df['MLST Scheme'] = df['MLST Scheme'].replace('\\s+', ' ', regex=True)
