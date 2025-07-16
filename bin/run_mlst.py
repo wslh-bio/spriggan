@@ -35,7 +35,7 @@ vcholerae_schemes = ['vcholerae','vcholerae2']
 
 # Dictionary of scheme names
 ids = {'mlstID':['abaumannii','abaumannii_2','ecoli','ecoli_2','leptospira','leptospira_2','leptospira_3','vcholerae2','vcholerae'],
-'PubMLSTID':['Oxford','Pasteur','Achtman','Pasteur ','Scheme 1','Scheme 2', 'Scheme 3','O1 and O139','']}
+'PubMLSTID':['Oxford','Pasteur','Achtman','Pasteur','Scheme 1','Scheme 2', 'Scheme 3','O1 and O139','']}
 ids = dict(zip(ids['mlstID'], ids['PubMLSTID']))
 
 # read in mlst output and get scheme
