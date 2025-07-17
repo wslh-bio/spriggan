@@ -33,7 +33,7 @@ merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean
 
 def modify_mlst_scheme(row):
     scheme_str = row['MLST Scheme']
-    species = row['Primary Species (%)'].split(' (')[0].replace(' ', '_')
+    species = row['Primary Species (%)'].split(' (')[0]
     
     # handle missing or empty MLST Scheme
     if pd.isna(scheme_str) or scheme_str.strip() == "":
