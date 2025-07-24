@@ -1,7 +1,6 @@
 process SHOVILL {
     tag "$meta.id"
     label 'process_medium'
-    label 'error_ignore'
 
     container "staphb/shovill:1.1.0"
 
