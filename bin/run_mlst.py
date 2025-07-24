@@ -35,7 +35,7 @@ vcholerae_schemes = ['vcholerae','vcholerae2']
 
 # Dictionary of scheme names
 ids = {'mlstID':['abaumannii','abaumannii_2','ecoli','ecoli_2','leptospira','leptospira_2','leptospira_3','vcholerae2','vcholerae'],
-'PubMLSTID':['Oxford','Pasteur','Achtman','Pasteur ','Scheme 1','Scheme 2', 'Scheme 3','O1 and O139','']}
+'PubMLSTID':['Oxford','Pasteur','Achtman','Pasteur','Scheme 1','Scheme 2', 'Scheme 3','O1 and O139','']}
 ids = dict(zip(ids['mlstID'], ids['PubMLSTID']))
 
 # read in mlst output and get scheme
@@ -67,23 +67,24 @@ mlst_files = glob.glob('*.tsv')
 for file in mlst_files:
     df = pd.read_csv(file, header=None, delimiter='\t')
     df[0] = df[0].str.replace('.contigs.fa', '')
-    df[2] = 'ST' + df[2].astype(str)
-    df[2] = df[2].str.replace('ST-', 'NA')
+    df[2] = 'MLST' + df[2].astype(str)
+    df[2] = df[2].str.replace('MLST-', 'MLST')
 
     if len(mlst_files) > 1:
         # Replace mlst scheme names with PubMLST scheme names
         for old, new in ids.items():
             df[1] = df[1].replace(to_replace=old, value=new)
     else:
-        # Remove scheme name
-        df.iloc[0,1] = ''
-        df[2] = df[2].str.replace('NA', 'No scheme available')
-    # Join ST to PubMLST scheme names
-    df['MLST Scheme'] = df[[1,2]].agg(' '.join, axis=1)
+        df[2] = df[2].str.replace('MLST', 'No Scheme Available')
+    # Join ST to PubMLST scheme names, putting MLST{Scheme} in front of scheme name
+    if df.iloc[0][2] == "No Scheme Available": # if no scheme detected, report as MLST
+        df['MLST Scheme'] = "MLST"
+    else:
+        df['MLST Scheme'] = df[2] + '_' + df[1]
     df = df[[0,'MLST Scheme']]
     df.columns =['Sample','MLST Scheme']
     df['MLST Scheme'] = df['MLST Scheme'].replace('\\s+', ' ', regex=True)
-    df['MLST Scheme'] = df['MLST Scheme'].str.replace('NA -', 'NA', regex=True)
+    df['MLST Scheme'] = df['MLST Scheme'].str.replace('NA -', 'MLST', regex=True)
     dfs.append(df)
 
 # Merge multiple dataframes (separated by ;) and write to file
