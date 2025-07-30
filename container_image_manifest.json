@@ -3,19 +3,10 @@
         "wslh-bioinformatics/spriggan-mlst:2.19.0",
         "biocontainers/python:3.8.3",
         "wslh-bioinformatics/spriggan-pandas:1.3.2",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
         "wslh-bioinformatics/pandas@sha256:9ba0a1f5518652ae26501ea464f466dcbb69e43d85250241b308b96406cac458",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
         "wslh-bioinformatics/fastqc@sha256:6e4ace04f051e6138447ca64f5c6f44889157cc641fe8e0a40947a3949d47ab8",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
         "wslh-bioinformatics/spriggan-amrfinder:3.10.30",
         "biocontainers/multiqc:1.13--pyhdfd78af_0",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
-        "wslh-bioinformatics/multiqc@sha256:23c5f869c8f162754dd6d4fa18e8fb7d9d592bb0e6c4de2d1f4cd0c033bd0011",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2",
-        "wslh-bioinformatics/pandas@sha256:9ba0a1f5518652ae26501ea464f466dcbb69e43d85250241b308b96406cac458",
-        "wslh-bioinformatics/spriggan-pandas:1.3.2"
+        "wslh-bioinformatics/multiqc@sha256:23c5f869c8f162754dd6d4fa18e8fb7d9d592bb0e6c4de2d1f4cd0c033bd0011"
     ]
 }
