@@ -74,13 +74,13 @@ for file in mlst_files:
         # Replace mlst scheme names with PubMLST scheme names
         for old, new in ids.items():
             df[1] = df[1].replace(to_replace=old, value=new)
-    else:
-        df[2] = df[2].str.replace('MLST', 'No Scheme Available')
-    # Join ST to PubMLST scheme names, putting MLST{Scheme} in front of scheme name
-    if df.iloc[0][2] == "No Scheme Available": # if no scheme detected, report as MLST
+
+    # Check for missing scheme/no scheme detected
+    if df.iloc[0][1] == "-":
         df['MLST Scheme'] = "MLST"
     else:
         df['MLST Scheme'] = df[2] + '_' + df[1]
+
     df = df[[0,'MLST Scheme']]
     df.columns =['Sample','MLST Scheme']
     df['MLST Scheme'] = df['MLST Scheme'].replace('\\s+', ' ', regex=True)
