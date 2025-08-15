@@ -242,18 +242,10 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
                 return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid
 
+    # If no match found, log and return None
     if not found:
-        logging.debug("If it was not found, write no matching found")
-
         logging.info(f"No match found for '{genus} {species}'")
-
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: NA\nIsolate_St.Devs: NA\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -1\nRatio Expected:Actual: NA")
-
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
-
-        sys.exit(0)
+        return None
 
 def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
 
@@ -337,21 +329,43 @@ def main(args=None):
             f"No NCBI assembly stats found for '{genus} {species}'in {NCBI_ratio_file}; proceeding with default values for sample '{sample_name}'."
         )
         # Assign placeholder values so output can still be written
-        taxid = None
-        stdev = None
-        stdevs = None
-        expected_length = None
-        # Assign 0.0 to numerical outputs
-        gc_stdev = gc_min = gc_max = gc_mean = gc_count = 0.0
+        taxid = "None"
+        stdev = "None"
+        stdevs = "None"
+        assembly_length_str = str(assembly_length) if assembly_length else "None"
+        expected_length = "None"
+        total_tax = "None"
+        ratio_a_e = "None"
+        ratio_e_a = "None"
+
+        # Write placeholder Assembly ratio file
+        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+            outfile.write(
+                f"Sample: {sample_name}\n"
+                f"Tax: {total_tax}\n"
+                f"NCBI_TAXID: {taxid}\n"
+                f"Species_St.Dev: {stdev}\n"
+                f"Isolate_St.Devs: {stdevs}\n"
+                f"Actual_length: {assembly_length_str}\n"
+                f"Expected_length: {expected_length}\n"
+                f"Ratio Actual:Expected: {ratio_a_e}\n"
+                f"Ratio Expected:Actual: {ratio_e_a}\n"
+            )
 
     else:
         stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = result
 
-    #Calculating ratio 
-    ratio_a_e, ratio_e_a = calculate_ratio(sample_name, NCBI_ratio_file, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
+        # Calculate ratios
+        ratio_a_e, ratio_e_a = calculate_ratio(
+            sample_name, NCBI_ratio_date, expected_length, total_tax, taxid,
+            assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev
+        )
 
-    #Writing final output
-    write_output(sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a)
+        # Write final output files
+        write_output(
+            sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs,
+            assembly_length, expected_length, ratio_a_e, ratio_e_a
+            )
     logging.info("Finished writing assembly ratio file.")
 
 if __name__ == "__main__":
