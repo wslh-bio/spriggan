@@ -324,7 +324,28 @@ def main(args=None):
     total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, sample_name)
 
     #Grabbing stats 
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+    # stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
+
+    result = search_ncbi_ratio_file(
+        NCBI_ratio_file, genus, species, assembly_length,
+        sample_name, NCBI_ratio_date, total_tax,
+        sample_gc_percent, found
+    )
+
+    if result is None:
+        logging.warning(
+            f"No NCBI assembly stats found for '{genus} {species}'in {NCBI_ratio_file}; proceeding with default values for sample '{sample_name}'."
+        )
+        # Assign placeholder values so output can still be written
+        taxid = None
+        stdev = None
+        stdevs = None
+        expected_length = None
+        # Assign 0.0 to numerical outputs
+        gc_stdev = gc_min = gc_max = gc_mean = gc_count = 0.0
+
+    else:
+        stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = result
 
     #Calculating ratio 
     ratio_a_e, ratio_e_a = calculate_ratio(sample_name, NCBI_ratio_file, expected_length, total_tax, taxid, assembly_length,gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev)
