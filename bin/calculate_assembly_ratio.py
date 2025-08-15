@@ -352,6 +352,20 @@ def main(args=None):
                 f"Ratio Expected:Actual: {ratio_e_a}\n"
             )
 
+        # Write placeholder GC content file
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+            outfile.write(
+                f"Sample: {sample_name}\n"
+                f"Tax: {total_tax}\n"
+                f"NCBI_TAXID: {taxid}\n"
+                f"Species_GC_StDev: None\n"
+                f"Species_GC_Min: None\n"
+                f"Species_GC_Max: None\n"
+                f"Species_GC_Mean: None\n"
+                f"Species_GC_Count: None\n"
+                f"Sample_GC_Percent: None\n"
+            )
+
     else:
         stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = result
 
