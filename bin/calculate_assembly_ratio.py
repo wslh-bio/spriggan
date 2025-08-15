@@ -380,7 +380,7 @@ def main(args=None):
             sample_name, NCBI_ratio_date, total_tax, taxid, stdev, stdevs,
             assembly_length, expected_length, ratio_a_e, ratio_e_a
             )
-    logging.info("Finished writing assembly ratio file.")
+    logging.info("Finished writing assembly ratio file and GC content file.")
 
 if __name__ == "__main__":
     sys.exit(main())
