@@ -182,7 +182,7 @@ Notable output files:
 **Empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
 
 ## Credits
-Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
+Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), [Eva Gunawan](https://github.com/evagunawan), and [Dustin Lyfoung](https://github.com/dtlyfoung).
 
 We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
 
@@ -193,7 +193,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 If you use Spriggan for your analysis, please cite it using the following:
 
 ```
-A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.6.2) [https://github.com/wslh-bio/spriggan/].
+A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.6.3) [https://github.com/wslh-bio/spriggan/].
 ```
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
