@@ -75,12 +75,14 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
     file_name_txt = os.path.basename(path_database)
     file_name = file_name_txt.strip(".txt")
 
-    dir_name = os.path.dirname(path_database) + "/"
+    dir_name = os.path.dirname(path_database)
 
     logging.debug("Create a new database file to read that is properly sanitized.")
     if os.path.isfile(path_database):
 
-        db_path_update = dir_name + file_name + "_update.txt"
+        file_name_update = file_name + "_update.txt"
+
+        db_path_update = os.path.join(dir_name,file_name_update)
 
         with open(path_database, 'r') as infile, open(db_path_update, 'w') as outfile:
             for line in infile:
