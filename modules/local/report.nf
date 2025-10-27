@@ -1,4 +1,4 @@
-process RESULTS {
+process REPORT {
     label 'process_single'
 
     container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
@@ -21,6 +21,6 @@ process RESULTS {
 
     script:
     """
-    compile_results.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version}
+    create_report.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version}
     """
 }

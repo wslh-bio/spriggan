@@ -56,7 +56,7 @@ include { KRAKEN_SUMMARY                } from '../modules/local/kraken_summary.
 include { AMRFINDER_SETUP               } from '../modules/local/amrfinder_setup.nf'
 include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
-include { RESULTS                       } from '../modules/local/results.nf'
+include { REPORT                        } from '../modules/local/report.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
 include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
 include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
@@ -92,15 +92,6 @@ workflow SPRIGGAN {
             }
         .set{ ch_filtered }
 
-    ch_filtered.single_end
-        .map{ meta, file ->
-            [meta, file, file[0].countFastq()]}
-        .branch{ meta, file, count ->
-            pass: count > 0
-            fail: count == 0
-        }
-        .set{ ch_single_end }
-
     ch_filtered.paired_end
         .map{ meta, file ->
             [meta, file, file[0].countFastq(), file[1].countFastq()]}
@@ -116,14 +107,7 @@ workflow SPRIGGAN {
             }
         .set{ ch_paired_end_filtered }
 
-    ch_single_end.pass
-        .map { meta, file, count ->
-            [meta, file]
-        }
-        .set{ ch_single_end_filtered }
-
     ch_paired_end_filtered
-        .mix(ch_single_end_filtered)
         .set{ ch_filtered }
 
     ch_paired_end.fail
@@ -132,14 +116,7 @@ workflow SPRIGGAN {
             }
         .set{ ch_paired_end_fail }
 
-    ch_single_end.fail
-        .map{ meta, file, count -> 
-            [meta.id]
-            }
-        .set{ ch_single_end_fail }
-
     ch_paired_end_fail
-        .mix( ch_single_end_fail )
         .flatten()
         .set{ ch_failed }
 
@@ -330,9 +307,9 @@ workflow SPRIGGAN {
     )
 
     //
-    // MODULE: RESULTS
+    // MODULE: REPORT
     //
-    RESULTS (
+    REPORT (
         BBDUK_SUMMARY.out.bbduk_tsv,
         COVERAGE_STATS.out.coverage_tsv,
         QUAST_SUMMARY.out.quast_tsv,
@@ -353,7 +330,7 @@ workflow SPRIGGAN {
     ch_valid_dataset = Channel.fromPath("$projectDir/test-dataset/validation/spntypeid_report_valid.csv", checkIfExists: true)
     WORKFLOW_TEST (
         ch_valid_dataset.collect(),
-        RESULTS.out.result_csv
+        REPORT.out.result_csv
     )
     */
 
