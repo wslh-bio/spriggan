@@ -69,7 +69,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 <img src ='/assets/sprigganUpdate.drawio.png'>
 
 #### Read trimming and quality assessment
-Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
+Read reapir, trimming, and cleaning are performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to repair fastqs with mismatched read numbers, trim reads of low quality bases, and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
 
 #### Genome assembly
 Assembly of the cleaned and trimmed reads is performed using [Shovill v1.1.0](https://github.com/tseemann/shovill).
@@ -110,11 +110,15 @@ spriggan_results
 ├── assembly
 │   └── assembly_stats_results.tsv
 ├── bbduk
-│   ├── *.fastq.gz
 │   ├── *.adapter.stats.txt
 │   ├── *.bbduk.log
-│   ├── *.trim.txt
-│   └── bbduk_results.tsv
+│   ├── *_repaired_1.fastq.gz
+│   ├── *_repaired_2.fastq.gz
+│   ├── *.repair.log
+│   ├── *_singletons.fastq.gz
+│   ├── *_trimmed_1.fastq.gz
+│   ├── *_trimmed_2.fastq.gz
+│   └── *.trim.txt
 ├── calculate
 │   ├── *_Assembly_ratio_*.tsv
 │   ├── *_GC_content_*.tsv
@@ -193,7 +197,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 If you use Spriggan for your analysis, please cite it using the following:
 
 ```
-A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.6.3) [https://github.com/wslh-bio/spriggan/].
+A.C. Shockey, K. Florek, & E. Gunawan (2021). Spriggan (Version 1.7.0) [https://github.com/wslh-bio/spriggan/].
 ```
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
