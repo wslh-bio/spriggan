@@ -1,0 +1,10 @@
+{
+  "input": {
+     "description": "Path to comma-separated file containing information about the samples in the experiment.",
+    "optional": false
+  },
+  "outdir": {
+     "description": "Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure.",
+     "optional": false
+}   
+}
