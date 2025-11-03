@@ -69,7 +69,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 <img src ='/assets/sprigganUpdate.drawio.png'>
 
 #### Read trimming and quality assessment
-Read reapir, trimming, and cleaning are performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to repair fastqs with mismatched read numbers, trim reads of low quality bases, and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
+Read repair, trimming, and cleaning are performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to repair fastqs with mismatched read numbers, trim reads of low quality bases, and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
 
 #### Genome assembly
 Assembly of the cleaned and trimmed reads is performed using [Shovill v1.1.0](https://github.com/tseemann/shovill).
