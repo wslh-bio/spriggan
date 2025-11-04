@@ -92,15 +92,6 @@ workflow SPRIGGAN {
             }
         .set{ ch_filtered }
 
-    ch_filtered.single_end
-        .map{ meta, file ->
-            [meta, file, file[0].countFastq()]}
-        .branch{ meta, file, count ->
-            pass: count > 0
-            fail: count == 0
-        }
-        .set{ ch_single_end }
-
     ch_filtered.paired_end
         .map{ meta, file ->
             [meta, file, file[0].countFastq(), file[1].countFastq()]}
@@ -116,14 +107,7 @@ workflow SPRIGGAN {
             }
         .set{ ch_paired_end_filtered }
 
-    ch_single_end.pass
-        .map { meta, file, count ->
-            [meta, file]
-        }
-        .set{ ch_single_end_filtered }
-
     ch_paired_end_filtered
-        .mix(ch_single_end_filtered)
         .set{ ch_filtered }
 
     ch_paired_end.fail
@@ -132,14 +116,7 @@ workflow SPRIGGAN {
             }
         .set{ ch_paired_end_fail }
 
-    ch_single_end.fail
-        .map{ meta, file, count -> 
-            [meta.id]
-            }
-        .set{ ch_single_end_fail }
-
     ch_paired_end_fail
-        .mix( ch_single_end_fail )
         .flatten()
         .set{ ch_failed }
 

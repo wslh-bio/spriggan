@@ -104,6 +104,7 @@ class RowChecker:
                 raise AssertionError("FASTQ pairs must have the same file extensions.")
         else:
             row[self._single_col] = True
+            raise AssertionError("Spriggan requires paired-end Illumina data. Check to make sure both R1 and R2 are present in your samplesheet.")
 
     def _validate_fastq_format(self, filename):
         """Assert that a given filename has one of the expected FASTQ extensions."""
