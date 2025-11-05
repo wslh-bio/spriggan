@@ -5,6 +5,8 @@ import os
 import logging
 import sys
 import pandas as pd
+import urllib.request
+import numpy as np
 
 
 logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
@@ -16,7 +18,7 @@ def parse_args(args=None):
     parser.add_argument('-d', '--path_database',
         metavar='path_to_database_file', 
         type=str, 
-        help='Path to sorted database with NCBI entries statistics', 
+        help='FTP path of the Refseq assembly summary file', 
         required=True
         )
     parser.add_argument('-q', '--quast_report',
@@ -55,6 +57,44 @@ def initialize_variables():
     total_tax = "NA" #DATABASE
 
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
+
+
+def fetch_ncbi_assembly_summary(url, target_taxid):
+    """
+    Stream through the NCBI assembly_summary_refseq.txt file
+    returning genome_size and gc_percent matching on target_taxid.
+    """
+
+    logging.info(f"Fetching NCBI assembly summary for taxid {target_taxid} ...")
+
+    #TODO Calc genome size and gc percent by calculating median, calculate IQR and trim outliers, calculate the mean afterwards
+
+    genome_size = None
+    gc_percent = None
+
+    try:
+        with urllib.request.urlopen(url) as response:
+            for raw_line in response:
+                line = raw_line.decode("utf-8").strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                cols = line.split("\t")
+                if len(cols) < 30:  # ensure expected columns exist
+                    continue
+
+                taxid = cols[5]
+                if taxid == str(target_taxid):
+                    genome_size = cols[25] or None
+                    gc_percent = cols[27] or None
+                else:
+                    logging.warning(f"No record found for taxid {target_taxid}")
+                    return None, None
+
+    except Exception as e:
+        logging.error(f"Error fetching NCBI assembly summary: {e}")
+        return None, None
+
 
 def extract_sample_name(quast_report):
     logging.debug("Extracting sample name from quast report")
