@@ -153,6 +153,8 @@ def fetch_ncbi_assembly_summary(url, target_taxid):
 
         # Final stats
         mean_genome_size = statistics.mean(filtered_sizes)
+        # For continuity, only calculate std dev for species with 10 or more references
+        stdev_genome_size = statistics.stdev(filtered_sizes) if len(filtered_sizes) >= 10 else "Not calculated on species with n<10 references"  
         mean_gc_percent = statistics.mean(gc_percents)
 
         logging.info(
