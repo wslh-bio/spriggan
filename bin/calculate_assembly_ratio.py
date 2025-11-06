@@ -101,8 +101,6 @@ def fetch_ncbi_assembly_summary(url, target_taxid):
 
     logging.info(f"Fetching NCBI assembly summary for taxid {target_taxid} ...")
 
-    #TODO Calc genome size and gc percent by calculating median, calculate IQR and trim outliers, calculate the mean afterwards
-
     genome_sizes = []
     gc_percents = []
 
