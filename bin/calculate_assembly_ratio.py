@@ -92,7 +92,7 @@ def parse_gc_percent(value):
         return None
 
 
-def fetch_ncbi_assembly_summary(url, target_taxid):
+def compute_taxid_genome_stats(url, target_taxid):
     """
     Stream through the NCBI assembly_summary_refseq.txt file,
     compute mean genome_size (after IQR filtering) and mean gc_percent
