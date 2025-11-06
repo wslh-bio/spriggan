@@ -7,9 +7,12 @@ import sys
 import pandas as pd
 import urllib.request
 import numpy as np
+import statistics
 
 
 logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+
+DEFAULT_REFSEQ_URL = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
@@ -17,8 +20,9 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser(description=Description)
     parser.add_argument('-d', '--path_database',
         metavar='path_to_database_file', 
-        type=str, 
-        help='FTP path of the Refseq assembly summary file', 
+        type=str,
+        default=DEFAULT_REFSEQ_URL,
+        help='FTP path of the Refseq assembly summary file (default: {DEFAULT_REFSEQ_URL})', 
         required=True
         )
     parser.add_argument('-q', '--quast_report',
@@ -59,18 +63,48 @@ def initialize_variables():
     return taxid, stdev, stdevs, assembly_length, expected_length, total_tax
 
 
+def is_float(value):
+    """
+    Helper function to handle strings in genome_size column of refseq assembly file.
+    Returns True if the value can be converted to a float.
+    """
+    try:
+        float(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+    
+
+def parse_gc_percent(value):
+    """
+    Some fields in the gc_percent column of the refseq assembly file contain values over 100%.
+    Helper function that gets rid of values over 100%.
+    """
+    try:
+        val = float(value)
+        if val < 0:  # extremely unlikely scenario but handling anyways
+            return None
+        elif val > 100:  # Not sure if this is the best way to handle this but it's the cleanest
+            return None
+        else:
+            return val
+    except (ValueError, TypeError):
+        return None
+
+
 def fetch_ncbi_assembly_summary(url, target_taxid):
     """
-    Stream through the NCBI assembly_summary_refseq.txt file
-    returning genome_size and gc_percent matching on target_taxid.
+    Stream through the NCBI assembly_summary_refseq.txt file,
+    compute mean genome_size (after IQR filtering) and mean gc_percent
+    for all records matching the target_taxid.
     """
 
     logging.info(f"Fetching NCBI assembly summary for taxid {target_taxid} ...")
 
     #TODO Calc genome size and gc percent by calculating median, calculate IQR and trim outliers, calculate the mean afterwards
 
-    genome_size = None
-    gc_percent = None
+    genome_sizes = []
+    gc_percents = []
 
     try:
         with urllib.request.urlopen(url) as response:
@@ -80,16 +114,55 @@ def fetch_ncbi_assembly_summary(url, target_taxid):
                     continue
 
                 cols = line.split("\t")
-                if len(cols) < 30:  # ensure expected columns exist
+                if len(cols) <= 27:  # At minimum, column count should go to column 27 (zero-based numbering), which is 'gc_percent'. 
                     continue
 
-                taxid = cols[5]
-                if taxid == str(target_taxid):
-                    genome_size = cols[25] or None
-                    gc_percent = cols[27] or None
+                taxid = cols[5].strip()
+                if taxid != str(target_taxid):
+                    continue
+
+                genome_size_val = cols[25].strip()
+                gc_percent_val = parse_gc_percent(cols[27].strip())  # Remove all gc_percent values over 100
+
+                # Handle strings in genome_size and validate numeric fields
+                if is_float(genome_size_val) and gc_percent_val is not None:
+                    genome_size = float(genome_size_val)
+                    gc_percent = float(gc_percent_val)
+                    genome_sizes.append(genome_size)
+                    gc_percents.append(gc_percent)
                 else:
-                    logging.warning(f"No record found for taxid {target_taxid}")
-                    return None, None
+                    logging.debug(
+                        f"Skipping malformed entry for taxid {taxid}: genome_size='{genome_size_val}', gc_percent='{gc_percent_val}'"
+                    )
+
+        if not genome_sizes:
+            logging.warning(f"No valid genome entries found for taxid {target_taxid}")
+            return None, None
+
+        # --- IQR filtering on genome_size ---
+        Q1 = np.percentile(genome_sizes, 25)
+        Q3 = np.percentile(genome_sizes, 75)
+        IQR = Q3 - Q1
+
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        filtered_sizes = [x for x in genome_sizes if lower_bound <= x <= upper_bound]  # Remove outliers
+
+        if not filtered_sizes:
+            logging.warning(f"All genome_size values filtered out for taxid {target_taxid}")
+            return None, None
+
+        # Final stats
+        mean_genome_size = statistics.mean(filtered_sizes)
+        mean_gc_percent = statistics.mean(gc_percents)
+
+        logging.info(
+            f"Taxid {target_taxid}: mean genome_size (IQR-filtered) = {mean_genome_size:.2f}, "
+            f"mean GC% = {mean_gc_percent:.2f} (n={len(filtered_sizes)})"
+        )
+
+        return mean_genome_size, mean_gc_percent
 
     except Exception as e:
         logging.error(f"Error fetching NCBI assembly summary: {e}")
