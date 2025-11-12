@@ -8,6 +8,7 @@ import pandas as pd
 import urllib.request
 import numpy as np
 import statistics
+from datetime import datetime
 
 
 logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
@@ -181,9 +182,7 @@ def process_database_paths(path_database, sample_name, taxid, stdev, stdevs, ass
 
     logging.debug("Processing database dates and paths.")
 
-    get_date = path_database
-    match = re.search(r"(\d{8})", get_date)
-    NCBI_ratio_date = match.group(1)
+    NCBI_ratio_date = datetime.now().strftime("%Y%m%d")
 
     file_name_txt = os.path.basename(path_database)
     file_name = file_name_txt.strip(".txt")
