@@ -412,7 +412,7 @@ def main(args=None):
 
     if result is None:
         logging.warning(
-            f"No NCBI assembly stats found for '{genus} {species}'in {NCBI_ratio_file}; proceeding with default values for sample '{sample_name}'."
+            f"No NCBI assembly stats found for '{genus} {species}'in {args.path_database}; proceeding with default values for sample '{sample_name}'."
         )
         # Assign placeholder values so output can still be written
         taxid = "None"
