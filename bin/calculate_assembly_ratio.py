@@ -157,9 +157,9 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, NCBI_ratio_date, 
 
         filtered_gc = [x for x in gc_percents if gc_lower_bound <= x <= gc_upper_bound]  # Remove GC% outliers
 
-        if not filtered_gc:
-            logging.warning(f"All GC% values filtered out for taxid {target_taxid}")
-            return None, None
+        if not filtered_sizes or not filtered_gc:
+            logging.warning(f"All values filtered out for taxid {target_taxid}")
+            return None
 
         # Final stats
         expected_length = statistics.mean(filtered_sizes)  # Mean genome size
@@ -199,8 +199,8 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, NCBI_ratio_date, 
         return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, stdevs, expected_length, taxid
     
     except Exception as e:
-        logging.error(f"Error fetching NCBI assembly summary: {e}")
-        return None, None
+        logging.error(f"Error computing taxid genome stats for {target_taxid}: {e}")
+        return None
 
 
 def extract_sample_name(quast_report):
