@@ -93,7 +93,7 @@ def parse_gc_percent(value):
         return None
 
 
-def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_percent):
+def compute_taxid_genome_stats(url, target_taxid, sample_name, NCBI_ratio_date, assembly_length, total_tax sample_gc_percent):
     """
     Stream through the NCBI assembly_summary_refseq.txt file,
     compute mean genome_size (after IQR filtering) and mean gc_percent
@@ -164,7 +164,21 @@ def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_per
         # Final stats
         expected_length = statistics.mean(filtered_sizes)  # Mean genome size
         # For continuity, only calculate std dev for species with 10 or more references
-        stdev_genome_size = statistics.stdev(filtered_sizes) if len(filtered_sizes) >= 10 else "Not calculated on species with n<10 references"  
+        if len(filtered_sizes) >= 10:
+            stdev_genome_size = statistics.stdev(filtered_sizes)
+            if int(assembly_length) > int(expected_length):
+                bigger = int(assembly_length)
+                smaller = int(expected_length)
+            else:
+                smaller = int(assembly_length)
+                bigger = int(expected_length)
+
+            logging.debug("Calculating the standard deviations")
+            stdevs = (bigger - smaller) / stdev_genome_size
+
+        else:
+            stdev_genome_size = "Not calculated on species with n<10 references"
+            stdevs = "NA"
         
         ## GC
         species_gc_mean = statistics.mean(gc_percents)
@@ -179,7 +193,10 @@ def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_per
             f"mean GC% = {species_gc_mean:.2f} (n={len(filtered_sizes)})"
         )
 
-        return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, expected_length, taxid
+        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+                    outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {species_gc_percent_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {species_gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
+
+        return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, stdevs, expected_length, taxid
     
     except Exception as e:
         logging.error(f"Error fetching NCBI assembly summary: {e}")
