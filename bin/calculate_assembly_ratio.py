@@ -93,7 +93,7 @@ def parse_gc_percent(value):
         return None
 
 
-def compute_taxid_genome_stats(url, target_taxid):
+def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_percent):
     """
     Stream through the NCBI assembly_summary_refseq.txt file,
     compute mean genome_size (after IQR filtering) and mean gc_percent
@@ -153,17 +153,17 @@ def compute_taxid_genome_stats(url, target_taxid):
             return None, None
 
         # Final stats
-        mean_genome_size = statistics.mean(filtered_sizes)
+        expected_length = statistics.mean(filtered_sizes)  # Mean genome size
         # For continuity, only calculate std dev for species with 10 or more references
         stdev_genome_size = statistics.stdev(filtered_sizes) if len(filtered_sizes) >= 10 else "Not calculated on species with n<10 references"  
-        mean_gc_percent = statistics.mean(gc_percents)
+        gc_mean = statistics.mean(gc_percents)
 
         logging.info(
-            f"Taxid {target_taxid}: mean genome_size (IQR-filtered) = {mean_genome_size:.2f}, "
-            f"mean GC% = {mean_gc_percent:.2f} (n={len(filtered_sizes)})"
+            f"Taxid {target_taxid}: mean genome_size (IQR-filtered) = {expected_length:.2f}, "
+            f"mean GC% = {gc_mean:.2f} (n={len(filtered_sizes)})"
         )
 
-        return mean_genome_size, mean_gc_percent, stdev_genome_size
+        return expected_length, gc_mean, stdev_genome_size
 
     except Exception as e:
         logging.error(f"Error fetching NCBI assembly summary: {e}")
