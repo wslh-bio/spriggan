@@ -138,7 +138,7 @@ def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_per
             logging.warning(f"No valid genome entries found for taxid {target_taxid}")
             return None, None
 
-        # --- IQR filtering on genome_size ---
+        # --- IQR filtering on genome_size and gc_percent ---
         Q1 = np.percentile(genome_sizes, 25)
         Q3 = np.percentile(genome_sizes, 75)
         IQR = Q3 - Q1
@@ -148,23 +148,39 @@ def compute_taxid_genome_stats(url, target_taxid, assembly_length, sample_gc_per
 
         filtered_sizes = [x for x in genome_sizes if lower_bound <= x <= upper_bound]  # Remove outliers
 
-        if not filtered_sizes:
-            logging.warning(f"All genome_size values filtered out for taxid {target_taxid}")
+        Q1_gc = np.percentile(gc_percents, 25)
+        Q3_gc = np.percentile(gc_percents, 75)
+        IQR_gc = Q3_gc - Q1_gc
+
+        gc_lower_bound = Q1_gc - 1.5 * IQR_gc
+        gc_upper_bound = Q3_gc + 1.5 * IQR_gc
+
+        filtered_gc = [x for x in gc_percents if gc_lower_bound <= x <= gc_upper_bound]  # Remove GC% outliers
+
+        if not filtered_gc:
+            logging.warning(f"All GC% values filtered out for taxid {target_taxid}")
             return None, None
 
         # Final stats
         expected_length = statistics.mean(filtered_sizes)  # Mean genome size
         # For continuity, only calculate std dev for species with 10 or more references
         stdev_genome_size = statistics.stdev(filtered_sizes) if len(filtered_sizes) >= 10 else "Not calculated on species with n<10 references"  
-        gc_mean = statistics.mean(gc_percents)
+        
+        ## GC
+        species_gc_mean = statistics.mean(gc_percents)
+        gc_min = min(gc_percents)
+        gc_max = max(gc_percents)
+        gc_count = len(gc_percents)
+        species_gc_percent_stdev = statistics.stdev(filtered_gc) if len(filtered_gc) >= 10 else "Not calculated on species with n<10 references" 
+
 
         logging.info(
             f"Taxid {target_taxid}: mean genome_size (IQR-filtered) = {expected_length:.2f}, "
-            f"mean GC% = {gc_mean:.2f} (n={len(filtered_sizes)})"
+            f"mean GC% = {species_gc_mean:.2f} (n={len(filtered_sizes)})"
         )
 
-        return expected_length, gc_mean, stdev_genome_size
-
+        return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, expected_length, taxid
+    
     except Exception as e:
         logging.error(f"Error fetching NCBI assembly summary: {e}")
         return None, None
