@@ -163,7 +163,7 @@ def compute_taxid_genome_stats(url, target_taxid):
             f"mean GC% = {mean_gc_percent:.2f} (n={len(filtered_sizes)})"
         )
 
-        return mean_genome_size, mean_gc_percent
+        return mean_genome_size, mean_gc_percent, stdev_genome_size
 
     except Exception as e:
         logging.error(f"Error fetching NCBI assembly summary: {e}")
