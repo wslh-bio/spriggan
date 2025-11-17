@@ -40,10 +40,10 @@ def parse_args(args=None):
         help='Tax file from Kraken', 
         required=True
         )
-    parser.add_argument('-f', '--taxonomy_to_compare',
-        metavar='"genus species"', 
+    parser.add_argument('-f', '--taxonomic_ID_to_compare',
+        metavar='"tax ID"', 
         type=str, 
-        help='Specific taxonomy to compare against in the database', 
+        help='Specific taxonomic ID to compare against in the database', 
         default=None
         )
     parser.add_argument('-V', '--version',
@@ -386,23 +386,18 @@ def main(args=None):
     #Extracting sample name
     sample_name = extract_sample_name(args.quast_report)
 
-    #Grabbing assembly length and gc percentage from quast file
-    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
-
-    #Getting database names and dates
-    handle_missing_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
-
     #Getting taxonomy info
     total_tax, genus, species, found = extract_kraken_tax_id(args.taxonomy_to_compare, args.tax_file, sample_name)
 
-    # Get genome stats from refseq summary file
-    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = compute_taxid_genome_stats(args.path_database, sample_name, assembly_length, total_tax, sample_gc_percent, found)
+    # Decide which taxid to pass to compute_taxid_genome_stats(). Use Kraken taxid if available, else use user-provided
+    target_taxid = taxid if found else args.taxonomic_ID_to_compare
 
-    # result = search_ncbi_ratio_file(
-    #     NCBI_ratio_file, genus, species, assembly_length,
-    #     sample_name, NCBI_ratio_date, total_tax,
-    #     sample_gc_percent, found
-    # )
+    #Grabbing assembly length and gc percentage from quast file
+    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+
+    handle_missing_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+    
+    result = compute_taxid_genome_stats(args.path_database, target_taxid, sample_name, assembly_length, total_tax, sample_gc_percent, found)
 
     if result is None:
         logging.warning(
