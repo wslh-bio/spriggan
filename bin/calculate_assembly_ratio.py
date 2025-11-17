@@ -266,54 +266,62 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
         sys.exit(1)
 
-def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
+def extract_kraken_tax_id(taxid_to_compare, tax):
+    """
+    Extract the highest-percentage S-level taxonomic ID from {sample_name}.kraken2.txt report file.
+    If none found, fall back to user-provided taxid.
+    """
+    logging.debug("Parsing Kraken2 report for species-level taxonomic ID.")
 
-    logging.debug("Checking for taxonomy information in taxonomy file.")
+    logging.debug("Initialize variables")
 
-    logging.debug("Initializing blank variables")
+    best_percent = -1.0
+    taxid = None
     genus = None
     species = None
 
-    logging.debug("If user did not enter a taxonomy to compare to")
-    if not taxonomy_to_compare:
+    try:
+        with open(tax, "r") as infile:
+            for line in infile:
+                parts = line.strip().split("\t")
 
-        df = pd.read_csv(tax,sep='\t')
+                # Ensure minimum columns
+                if len(parts) < 6:
+                    continue
 
-        if df['Sample'].str.contains(sample_name).any():
+                percent = float(parts[0])
+                rank = parts[3]
+                taxid = parts[4]
+                name = parts[5].strip()
 
-            found = True
+                # Only consider S rank (true species level)
+                if rank == "S":
+                    if percent > best_percent:
+                        name_parts = name.split()
+                        if len(name_parts) < 2:
+                            continue  # this is to catch malformed species name
+                        
+                        best_percent = percent
+                        taxid = taxid
+                        genus = name_parts[0]
+                        species = name_parts[1]
 
-            result = df.loc[df['Sample'] == sample_name,'Primary Species (%)'].values[0]
-            genus = result.split(' ')[0]
-
-            if genus == "":
-                genus = "No genus found"
-
-            species = result.split(' ')[1]
-
-            if 'sp.' in species:
-                species = species.replace('sp. ', 'sp.')
-
-            if species == "":
-                species = "No species found"
-
+        # For a species-level match
+        if taxid:
             total_tax = f"{genus} {species}"
+            found = True
+            return total_tax, genus, species, taxid, found
 
-            return total_tax, genus, species, found
+    except Exception as exc:
+        logging.debug(f"Error reading Kraken report: {exc}")
 
-    else:
-        logging.debug("If user has a taxonomy they want to compare this to")
-        in_genus = taxonomy_to_compare.split()[0].capitalize()
-        in_species = taxonomy_to_compare.split()[1].lower().capitalize()
-        genus = in_genus
-        species = in_species
+    logging.debug("If user provided a taxid:")
 
-        total_tax = f"{genus} {species}    (selected manually)"
+    taxid = taxid_to_compare.strip()
+    total_tax = f"TaxID {taxid} (selected manually)"
+    found = False
 
-        # Initialize variables for matching
-        found = False
-
-        return total_tax, genus, species, found
+    return total_tax, None, None, taxid, found
 
 
 def calculate_ratio(sample_name, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
