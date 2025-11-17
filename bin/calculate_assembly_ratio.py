@@ -393,13 +393,9 @@ def main(args=None):
     handle_missing_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
 
     #Getting taxonomy info
-    total_tax, genus, species, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file, sample_name)
+    total_tax, genus, species, found = extract_kraken_tax_id(args.taxonomy_to_compare, args.tax_file, sample_name)
 
-    #Grabbing stats 
-    # stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
-
-    #TODO Replace with compute_taxid_genome_stats()
-
+    # Get genome stats from refseq summary file
     stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = compute_taxid_genome_stats(args.path_database, sample_name, assembly_length, total_tax, sample_gc_percent, found)
 
     # result = search_ncbi_ratio_file(
