@@ -120,7 +120,10 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, 
 
                 taxid = cols[5].strip()
                 if taxid != str(target_taxid):
-                    continue
+                    continue  # skip rows that are not target tax ID
+
+                if total_tax == None:
+                    total_tax = cols[7].strip()
 
                 found = True
 
@@ -318,7 +321,7 @@ def extract_kraken_tax_id(taxid_to_compare, tax):
     logging.debug("If user provided a taxid:")
 
     taxid = taxid_to_compare.strip()
-    total_tax = f"TaxID {taxid} (selected manually)"
+    total_tax = None
     found = False
 
     return total_tax, None, None, taxid, found
