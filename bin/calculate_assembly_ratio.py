@@ -95,7 +95,7 @@ def parse_gc_percent(value):
         return None
 
 
-def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, total_tax, sample_gc_percent):
+def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, total_tax, sample_gc_percent, found):
     """
     Stream through the NCBI assembly_summary_refseq.txt file,
     compute mean genome_size (after IQR filtering) and mean gc_percent
@@ -122,6 +122,8 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, 
                 if taxid != str(target_taxid):
                     continue
 
+                found = True
+
                 genome_size_val = cols[25].strip()
                 gc_percent_val = parse_gc_percent(cols[27].strip())  # Remove all gc_percent values over 100
 
@@ -135,6 +137,10 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, 
                     logging.debug(
                         f"Skipping malformed entry for taxid {taxid}: genome_size='{genome_size_val}', gc_percent='{gc_percent_val}'"
                     )
+        
+        if not found:
+            logging.warning(f"No NCBI matches found for target taxid '{target_taxid}'")
+            return None
 
         if not genome_sizes:
             logging.warning(f"No valid genome entries found for taxid {target_taxid}")
@@ -382,6 +388,9 @@ def main(args=None):
     # stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, total_tax, sample_gc_percent, found)
 
     #TODO Replace with compute_taxid_genome_stats()
+
+    stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = compute_taxid_genome_stats(args.path_database, sample_name, assembly_length, total_tax, sample_gc_percent, found)
+
     # result = search_ncbi_ratio_file(
     #     NCBI_ratio_file, genus, species, assembly_length,
     #     sample_name, NCBI_ratio_date, total_tax,
