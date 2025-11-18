@@ -17,7 +17,7 @@ timestamp = datetime.now().strftime("%Y%m%d")
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
-    
+
     parser = argparse.ArgumentParser(description=Description)
     parser.add_argument('-d', '--path_database',
         metavar='path_to_database_file', 
@@ -384,7 +384,7 @@ def main(args=None):
     sample_name = extract_sample_name(args.quast_report)
 
     #Getting taxonomy info
-    total_tax, genus, species, found = extract_kraken_tax_id(args.taxonomy_to_compare, args.tax_file, sample_name)
+    total_tax, genus, species, found = extract_kraken_tax_id(args.taxonomic_ID_to_compare, args.tax_file, sample_name)
 
     # Decide which taxid to pass to compute_taxid_genome_stats(). Use Kraken taxid if available, else use user-provided
     target_taxid = taxid if found else args.taxonomic_ID_to_compare
