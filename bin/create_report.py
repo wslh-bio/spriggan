@@ -77,6 +77,9 @@ for file in files:
     if 'Sample' in df.columns:
         df['Sample'] = df['Sample'].apply(sanitize_sample)
     
+    if 'Primary Species (%)' in df.columns:
+        df['Primary Species'] = df['Primary Species (%)'].apply(sanitize_primary_species)
+    
     dfs.append(df)
 
 merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'), dfs)
@@ -116,7 +119,5 @@ merged = merged.rename(columns={'Contigs':'Contigs (#)',
 
 
 merged['MLST Scheme'] = merged.apply(modify_mlst_scheme, axis=1)
-
-merged['Primary Species'] = merged['Primary Species (%)'].apply(sanitize_primary_species)
 
 merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
