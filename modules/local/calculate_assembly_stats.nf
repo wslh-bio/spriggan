@@ -6,7 +6,7 @@ process CALCULATE_ASSEMBLY_STATS {
 
     input:
     tuple val(meta), path(quast_report_tsv)
-    path(kraken_results_tsv)
+    path(kraken_results)
     val(path_database)
 
     output:
@@ -21,6 +21,6 @@ process CALCULATE_ASSEMBLY_STATS {
     calculate_assembly_ratio.py \\
     -d $path_database \\
     -q $quast_report_tsv \\
-    -t $kraken_results_tsv
+    -t $kraken_results
     """
 }
