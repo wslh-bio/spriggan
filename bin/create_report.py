@@ -14,9 +14,9 @@ with open(sys.argv[2], 'r') as krakenFile:
         if "kraken DB:" in l.strip():
             krakenDB_version = l.strip().split(':')[1].strip()
 
-files = glob.glob('*.tsv')
-
 run_name = sys.argv[4]
+
+files = glob.glob('*.tsv')
 
 dfs = []
 
