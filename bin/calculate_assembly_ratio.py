@@ -13,19 +13,16 @@ from datetime import datetime
 
 logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
-DEFAULT_REFSEQ_URL = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
-
 timestamp = datetime.now().strftime("%Y%m%d")
 
 def parse_args(args=None):
     Description='Compare local assembly to expected assembly size based on taxonomy.'
-
+    
     parser = argparse.ArgumentParser(description=Description)
     parser.add_argument('-d', '--path_database',
         metavar='path_to_database_file', 
         type=str,
-        default=DEFAULT_REFSEQ_URL,
-        help='FTP path of the Refseq assembly summary file (default: {DEFAULT_REFSEQ_URL})', 
+        help='Path or URL of the Refseq assembly summary file', 
         required=True
         )
     parser.add_argument('-q', '--quast_report',
