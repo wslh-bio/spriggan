@@ -16,6 +16,8 @@ with open(sys.argv[2], 'r') as krakenFile:
 
 files = glob.glob('*.tsv')
 
+run_name = sys.argv[4]
+
 dfs = []
 
 for file in files:
@@ -26,7 +28,9 @@ merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],how='left'
 merged = merged.assign(krakenDB=krakenDB_version)
 merged = merged.assign(amrDB=amrfinderDB_version)
 merged = merged.assign(spriggan=sys.argv[3])
+merged = merged.assign(Run=run_name)
 merged = merged[['Sample',
+                 'Run',
                  'Total Reads',
                  'Reads Removed',
                  'Median Coverage',
