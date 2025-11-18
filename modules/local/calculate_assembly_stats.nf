@@ -7,7 +7,7 @@ process CALCULATE_ASSEMBLY_STATS {
     input:
     tuple val(meta), path(quast_report_tsv)
     path(kraken_results_tsv)
-    path NCBI_assembly_stats_file
+    val(path_database)
 
     output:
     path "*_Assembly_ratio_*"   , emit: assembly_ratio
@@ -19,7 +19,7 @@ process CALCULATE_ASSEMBLY_STATS {
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin/
     """
     calculate_assembly_ratio.py \\
-    -d $NCBI_assembly_stats_file \\
+    -d $path_database \\
     -q $quast_report_tsv \\
     -t $kraken_results_tsv
     """
