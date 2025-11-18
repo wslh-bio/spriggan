@@ -37,10 +37,9 @@ def sanitize_sample(sample):
     # Internal pattern: two digits + MP + six digits
     mp = re.match(r"^\d{2}MP\d{6,}", s)
     if mp:
-        # Return only the matched part (25MPxxxxxx)
         return mp.group(0)
 
-    # For non-matching sample names, keep as-is (Ecoli_test_1)
+    # For non-matching sample names
     return s
     
 
