@@ -35,13 +35,26 @@ def sanitize_sample(sample):
     s = str(sample)
 
     # Internal pattern: two digits + MP + six digits
-    m = re.match(r"^\d{2}MP\d{6,}", s)
-    if m:
+    mp = re.match(r"^\d{2}MP\d{6,}", s)
+    if mp:
         # Return only the matched part (25MPxxxxxx)
-        return m.group(0)
+        return mp.group(0)
 
     # For non-matching sample names, keep as-is (Ecoli_test_1)
     return s
+    
+
+def sanitize_primary_species(primary_species):
+    """
+    Split out the % from primary species and assign to "Primary Species" column
+    """
+    if pd.isna(primary_species):
+        return primary_species
+    
+    species = str(primary_species)
+    cleaned_species = species.split('(')[0].strip()
+    return cleaned_species
+    
 
 with open(sys.argv[1], 'r') as amrFile:
     for l in amrFile.readlines():
@@ -81,6 +94,7 @@ merged = merged[['Sample',
                  'Contigs',
                  'Assembly Length (bp)',
                  'N50',
+                 'Primary Species',
                  'Primary Species (%)',
                  'Secondary Species (%)',
                  'Unclassified Reads (%)',
@@ -97,11 +111,13 @@ merged = merged.rename(columns={'Contigs':'Contigs (#)',
                                 'Average Coverage':'Mean Coverage',
                                 'Gene':'AMR','Coverage':'AMR Coverage',
                                 'Identity':'AMR Identity',
-                                'krakenDB':'Kraken Database Verion',
+                                'krakenDB':'Kraken Database Version',
                                 'amrDB':'AMRFinderPlus Database Version',
                                 'spriggan':'Spriggan Version'})
 
 
 merged['MLST Scheme'] = merged.apply(modify_mlst_scheme, axis=1)
+
+merged['Primary Species'] = merged['Primary Species (%)'].apply(sanitize_primary_species)
 
 merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
