@@ -384,7 +384,7 @@ def main(args=None):
     sample_name = extract_sample_name(args.quast_report)
 
     #Getting taxonomy info
-    total_tax, genus, species, found = extract_kraken_tax_id(args.taxonomic_ID_to_compare, args.tax_file)
+    total_tax, genus, species, taxid, found = extract_kraken_tax_id(args.taxonomic_ID_to_compare, args.tax_file)
 
     # Decide which taxid to pass to compute_taxid_genome_stats(). Use Kraken taxid if available, else use user-provided
     target_taxid = taxid if found else args.taxonomic_ID_to_compare
