@@ -204,7 +204,7 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, 
         with open(f"{sample_name}_GC_content_{timestamp}.txt", 'w') as outfile:
                     outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {target_taxid}\nSpecies_GC_StDev: {species_gc_percent_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {species_gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
 
-        return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, stdevs, expected_length, taxid
+        return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, stdevs, expected_length, target_taxid
     
     except Exception as e:
         logging.error(f"Error computing taxid genome stats for {target_taxid}: {e}")
@@ -396,7 +396,7 @@ def main(args=None):
             outfile.write(
                 f"Sample: {sample_name}\n"
                 f"Tax: {total_tax}\n"
-                f"NCBI_TAXID: {taxid}\n"
+                f"NCBI_TAXID: {target_taxid}\n"
                 f"Species_St.Dev: {stdev}\n"
                 f"Isolate_St.Devs: {stdevs}\n"
                 f"Actual_length: {assembly_length_str}\n"
@@ -410,7 +410,7 @@ def main(args=None):
             outfile.write(
                 f"Sample: {sample_name}\n"
                 f"Tax: {total_tax}\n"
-                f"NCBI_TAXID: {taxid}\n"
+                f"NCBI_TAXID: {target_taxid}\n"
                 f"Species_GC_StDev: None\n"
                 f"Species_GC_Min: None\n"
                 f"Species_GC_Max: None\n"
