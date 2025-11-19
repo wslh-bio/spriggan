@@ -202,7 +202,7 @@ def compute_taxid_genome_stats(url, target_taxid, sample_name, assembly_length, 
         )
 
         with open(f"{sample_name}_GC_content_{timestamp}.txt", 'w') as outfile:
-                    outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {species_gc_percent_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {species_gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
+                    outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {target_taxid}\nSpecies_GC_StDev: {species_gc_percent_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {species_gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
 
         return stdev_genome_size, species_gc_percent_stdev, gc_min, gc_max, species_gc_mean, gc_count, stdevs, expected_length, taxid
     
@@ -219,22 +219,8 @@ def extract_sample_name(quast_report):
 
     return sample_name
 
-def handle_missing_database_paths(path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
 
-    logging.debug("Function to handle erroneous database path passed into main function")
-    if not os.path.isfile(path_database):
-        logging.critical("No ratio database found, exiting")
-        logging.debug("Writing NA for all information in output files.")
-
-        with open(f"{sample_name}_Assembly_ratio_{timestamp}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
-
-        with open(f"{sample_name}_GC_content_{timestamp}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
-
-        sys.exit(1)
-
-def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
+def check_quast_stats(quast_report, timestamp, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax):
 
     logging.debug("Checking quast results.")
 
@@ -258,10 +244,10 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
         logging.critical("No quast exists, cannot continue")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI}.txt", 'w') as outfile:
+        with open(f"{sample_name}_Assembly_ratio_{timestamp}.txt", 'w') as outfile:
             outfile.write(f"Sample: {sample_name}\nTax: {total_tax}\nNCBI_TAXID: {taxid}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
 
-        with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
+        with open(f"{sample_name}_GC_content_{timestamp}.txt", 'w') as outfile:
             outfile.write(f"Sample: {sample_name}\nTax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
 
         sys.exit(1)
@@ -275,7 +261,6 @@ def extract_kraken_tax_id(taxid_to_compare, tax):
 
     logging.debug("Initialize variables")
 
-    best_percent = -1.0
     taxid = None
     genus = None
     species = None
@@ -296,21 +281,19 @@ def extract_kraken_tax_id(taxid_to_compare, tax):
 
                 # Only consider S rank (true species level)
                 if rank == "S":
-                    if percent > best_percent:
-                        name_parts = name.split()
-                        if len(name_parts) < 2:
-                            continue  # this is to catch malformed species name
-                        
-                        best_percent = percent
-                        taxid = taxid
-                        genus = name_parts[0]
-                        species = name_parts[1]
+                    if percent == 0.0:  # filter out noise hits
+                        continue
 
-        # For a species-level match
-        if taxid:
-            total_tax = f"{genus} {species}"
-            found = True
-            return total_tax, genus, species, taxid, found
+                    name_parts = name.split()
+                    if len(name_parts) < 2:
+                        continue  # this is to catch malformed species name
+                    
+                    genus = name_parts[0]
+                    species = name_parts[1]
+                    total_tax = f"{genus} {species}"
+                    found = True
+                    return total_tax, genus, species, taxid, found
+            
 
     except Exception as exc:
         logging.debug(f"Error reading Kraken report: {exc}")
@@ -324,7 +307,7 @@ def extract_kraken_tax_id(taxid_to_compare, tax):
     return total_tax, None, None, taxid, found
 
 
-def calculate_ratio(sample_name, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
+def calculate_ratio(sample_name, timestamp, expected_length, total_tax, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
 
     if expected_length == "NA" or not expected_length:
 
@@ -360,7 +343,7 @@ def calculate_ratio(sample_name, expected_length, total_tax, taxid, assembly_len
 
     return ratio_a_e, ratio_e_a
 
-def write_output(sample_name, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a):
+def write_output(sample_name, timestamp, total_tax, taxid, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a):
 
     logging.debug("Writing the output file")
     with open(f"{sample_name}_Assembly_ratio_{timestamp}.txt", 'w') as outfile:
@@ -390,9 +373,7 @@ def main(args=None):
     target_taxid = taxid if found else args.taxonomic_ID_to_compare
 
     #Grabbing assembly length and gc percentage from quast file
-    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
-
-    handle_missing_database_paths(args.path_database, sample_name, taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
+    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, timestamp, sample_name, target_taxid, stdev, stdevs, assembly_length, expected_length, total_tax)
     
     result = compute_taxid_genome_stats(args.path_database, target_taxid, sample_name, assembly_length, total_tax, sample_gc_percent, found)
 
@@ -439,17 +420,17 @@ def main(args=None):
             )
 
     else:
-        stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = result
+        stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, target_taxid = result
 
         # Calculate ratios
         ratio_a_e, ratio_e_a = calculate_ratio(
-            sample_name, timestamp, expected_length, total_tax, taxid,
+            sample_name, timestamp, expected_length, total_tax, target_taxid,
             assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev
         )
 
         # Write final output files
         write_output(
-            sample_name, timestamp, total_tax, taxid, stdev, stdevs,
+            sample_name, timestamp, total_tax, target_taxid, stdev, stdevs,
             assembly_length, expected_length, ratio_a_e, ratio_e_a
             )
     logging.info("Finished writing assembly ratio file and GC content file.")
