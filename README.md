@@ -162,7 +162,7 @@ spriggan_results
 │   └── quast_results.tsv
 ├── rejected_samples
 │   └── Empty_samples.csv
-├── results
+├── report
 │   └── spriggan_report.csv
 ├── samtools
 │   ├── *.bam
