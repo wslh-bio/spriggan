@@ -31,6 +31,11 @@
                   "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                   "fa_icon": "fas fa-folder-open"
               },
+              "run_name": {
+                  "type": "string",
+                  "description": "A user-defined name for this workflow run. This will appear in reports, logs, and output directory structures to help identify the run.",
+                  "fa_icon": "fas fa-tag"
+              },
               "email": {
                   "type": "string",
                   "description": "Email address for completion summary.",
