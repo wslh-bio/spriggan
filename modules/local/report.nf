@@ -21,6 +21,6 @@ process REPORT {
 
     script:
     """
-    create_report.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version}
+    create_report.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version} ${params.run_name}
     """
 }
