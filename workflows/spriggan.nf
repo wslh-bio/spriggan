@@ -256,7 +256,6 @@ workflow SPRIGGAN {
     // MODULE: CALCULATE_ASSEMBLY_STATS
     //
     // 
-    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
     ch_kraken_results = KRAKEN.out.kraken_results
     QUAST.out.transposed_report
         .map{meta, result -> 
