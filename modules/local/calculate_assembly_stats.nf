@@ -6,7 +6,7 @@ process CALCULATE_ASSEMBLY_STATS {
 
     input:
     tuple val(meta), path(quast_report_tsv)
-    path(kraken_results)
+    tuple val(meta), path(kraken_results)
     val(path_database)
 
     output:
