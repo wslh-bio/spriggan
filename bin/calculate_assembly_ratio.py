@@ -84,7 +84,7 @@ def parse_gc_percent(value):
         val = float(value)
         if val < 0:  # extremely unlikely scenario but handling anyways
             return None
-        elif val > 100:  # Not sure if this is the best way to handle this but it's the cleanest
+        elif val > 100:  # Cleanest way to handle values over 100
             return None
         else:
             return val
@@ -352,7 +352,7 @@ def write_output(sample_name, timestamp, total_tax, taxid, stdev, stdevs, assemb
 def print_version(version):
     logging.debug("Took this version from the original script")
     if version:
-        logging.info("calculate_assembly_ratio.py: 2.0")
+        logging.info("calculate_assembly_ratio.py: 3.0")
 
 def main(args=None):
     args = parse_args(args)
