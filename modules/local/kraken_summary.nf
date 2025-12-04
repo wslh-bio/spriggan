@@ -4,7 +4,7 @@ process KRAKEN_SUMMARY {
     container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
 
     input:
-    path("data/*")
+    path(kraken_files)
 
     output:
     path("kraken_results.tsv"), emit: kraken_tsv
