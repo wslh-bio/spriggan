@@ -56,9 +56,9 @@
           "fa_icon": "fas fa-dna",
           "description": "Configuration options for the workflow.",
           "properties": {
-              "ncbi_assembly_stats": {
+              "refseq_assembly_summary": {
                   "type": "string",
-                  "default": "${baseDir}/assets/databases/NCBI_Assembly_stats_20240124.txt"
+                  "default": "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
               },
               "min_quast_contig": {
                   "type": "integer",
