@@ -74,7 +74,7 @@ def summarize_kraken(file):
     combined_df = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
     return combined_df
 # get all kraken2 report files
-files = glob.glob("data/*.kraken2.txt")
+files = glob.glob("*.kraken2.txt")
 
 # summarize kraken2 report files
 results = map(summarize_kraken, files)
