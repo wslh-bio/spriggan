@@ -263,15 +263,19 @@ workflow SPRIGGAN {
     //
     // 
     ch_kraken_results = KRAKEN.out.kraken_results
+        .map { meta, kraken_file -> [[id: meta.id], kraken_file] }
+
     QUAST.out.transposed_report
         .map{meta, result -> 
             [[id:meta.id], result]
             }
             .set { ch_quast }
 
+    ch_calc_input = ch_quast
+        .join(ch_kraken_results)
+
     CALCULATE_ASSEMBLY_STATS (
-        ch_quast,
-        ch_kraken_results,
+        ch_calc_input
         params.refseq_summary_file
     )
 
