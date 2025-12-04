@@ -5,8 +5,7 @@ process CALCULATE_ASSEMBLY_STATS {
     label 'process_single'
 
     input:
-    tuple val(meta), path(quast_report_tsv)
-    tuple val(meta), path(kraken_results)
+    tuple val(meta), path(quast_report_tsv), path(kraken_results)
     val(path_database)
 
     output:
