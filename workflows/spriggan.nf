@@ -275,7 +275,7 @@ workflow SPRIGGAN {
         .join(ch_kraken_results)
 
     CALCULATE_ASSEMBLY_STATS (
-        ch_calc_input
+        ch_calc_input,
         params.refseq_summary_file
     )
 
