@@ -120,4 +120,4 @@ merged = merged.rename(columns={'Contigs':'Contigs (#)',
 
 merged['MLST Scheme'] = merged.apply(modify_mlst_scheme, axis=1)
 
-merged.to_csv('spriggan_report.csv', index=False, sep=',', encoding='utf-8')
+merged.to_csv(f"{run_name}_spriggan_report.csv", index=False, sep=',', encoding='utf-8')

@@ -17,7 +17,7 @@ process REPORT {
     path("gc_stats_summary.tsv")
 
     output:
-    path('spriggan_report.csv')
+    path("${params.run_name}_spriggan_report.csv")
 
     script:
     """
