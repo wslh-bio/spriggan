@@ -28,13 +28,13 @@ def parse_args(args=None):
     parser.add_argument('-t', '--tax_file',
         metavar='tax_file', 
         type=str, 
-        help='Tax file from Kraken', 
+        help='Sample Kraken output file', 
         required=True
         )
     parser.add_argument('-f', '--taxonomy_to_compare',
-        metavar='"genus species"', 
+        metavar='"taxonomic ID"', 
         type=str, 
-        help='Specific taxonomy to compare against in the database', 
+        help='Specific taxonomic ID to compare against in the database', 
         default=None
         )
     parser.add_argument('-V', '--version',
