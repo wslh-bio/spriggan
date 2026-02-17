@@ -183,7 +183,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax):
 
         return tax_id, found
 
-def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_name, NCBI_ratio_date, tax_id, sample_gc_percent, found):
+def search_ncbi_ratio_file(NCBI_ratio, assembly_length, sample_name, NCBI_ratio_date, tax_id, sample_gc_percent, found):
 
     # Search in NCBI_ratio file
     with open(NCBI_ratio, 'r') as infile:
@@ -191,14 +191,14 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
 
             line = line.strip().split('\t')
 
-            if f"{genus.lower()} {species.lower()}" == line[0].lower():
-                taxid = line[19]
+            if tax_id == line[19]:
+                tax = line[0]
 
-                if taxid == -2:
-                    taxid = "No mode available when determining tax id"
+                if tax_id == -2:
+                    tax = "No mode available when determining tax id"
 
-                elif taxid == -1:
-                    taxid = "No tax id given or empty when making lookup"
+                elif tax_id == -1:
+                    tax = "No tax id given or empty when making lookup"
 
                 expected_length = int(1000000 * float(line[4])) // 1
                 reference_count = line[6]
@@ -235,15 +235,15 @@ def search_ncbi_ratio_file(NCBI_ratio, genus, species, assembly_length, sample_n
                     gc_stdev = line[11]
 
                 with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
-                    outfile.write(f"Sample: {sample_name}\nTax: {tax_id}\nNCBI_TAXID: {taxid}\nSpecies_GC_StDev: {gc_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
+                    outfile.write(f"Sample: {sample_name}\nTax: {tax}\nNCBI_TAXID: {tax_id}\nSpecies_GC_StDev: {gc_stdev}\nSpecies_GC_Min: {gc_min}\nSpecies_GC_Max: {gc_max}\nSpecies_GC_Mean: {gc_mean}\nSpecies_GC_Count: {gc_count}\nSample_GC_Percent: {sample_gc_percent}")
 
                 found = True
 
-                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid
+                return stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, tax
 
     # If no match found, log and return None
     if not found:
-        logging.info(f"No match found for '{genus} {species}'")
+        logging.info(f"No match found for {tax_id}")
         return None
 
 def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, tax_id, taxid, assembly_length, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdev):
