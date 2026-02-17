@@ -137,6 +137,34 @@ def check_quast_stats(quast_report, NCBI, sample_name, taxid, stdev, stdevs, ass
 
         sys.exit(1)
 
+
+def parse_kraken_raw(kraken_file):
+    """
+    Parse Kraken report to get the tax ID by only considering rank 'S' (species)
+    and selecting the highest percentage.
+    """
+    best_taxid = None
+    best_percent = -1.0
+    with open(kraken_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            cols = line.split("\t")
+            try:
+                percent = float(cols[0])
+                rank = cols[3]
+                taxid = cols[4]
+            except (ValueError, IndexError):
+                continue
+            if rank == 'S' and percent > best_percent:
+                best_percent = percent
+                best_taxid = taxid
+    if best_taxid is None:
+        raise ValueError(f"No species-level taxa found in {kraken_file}")
+    return best_taxid
+
+
 def process_NCBI_and_tax(taxonomy_to_compare, tax, sample_name):
 
     logging.debug("Checking for taxonomy information in taxonomy file.")
