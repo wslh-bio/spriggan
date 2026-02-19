@@ -65,6 +65,10 @@ def extract_sample_name(quast_report):
     return sample_name
 
 def process_database_paths(path_database, sample_name, tax, stdev, stdevs, assembly_length, expected_length, tax_id):
+    """
+    Some of the records/rows contain values in brackets. This function writes an updated database file 
+    with sanitized values for cleaner downstream processing.
+    """
 
     logging.debug("Processing database dates and paths.")
 
