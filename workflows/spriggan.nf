@@ -249,7 +249,7 @@ workflow SPRIGGAN {
     // MODULE: KRAKEN_SUMMARY
     //
     KRAKEN_SUMMARY (
-        KRAKEN.out.kraken_results.collect()
+        KRAKEN.out.kraken_results.map { meta, path -> path }.collect()
     )
 
     //
