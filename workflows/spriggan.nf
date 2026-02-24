@@ -358,7 +358,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_adapters.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN
+        .out
+        .kraken_results
+        .map {meta, path -> path }
+        .collect()
+        .ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(QUAST
         .out
         .result
