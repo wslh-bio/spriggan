@@ -163,7 +163,7 @@ spriggan_results
 ├── rejected_samples
 │   └── Empty_samples.csv
 ├── report
-│   └── spriggan_report.csv
+│   └── {run_name}_spriggan_report.csv
 ├── samtools
 │   ├── *.bam
 │   ├── *.depth.tsv
@@ -197,7 +197,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 If you use Spriggan for your analysis, please cite it using the following:
 
 ```
-A.C. Shockey, K. Florek, E. Gunawan, & D. Lyfoung (2021). Spriggan (Version 1.7.2) [https://github.com/wslh-bio/spriggan/].
+A.C. Shockey, K. Florek, E. Gunawan, & D. Lyfoung (2021). Spriggan (Version 1.7.3) [https://github.com/wslh-bio/spriggan/].
 ```
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
