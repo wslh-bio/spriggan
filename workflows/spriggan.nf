@@ -255,17 +255,20 @@ workflow SPRIGGAN {
     //
     // MODULE: CALCULATE_ASSEMBLY_STATS
     //
-    // 
-    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
-    QUAST.out.transposed_report
-        .map{meta, result -> 
-            [[id:meta.id], result]
-            }
-            .set { ch_quast }
+    // *** REMOVE AFTER TESTING ***
+    // ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
+    // QUAST.out.transposed_report
+    //     .map{meta, result -> 
+    //         [[id:meta.id], result]
+    //         }
+    //         .set { ch_quast }
+
+    // Join QUAST and KRAKEN per sample
+    ch_quast_kraken = QUAST.out.transposed_report
+    .join(KRAKEN.out.kraken_results)
 
     CALCULATE_ASSEMBLY_STATS (
-        ch_quast,
-        ch_kraken_tsv,
+        ch_quast_kraken,
         params.ncbi_assembly_stats
     )
 
