@@ -160,8 +160,8 @@ spriggan_results
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.report.tsv
 │   └── quast_results.tsv
-├── rejected_samples
-│   └── Empty_samples.csv
+├── rejected
+│   └── Spriggan_empty_samples.csv
 ├── report
 │   └── {run_name}_spriggan_report.csv
 ├── samtools
