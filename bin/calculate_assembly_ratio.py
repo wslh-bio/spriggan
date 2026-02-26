@@ -64,7 +64,7 @@ def extract_sample_name(quast_report):
 
     return sample_name
 
-def process_database_paths(path_database, sample_name, tax, stdev, stdevs, assembly_length, expected_length, tax_id):
+def process_database_paths(path_database, sample_name):
     """
     Some of the records/rows contain values in brackets. This function writes an updated database file 
     with sanitized values for cleaner downstream processing.
@@ -101,15 +101,11 @@ def process_database_paths(path_database, sample_name, tax, stdev, stdevs, assem
         logging.critical("No ratio database found, exiting")
         logging.debug("Writing NA for all information in output files.")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: {tax}\nNCBI_TAXID: {tax_id}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
-
-        with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
+        write_na_output(sample_name, NCBI_ratio_date, tax_id=None)
 
         sys.exit(1)
 
-def check_quast_stats(quast_report, NCBI, sample_name, tax, stdev, stdevs, assembly_length, expected_length, tax_id):
+def check_quast_stats(quast_report, NCBI_ratio_date, sample_name, tax_id):
 
     logging.debug("Checking quast results.")
 
@@ -133,11 +129,7 @@ def check_quast_stats(quast_report, NCBI, sample_name, tax, stdev, stdevs, assem
 
         logging.critical("No quast exists, cannot continue")
 
-        with open(f"{sample_name}_Assembly_ratio_{NCBI}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: {tax}\nNCBI_TAXID: {tax_id}\nSpecies_StDev: {stdev}\nIsolate_St.Devs: {stdevs}\nActual_length: {assembly_length}\nExpected_length: {expected_length}\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
-
-        with open(f"{sample_name}_GC_content_{NCBI}.txt", 'w') as outfile:
-            outfile.write(f"Sample: {sample_name}\nTax: No genus Found    No species found\nNCBI_TAXID: No Match Found\nSpecies_GC_StDev: No Match Found\nSpecies_GC_Min: No Match Found\nSpecies_GC_Max: No Match Found\nSpecies_GC_Mean: No Match Found\nSpecies_GC_Count: No Match Found\nSample_GC_Percent: No Match Found")
+        write_na_output(sample_name, NCBI_ratio_date, tax_id)
 
         sys.exit(1)
 
@@ -187,7 +179,7 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax_file):
         tax_id = taxonomy_to_compare
 
         # Initialize variables for matching
-        found = False
+        found = True
 
         return tax_id, found
 
@@ -295,6 +287,17 @@ def calculate_ratio(sample_name, NCBI_ratio_date, expected_length, tax, tax_id, 
 
     return ratio_a_e, ratio_e_a
 
+def write_na_output(sample_name, NCBI_ratio_date, tax_id):
+    """
+    This function writes "NA" as outputs when necessary data cannot be found or matched to anything
+    """
+    with open(f"{sample_name}_Assembly_ratio_{NCBI_ratio_date}.txt", 'w') as outfile:
+        outfile.write(f"Sample: {sample_name}\nTax: NA\nNCBI_TAXID: {tax_id}\nSpecies_StDev: NA\nIsolate_St.Devs: NA\nActual_length: NA\nExpected_length: NA\nRatio Actual:Expected: -2\nRatio Expected:Actual: NA")
+
+    with open(f"{sample_name}_GC_content_{NCBI_ratio_date}.txt", 'w') as outfile:
+        outfile.write(f"Sample: {sample_name}\nTax: NA\nNCBI_TAXID: {tax_id}\nSpecies_GC_StDev: NA\nSpecies_GC_Min: NA\nSpecies_GC_Max: NA\nSpecies_GC_Mean: NA\nSpecies_GC_Count: NA\nSample_GC_Percent: NA")
+
+
 def write_output(sample_name, NCBI_ratio_date, tax, tax_id, stdev, stdevs, assembly_length, expected_length, ratio_a_e, ratio_e_a):
 
     logging.debug("Writing the output file")
@@ -318,17 +321,14 @@ def main(args=None):
     #Extracting sample name
     sample_name = extract_sample_name(args.quast_report)
 
-    #Grabbing assembly length and gc percentage from quast file
-    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, args.tax_file, sample_name, tax, stdev, stdevs, assembly_length, expected_length, tax_id)
-
-    #Getting database names and dates
-    NCBI_ratio_file, NCBI_ratio_date = process_database_paths(args.path_database, sample_name, tax, stdev, stdevs, assembly_length, expected_length, tax_id)
-
     #Getting taxonomy info
     tax_id, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file)
 
-    #Grabbing stats 
-    # stdev, gc_stdev, gc_min, gc_max, gc_mean, gc_count, stdevs, expected_length, taxid = search_ncbi_ratio_file(NCBI_ratio_file, genus, species, assembly_length, sample_name, NCBI_ratio_date, tax_id, sample_gc_percent, found)
+    #Getting database names and dates
+    NCBI_ratio_file, NCBI_ratio_date = process_database_paths(args.path_database, sample_name)
+
+    #Grabbing assembly length and gc percentage from quast file
+    assembly_length, sample_gc_percent = check_quast_stats(args.quast_report, NCBI_ratio_date, sample_name, tax_id)
 
     result = search_ncbi_ratio_file(
         NCBI_ratio_file, assembly_length,
