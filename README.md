@@ -183,7 +183,7 @@ Notable output files:
 **\*.contigs.fa** - Shovill assembly for each sample.  
 **\*.amr.tsv** - AMR genes identified in each sample by AMRFinderPlus.  
 **\*.mlst.tsv** - MLST scheme identified for each sample.  
-**Empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
+**Spriggan_empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
 
 ## Credits
 Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), [Eva Gunawan](https://github.com/evagunawan), and [Dustin Lyfoung](https://github.com/dtlyfoung).
