@@ -161,7 +161,7 @@ def parse_kraken_raw(kraken_file):
     return best_taxid
 
 
-def process_NCBI_and_tax(taxonomy_to_compare, tax_file):
+def process_NCBI_and_tax(tax_id_to_compare, tax_file):
     """
     User has option to provide tax ID to compare. Initialize tax_id as user input if provided.
     If no tax ID is provided, initialize tax_id as tax ID from the highest percentage 'S' rank
@@ -169,14 +169,21 @@ def process_NCBI_and_tax(taxonomy_to_compare, tax_file):
     """
     logging.debug("Checking for taxonomy information in taxonomy file.")
 
-    logging.debug("If user did not enter a taxonomic ID to compare to")
-    if not taxonomy_to_compare:
-        tax_id = parse_kraken_raw(tax_file)
-        found = True
+    if not tax_id_to_compare:
+        logging.debug("User did not enter a taxonomic ID to compare to")
+
+        tax_id = None
+
+        try:
+            tax_id = parse_kraken_raw(tax_file)
+            found = True
+        except ValueError:
+            logging.debug(f"No species-level taxa found in {tax_file}")
+            found = False
         return tax_id, found
     else:
-        logging.debug("If user has a taxonomic ID they want to compare this to")
-        tax_id = taxonomy_to_compare
+        logging.debug("User entered a taxonomic ID they want to compare this to")
+        tax_id = tax_id_to_compare
 
         # Initialize variables for matching
         found = True
