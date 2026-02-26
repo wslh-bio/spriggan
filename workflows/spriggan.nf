@@ -40,6 +40,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples.nf'
 include { BBDUK                         } from '../modules/local/bbduk.nf'
 include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
 include { FASTQC                        } from '../modules/local/fastqc.nf'
@@ -121,11 +122,17 @@ workflow SPRIGGAN {
         .set{ ch_failed }
 
     ch_failed
+        .ifEmpty{'NO_EMPTY_SAMPLES'}
         .collectFile(
-            storeDir: "${params.outdir}/rejected_samples",
-            name: 'Empty_samples.csv',
+            name: 'empty_samples.csv',
             newLine: true
-        )
+            )
+        .set{ ch_rejected_file }
+    
+    REJECTED_SAMPLES (
+        ch_rejected_file,
+        "Spriggan"
+    )
 
     ch_filtered
         .branch {
