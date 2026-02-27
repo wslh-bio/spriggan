@@ -31,12 +31,6 @@ def parse_args(args=None):
         help='Sample Kraken output file', 
         required=True
         )
-    parser.add_argument('-f', '--taxonomy_to_compare',
-        metavar='"taxonomic ID"', 
-        type=str, 
-        help='Specific taxonomic ID to compare against in the database', 
-        default=None
-        )
     parser.add_argument('-V', '--version',
         action='store_true', 
         help='Print version and exit'
@@ -161,34 +155,22 @@ def parse_kraken_raw(kraken_file):
     return best_taxid
 
 
-def process_NCBI_and_tax(tax_id_to_compare, tax_file):
+def process_NCBI_and_tax(tax_file):
     """
-    User has option to provide tax ID to compare. Initialize tax_id as user input if provided.
-    If no tax ID is provided, initialize tax_id as tax ID from the highest percentage 'S' rank
+    Initialize tax_id as tax ID from the highest percentage 'S' rank
     hit from Kraken2 output file.
     """
     logging.debug("Checking for taxonomy information in taxonomy file.")
+    tax_id = None
 
-    if not tax_id_to_compare:
-        logging.debug("User did not enter a taxonomic ID to compare to")
-
-        tax_id = None
-
-        try:
-            tax_id = parse_kraken_raw(tax_file)
-            found = True
-        except ValueError:
-            logging.debug(f"No species-level taxa found in {tax_file}")
-            found = False
-        return tax_id, found
-    else:
-        logging.debug("User entered a taxonomic ID they want to compare this to")
-        tax_id = tax_id_to_compare
-
-        # Initialize variables for matching
+    try:
+        tax_id = parse_kraken_raw(tax_file)
         found = True
-
-        return tax_id, found
+    except ValueError:
+        logging.debug(f"No species-level taxa found in {tax_file}")
+        found = False
+    return tax_id, found
+    
 
 def search_ncbi_ratio_file(NCBI_ratio, assembly_length, sample_name, NCBI_ratio_date, tax_id, sample_gc_percent, found):
     """
@@ -329,7 +311,7 @@ def main(args=None):
     sample_name = extract_sample_name(args.quast_report)
 
     #Getting taxonomy info
-    tax_id, found = process_NCBI_and_tax(args.taxonomy_to_compare, args.tax_file)
+    tax_id, found = process_NCBI_and_tax(args.tax_file)
 
     #Getting database names and dates
     NCBI_ratio_file, NCBI_ratio_date = process_database_paths(args.path_database, sample_name)
