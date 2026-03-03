@@ -296,7 +296,7 @@ def write_output(sample_name, NCBI_ratio_date, tax, tax_id, stdev, stdevs, assem
 def print_version(version):
     logging.debug("Took this version from the original script")
     if version:
-        logging.info("calculate_assembly_ratio.py: 2.0")
+        logging.info("calculate_assembly_ratio.py: 3.0")
 
 def main(args=None):
     args = parse_args(args)
