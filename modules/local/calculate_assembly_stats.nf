@@ -5,8 +5,7 @@ process CALCULATE_ASSEMBLY_STATS {
     label 'process_single'
 
     input:
-    tuple val(meta), path(quast_report_tsv)
-    path(kraken_results_tsv)
+    tuple val(meta), path(quast_report_tsv), path(kraken_results_tsv)
     path NCBI_assembly_stats_file
 
     output:

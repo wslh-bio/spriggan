@@ -160,10 +160,10 @@ spriggan_results
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.report.tsv
 │   └── quast_results.tsv
-├── rejected_samples
-│   └── Empty_samples.csv
+├── rejected
+│   └── Spriggan_empty_samples.csv
 ├── report
-│   └── spriggan_report.csv
+│   └── {run_name}_spriggan_report.csv
 ├── samtools
 │   ├── *.bam
 │   ├── *.depth.tsv
@@ -183,7 +183,7 @@ Notable output files:
 **\*.contigs.fa** - Shovill assembly for each sample.  
 **\*.amr.tsv** - AMR genes identified in each sample by AMRFinderPlus.  
 **\*.mlst.tsv** - MLST scheme identified for each sample.  
-**Empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
+**Spriggan_empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
 
 ## Credits
 Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), [Eva Gunawan](https://github.com/evagunawan), and [Dustin Lyfoung](https://github.com/dtlyfoung).
@@ -197,7 +197,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 If you use Spriggan for your analysis, please cite it using the following:
 
 ```
-A.C. Shockey, K. Florek, E. Gunawan, & D. Lyfoung (2021). Spriggan (Version 1.7.2) [https://github.com/wslh-bio/spriggan/].
+A.C. Shockey, K. Florek, E. Gunawan, & D. Lyfoung (2021). Spriggan (Version 1.8.0) [https://github.com/wslh-bio/spriggan/].
 ```
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).

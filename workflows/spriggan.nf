@@ -40,6 +40,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples.nf'
 include { BBDUK                         } from '../modules/local/bbduk.nf'
 include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
 include { FASTQC                        } from '../modules/local/fastqc.nf'
@@ -121,11 +122,17 @@ workflow SPRIGGAN {
         .set{ ch_failed }
 
     ch_failed
+        .ifEmpty{'NO_EMPTY_SAMPLES'}
         .collectFile(
-            storeDir: "${params.outdir}/rejected_samples",
-            name: 'Empty_samples.csv',
+            name: 'empty_samples.csv',
             newLine: true
-        )
+            )
+        .set{ ch_rejected_file }
+    
+    REJECTED_SAMPLES (
+        ch_rejected_file,
+        "Spriggan"
+    )
 
     ch_filtered
         .branch {
@@ -249,23 +256,26 @@ workflow SPRIGGAN {
     // MODULE: KRAKEN_SUMMARY
     //
     KRAKEN_SUMMARY (
-        KRAKEN.out.kraken_results.collect()
+        KRAKEN.out.kraken_results.map { meta, path -> path }.collect()
     )
 
     //
     // MODULE: CALCULATE_ASSEMBLY_STATS
     //
-    // 
-    ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
-    QUAST.out.transposed_report
-        .map{meta, result -> 
-            [[id:meta.id], result]
-            }
-            .set { ch_quast }
+    // *** REMOVE AFTER TESTING ***
+    // ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
+    // QUAST.out.transposed_report
+    //     .map{meta, result -> 
+    //         [[id:meta.id], result]
+    //         }
+    //         .set { ch_quast }
+
+    // Join QUAST and KRAKEN per sample
+    ch_quast_kraken = QUAST.out.transposed_report
+    .join(KRAKEN.out.kraken_results)
 
     CALCULATE_ASSEMBLY_STATS (
-        ch_quast,
-        ch_kraken_tsv,
+        ch_quast_kraken,
         params.ncbi_assembly_stats
     )
 
@@ -323,17 +333,6 @@ workflow SPRIGGAN {
         GC_STATS_SUMMARY.out.gc_stats_tsv
     )
 
-    //
-    // MODULE: WORKFLOW_TEST
-    //
-    /*
-    ch_valid_dataset = Channel.fromPath("$projectDir/test-dataset/validation/spntypeid_report_valid.csv", checkIfExists: true)
-    WORKFLOW_TEST (
-        ch_valid_dataset.collect(),
-        REPORT.out.result_csv
-    )
-    */
-
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
@@ -355,7 +354,12 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_adapters.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN.out.kraken_results.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN
+        .out
+        .kraken_results
+        .map {meta, path -> path }
+        .collect()
+        .ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(QUAST
         .out
         .result
