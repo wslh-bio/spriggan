@@ -333,17 +333,6 @@ workflow SPRIGGAN {
         GC_STATS_SUMMARY.out.gc_stats_tsv
     )
 
-    //
-    // MODULE: WORKFLOW_TEST
-    //
-    /*
-    ch_valid_dataset = Channel.fromPath("$projectDir/test-dataset/validation/spntypeid_report_valid.csv", checkIfExists: true)
-    WORKFLOW_TEST (
-        ch_valid_dataset.collect(),
-        REPORT.out.result_csv
-    )
-    */
-
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
