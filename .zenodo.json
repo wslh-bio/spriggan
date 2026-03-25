@@ -37,7 +37,6 @@
   ],
   "license": "GPL-3.0",
   "upload_type": "software",
-  "version": "1.8.0",
   "related_identifiers": [
     {
       "identifier": "https://github.com/wslh-bio/spriggan",
