@@ -1,7 +1,7 @@
 # Spriggan
-![Spriggan](https://github.com/wslh-bio/spriggan/actions/workflows/spriggan_build.yml/badge.svg)
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/spriggan)
 ![GitHub Release](https://img.shields.io/github/release/wslh-bio/spriggan)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18882490.svg)](https://doi.org/10.5281/zenodo.18882490)
 
 Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes.
 
@@ -19,8 +19,6 @@ Spriggan is a [Nextflow](https://www.nextflow.io/) pipeline for the assembly of 
 [Contamination detection](#contamination-detection)  
 [Summary](#summary)  
 [Output](#output)  
-[Credits](#credits)  
-[Contributions and Support](#contributions-and-support)  
 [Citations](#citations)  
 
 ### Usage
@@ -185,21 +183,7 @@ Notable output files:
 **\*.mlst.tsv** - MLST scheme identified for each sample.  
 **Spriggan_empty_samples.csv** - Lists any samples that do not have any reads and were removed from the pipeline.  
 
-## Credits
-Spriggan was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), [Eva Gunawan](https://github.com/evagunawan), and [Dustin Lyfoung](https://github.com/dtlyfoung).
-
-We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
-
-## Contributions and Support
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
-
 ## Citations
-If you use Spriggan for your analysis, please cite it using the following:
-
-```
-A.C. Shockey, K. Florek, E. Gunawan, & D. Lyfoung (2021). Spriggan (Version 1.8.0) [https://github.com/wslh-bio/spriggan/].
-```
-
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
