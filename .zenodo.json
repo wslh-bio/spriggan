@@ -1,0 +1,54 @@
+{
+  "title": "Spriggan: A Nextflow pipeline for bacterial whole genome sequence assembly and antibiotic resistance gene detection",
+  "description": "Spriggan is a Nextflow pipeline for the assembly of bacterial whole genome sequence data and identification of antibiotic resistance genes. The pipeline performs read trimming and quality assessment using BBtools and FastQC, genome assembly using Shovill, assembly quality assessment with QUAST, genome coverage calculation using BWA and Samtools, antimicrobial resistance gene detection using AMRFinderPlus, MLST scheme classification, contamination detection using Kraken2, and generates comprehensive summary reports using MultiQC.",
+  "creators": [
+    {
+      "name": "Shockey, Abigail C.",
+      "affiliation": "Wisconsin State Laboratory of Hygiene",
+      "orcid": ""
+    },
+    {
+      "name": "Florek, Kelsey",
+      "affiliation": "Wisconsin State Laboratory of Hygiene",
+      "orcid": ""
+    },
+    {
+      "name": "Gunawan, Eva",
+      "affiliation": "Wisconsin State Laboratory of Hygiene",
+      "orcid": ""
+    },
+    {
+      "name": "Lyfoung, Dustin",
+      "affiliation": "Wisconsin State Laboratory of Hygiene",
+      "orcid": ""
+    }
+  ],
+  "keywords": [
+    "bioinformatics",
+    "nextflow",
+    "bacterial-genomics",
+    "whole-genome-sequencing",
+    "genome-assembly",
+    "antibiotic-resistance",
+    "AMRFinderPlus",
+    "MLST",
+    "public-health",
+    "microbiology"
+  ],
+  "license": "GPL-3.0",
+  "upload_type": "software",
+  "version": "1.8.0",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/wslh-bio/spriggan",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "bioinformatics"
+    }
+  ]
+}
