@@ -4,23 +4,19 @@
   "creators": [
     {
       "name": "Shockey, Abigail C.",
-      "affiliation": "Wisconsin State Laboratory of Hygiene",
-      "orcid": ""
+      "affiliation": "Wisconsin State Laboratory of Hygiene"
     },
     {
       "name": "Florek, Kelsey",
-      "affiliation": "Wisconsin State Laboratory of Hygiene",
-      "orcid": ""
+      "affiliation": "Wisconsin State Laboratory of Hygiene"
     },
     {
       "name": "Gunawan, Eva",
-      "affiliation": "Wisconsin State Laboratory of Hygiene",
-      "orcid": ""
+      "affiliation": "Wisconsin State Laboratory of Hygiene"
     },
     {
       "name": "Lyfoung, Dustin",
-      "affiliation": "Wisconsin State Laboratory of Hygiene",
-      "orcid": ""
+      "affiliation": "Wisconsin State Laboratory of Hygiene"
     }
   ],
   "keywords": [
@@ -35,8 +31,9 @@
     "public-health",
     "microbiology"
   ],
-  "license": "GPL-3.0",
+  "license": "GPL-3.0-or-later",
   "upload_type": "software",
+  "access_right": "open",
   "related_identifiers": [
     {
       "identifier": "https://github.com/wslh-bio/spriggan",
