@@ -40,6 +40,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { COUNT_FASTQ                    } from '../modules/local/count_fastq'
 include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples.nf'
 include { BBDUK                         } from '../modules/local/bbduk.nf'
 include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
@@ -84,21 +85,39 @@ workflow SPRIGGAN {
         ch_input
     )
 
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
+    // Checking input and setting single and paired end 
     INPUT_CHECK.out.reads
         .branch{ meta, file -> 
             single_end: meta.single_end
             paired_end: !meta.single_end
             }
-        .set{ ch_filtered }
+        .set{ ch_end }
+    
+    ch_end.paired_end
+        .branch{ meta, file ->
+            ntc: (meta.id =~ params.ntc_regex)
+            sample: true
+        }
+        .set { ch_input_reads }
 
-    ch_filtered.paired_end
-        .map{ meta, file ->
-            [meta, file, file[0].countFastq(), file[1].countFastq()]}
+    // Run Module: countFastq
+    COUNT_FASTQ(
+        ch_input_reads.sample
+    )
+    ch_csv = COUNT_FASTQ.out.csv
+                .splitCsv(header: true)
+                .join(ch_input_reads.sample)
+                .map { meta, csv, file ->
+                def count1 = csv.count1 as Integer
+                def count2 = csv.count2 as Integer
+                tuple(meta, file, count1, count2)
+                }
+
+    // Pass/fail based on read count of fastq files
+    ch_csv
         .branch{ meta, file, count1, count2 ->
             pass: count1 > 0 && count2 > 0
-            fail: count1 == 0 || count2 == 0
+            fail: count1 == 0 || count2 == 0 || count1 == 0 && count2 == 0
         }
         .set{ ch_paired_end }
 
@@ -106,46 +125,33 @@ workflow SPRIGGAN {
         .map { meta, file, count1, count2 -> 
             [meta, file]
             }
-        .set{ ch_paired_end_filtered }
-
-    ch_paired_end_filtered
         .set{ ch_filtered }
 
     ch_paired_end.fail
         .map { meta, file, count1, count2 ->
-            [meta.id]
+            meta.id
             }
-        .set{ ch_paired_end_fail }
+        .set{ ch_failed}
 
-    ch_paired_end_fail
-        .flatten()
-        .set{ ch_failed }
-
+    // Collect 
     ch_failed
-        .ifEmpty{'NO_EMPTY_SAMPLES'}
+        .ifEmpty('NO_EMPTY_SAMPLES')
         .collectFile(
-            name: 'empty_samples.csv',
-            newLine: true
+                name: 'empty_samples.csv',
+                newLine: true
             )
         .set{ ch_rejected_file }
-    
+
     REJECTED_SAMPLES (
         ch_rejected_file,
         "Spriggan"
     )
 
-    ch_filtered
-        .branch {
-            ntc: it[0]['id'].contains('NTC')
-            sample: !it[0]['id'].contains('NTC')
-        }
-        .set{ ch_input_reads }
-
     //
     // MODULE: BBDUK
     //
     BBDUK (
-        ch_input_reads.sample,
+        ch_filtered,
         params.contaminants
     )
     ch_versions = ch_versions.mix(BBDUK.out.versions.first())
