@@ -4,23 +4,18 @@ process REPORT {
     container "quay.io/wslh-bioinformatics/spriggan-pandas:1.3.2"
 
     input:
-    path("bbduk_results.tsv")
-    path("coverage_stats.tsv")
-    path("quast_results.tsv")
-    path("mlst_results.tsv")
-    path("kraken_results.tsv")
-    path("amrfinder_summary.tsv")
-    path("selected_ar_genes.tsv")
-    path(kraken_version, stageAs:"kraken_version.yml")
-    path(amrfinder_version, stageAs:"amrfinder_version.yml")
-    path("assembly_stats_summary.tsv")
-    path("gc_stats_summary.tsv")
+    path results_compiled
+    val empty_ntc
 
     output:
-    path("${params.run_name}_spriggan_report.csv")
+    path("${params.run_name}_spriggan_report.csv"), emit: result_csv
 
     script:
     """
-    create_report.py ${amrfinder_version} ${kraken_version} ${workflow.manifest.version} ${params.run_name}
+    create_report.py \
+        --result_files ${results_compiled} \
+        --workflowVersion ${workflow.manifest.version} \
+        --workflowRunName ${params.run_name} \
+        --empty_ntc_list ${empty_ntc}
     """
 }
