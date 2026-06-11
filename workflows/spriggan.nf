@@ -333,6 +333,7 @@ workflow SPRIGGAN {
             ch_ntc_filtered,
             kraken_db.first()
         )
+        ch_versions = ch_versions.mix(KRAKEN_NTC.out.versions.first())
     }
 
     //
