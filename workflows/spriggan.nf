@@ -333,7 +333,6 @@ workflow SPRIGGAN {
             ch_ntc_filtered,
             kraken_db.first()
         )
-        ch_versions = ch_versions.mix(KRAKEN_NTC.out.versions.first())
     }
 
     //
@@ -402,7 +401,19 @@ workflow SPRIGGAN {
         ch_kraken_ntc = KRAKEN_NTC.out.kraken_results.map { meta, file -> file}.collect().ifEmpty([])
     } else {
         ch_ntc_pattern = Channel.value("Empty")
-        ch_kraken_ntc = ch_ref.map { meta, file -> file}.first() // Reference genome is being used as a placeholder file.
+        //setting up placeholder file
+        ch_empty = Channel
+            .fromPath("$baseDir/assets/empty.txt",checkIfExists:true)
+            .map { file_path ->
+                def meta = [
+                    id: file_path.baseName,
+                ]
+                def ref = [
+                    file_path
+                ]
+                tuple(meta, ref)
+            }
+        ch_kraken_ntc = ch_empty.map { meta, file -> file}.first() // Empty file is being used as a placeholder.
     }
 
     ch_compiled_results = Channel.empty()
