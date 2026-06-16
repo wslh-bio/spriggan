@@ -61,10 +61,14 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | selected_genes | Genes of interest to pull from AMRFinderPlus output (default: 'NDM\|OXA\|KPC\|IMP\|VIM') |
 | ncbi_assembly_stats | Path to NCBI database (default: NCBI_Assembly_stats_20240124.txt)
 | min_quast_contig | Lower threshold for contig length in bp (default: 500) |
+| ntc_regex | Regex pattern for identifying no template control (NTC) files. This is a mandatory parameter if a run has an NTC. (default: null) |
 
 ### Workflow outline
 
 <img src ='/assets/sprigganUpdate.drawio.png'>
+
+#### Read counting and sample filtering
+The number of reads in each sample is counted using a python script. Samples with zero reads are excluded and their names are recored in the output file `Spriggan_empty_samples.csv`, while all other samples continue through the pipeline.
 
 #### Read trimming and quality assessment
 Read repair, trimming, and cleaning are performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to repair fastqs with mismatched read numbers, trim reads of low quality bases, and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads.
