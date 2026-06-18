@@ -182,11 +182,8 @@ workflow SPRIGGAN {
             .set{ ch_ntc_failed }
 
         ch_ntc_failed
-            .map { it[0] }
             .collect()
-            .flatten() // removing brackets from ch output
             .ifEmpty("Empty")
-            .first()
             .set { ch_empty_ntc }
     }
 
