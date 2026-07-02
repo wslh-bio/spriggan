@@ -56,6 +56,12 @@
           "fa_icon": "fas fa-dna",
           "description": "Configuration options for the workflow.",
           "properties": {
+              "readcount_cutoff": {
+                  "type": "integer",
+                  "default": 0,
+                  "description": "Cut-off value for number of reads a sample needs to be analyzed.",
+                  "fa_icon": "fas fa-cog"
+                },
               "ntc_regex": {
                   "type": "string",
                   "description": "Regex expression for recognizing NTC samples",
