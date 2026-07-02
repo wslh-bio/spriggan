@@ -194,7 +194,7 @@ def rename_columns(merged_df):
                                 'Identity':'AMR Identity',
                                 'krakenDB':'Kraken Database Version',
                                 'amrfinderDB':'AMRFinderPlus Database Version',
-                                'spriggan':'Spriggan Version',
+                                'workflowVersion':'Spriggan Version',
                                 'ntc_all_reads':'All NTC reads',
                                 'max_ntc_reads':'Max NTC read'})
     return merged_df
@@ -227,7 +227,9 @@ def reorder_columns(merged_df):
                     'Sample GC Content (%)',
                     'Primary Species',
                     'ntc_all_reads',
-                    'max_ntc_reads']]
+                    'max_ntc_reads',
+                    'amrfinderDB',
+                    'workflowVersion']]
     return merged_df
 
 def write_output(WFRunName, merged_df):
