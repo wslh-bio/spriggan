@@ -62,6 +62,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 | ncbi_assembly_stats | Path to NCBI database (default: NCBI_Assembly_stats_20240124.txt)
 | min_quast_contig | Lower threshold for contig length in bp (default: 500) |
 | ntc_regex | Regex pattern for identifying no template control (NTC) files. This is a mandatory parameter if a run has an NTC. (default: null) |
+| readcount_cutoff | Sets the cut-off value for number of reads a sample needs to be analyzed (default: 0) |
 
 ### Workflow outline
 
