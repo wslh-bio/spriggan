@@ -40,6 +40,8 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { COUNT_FASTQ                   } from '../modules/local/count_fastq'
+include { COUNT_FASTQ as COUNT_NTC      } from '../modules/local/count_fastq'
 include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples.nf'
 include { BBDUK                         } from '../modules/local/bbduk.nf'
 include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
@@ -52,12 +54,14 @@ include { QUAST                         } from '../modules/local/quast.nf'
 include { QUAST_SUMMARY                 } from '../modules/local/quast_summary.nf'
 include { MLST                          } from '../modules/local/mlst.nf'
 include { MLST_SUMMARY                  } from '../modules/local/mlst_summary.nf'
-include { KRAKEN                        } from '../modules/local/kraken.nf'
+include { KRAKEN as KRAKEN_SAMPLE       } from '../modules/local/kraken.nf'
+include { KRAKEN as KRAKEN_NTC          } from '../modules/local/kraken.nf'
 include { KRAKEN_SUMMARY                } from '../modules/local/kraken_summary.nf'
 include { AMRFINDER_SETUP               } from '../modules/local/amrfinder_setup.nf'
 include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
 include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
-include { REPORT                        } from '../modules/local/report.nf'
+include { REPORT as REPORT_WITH_NTC     } from '../modules/local/report.nf'
+include { REPORT as REPORT_NO_NTC       } from '../modules/local/report.nf'
 include { MULTIQC                       } from '../modules/local/multiqc.nf'
 include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
 include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
@@ -76,29 +80,47 @@ def multiqc_report = []
 workflow SPRIGGAN {
 
     ch_versions = Channel.empty()
+    ch_multiqc_files = Channel.empty()
+    report_versions = Channel.empty()
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
     INPUT_CHECK (
         ch_input
     )
 
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
+    // Checking input and setting single and paired end 
     INPUT_CHECK.out.reads
         .branch{ meta, file -> 
             single_end: meta.single_end
             paired_end: !meta.single_end
             }
-        .set{ ch_filtered }
+        .set{ ch_end }
+    
+    ch_end.paired_end
+        .branch{ meta, file ->
+            ntc: (meta.id =~ params.ntc_regex)
+            sample: true
+        }
+        .set { ch_input_reads }
 
-    ch_filtered.paired_end
-        .map{ meta, file ->
-            [meta, file, file[0].countFastq(), file[1].countFastq()]}
+    
+    // Run Module: countFastq
+    COUNT_FASTQ(
+        ch_input_reads.sample
+    )
+    ch_csv = COUNT_FASTQ.out.csv
+                .splitCsv(header: true)
+                .join(ch_input_reads.sample)
+                .map { meta, csv, file ->
+                def count1 = csv.count1 as Integer
+                def count2 = csv.count2 as Integer
+                tuple(meta, file, count1, count2)
+                }
+
+    // Pass/fail based on read count of fastq files
+    ch_csv
         .branch{ meta, file, count1, count2 ->
-            pass: count1 > 0 && count2 > 0
-            fail: count1 == 0 || count2 == 0
+            pass: count1 > params.readcount_cutoff && count2 > params.readcount_cutoff
+            fail: count1 <= params.readcount_cutoff || count2 <= params.readcount_cutoff || count1 <= params.readcount_cutoff && count2 <= params.readcount_cutoff
         }
         .set{ ch_paired_end }
 
@@ -106,46 +128,82 @@ workflow SPRIGGAN {
         .map { meta, file, count1, count2 -> 
             [meta, file]
             }
-        .set{ ch_paired_end_filtered }
-
-    ch_paired_end_filtered
         .set{ ch_filtered }
 
     ch_paired_end.fail
         .map { meta, file, count1, count2 ->
-            [meta.id]
+            meta.id
             }
-        .set{ ch_paired_end_fail }
-
-    ch_paired_end_fail
-        .flatten()
         .set{ ch_failed }
 
+    // Collect 
     ch_failed
-        .ifEmpty{'NO_EMPTY_SAMPLES'}
+        .ifEmpty('NO_EMPTY_SAMPLES')
         .collectFile(
-            name: 'empty_samples.csv',
-            newLine: true
+                name: 'empty_samples.csv',
+                newLine: true
             )
         .set{ ch_rejected_file }
     
+
+    if (params.ntc_regex != null) {
+
+    // Run Module: countFastq
+        COUNT_NTC(
+            ch_input_reads.ntc
+        )
+        ch_ntc_csv = COUNT_NTC.out.csv
+                    .splitCsv(header: true)
+                    .join(ch_input_reads.ntc)
+                    .map { meta, csv, file ->
+                    def count1 = csv.count1 as Integer
+                    def count2 = csv.count2 as Integer
+                    tuple(meta, file, count1, count2)
+                    }
+
+        // Pass/fail based on read count of fastq files
+        ch_ntc_csv
+            .branch{ meta, file, count1, count2 ->
+                pass: count1 > 0 && count2 > 0
+                fail: count1 == 0 || count2 == 0 || count1 == 0 && count2 == 0
+            }
+            .set{ ch_ntc_paired_end }
+
+        ch_ntc_paired_end.pass
+            .map { meta, file, count1, count2 -> 
+                [meta, file]
+                }
+            .set{ ch_ntc_filtered }
+
+        ch_ntc_paired_end.fail
+            .map { meta, file, count1, count2 ->
+                meta.id
+                }
+            .set{ ch_ntc_failed }
+
+        ch_ntc_failed
+            .collect()
+            .ifEmpty("Empty")
+            .set { ch_empty_ntc }
+    }
+
+    if (params.ntc_regex == null)  {
+        ch_empty_ntc = Channel.value("Empty")
+    }
+
+    //
+    // Collect failed samples
+    //
     REJECTED_SAMPLES (
         ch_rejected_file,
         "Spriggan"
-    )
-
-    ch_filtered
-        .branch {
-            ntc: it[0]['id'].contains('NTC')
-            sample: !it[0]['id'].contains('NTC')
-        }
-        .set{ ch_input_reads }
+     )
 
     //
     // MODULE: BBDUK
     //
     BBDUK (
-        ch_input_reads.sample,
+        ch_filtered,
         params.contaminants
     )
     ch_versions = ch_versions.mix(BBDUK.out.versions.first())
@@ -235,7 +293,7 @@ workflow SPRIGGAN {
     )
 
     //
-    // MODULE: KRAKEN
+    // MODULE: KRAKEN_SAMPLE
     //
 
     if (params.kraken_db != null) {
@@ -246,18 +304,33 @@ workflow SPRIGGAN {
         kraken_db = file("$baseDir/assets/empty.txt",checkIfExists:true)
     }
 
-    KRAKEN (
+    KRAKEN_SAMPLE (
         BBDUK.out.reads,
         kraken_db.first()
     )
-    ch_versions = ch_versions.mix(KRAKEN.out.versions.first())
+    ch_versions = ch_versions.mix(KRAKEN_SAMPLE.out.versions.first())
+    report_versions = report_versions.mix(KRAKEN_SAMPLE.out.versions.first())
 
     //
     // MODULE: KRAKEN_SUMMARY
     //
     KRAKEN_SUMMARY (
-        KRAKEN.out.kraken_results.map { meta, path -> path }.collect()
+        KRAKEN_SAMPLE.out.kraken_results.map { meta, path -> path }.collect()
     )
+
+    //
+    // MODULE: KRAKEN_NTC
+    //
+    if (params.ntc_regex != null) {
+        //
+        // MODULE: KRAKEN_NTC
+        //
+        
+        KRAKEN_NTC(
+            ch_ntc_filtered,
+            kraken_db.first()
+        )
+    }
 
     //
     // MODULE: CALCULATE_ASSEMBLY_STATS
@@ -272,7 +345,7 @@ workflow SPRIGGAN {
 
     // Join QUAST and KRAKEN per sample
     ch_quast_kraken = QUAST.out.transposed_report
-    .join(KRAKEN.out.kraken_results)
+    .join(KRAKEN_SAMPLE.out.kraken_results)
 
     CALCULATE_ASSEMBLY_STATS (
         ch_quast_kraken,
@@ -308,6 +381,7 @@ workflow SPRIGGAN {
         AMRFINDER_SETUP.out.amrfinder_input
     )
     ch_versions = ch_versions.mix(AMRFINDER.out.versions.first())
+    report_versions = report_versions.mix(AMRFINDER.out.versions.first())
 
     //
     // MODULE: AMRFINDER_SUMMARY
@@ -319,19 +393,52 @@ workflow SPRIGGAN {
     //
     // MODULE: REPORT
     //
-    REPORT (
-        BBDUK_SUMMARY.out.bbduk_tsv,
-        COVERAGE_STATS.out.coverage_tsv,
-        QUAST_SUMMARY.out.quast_tsv,
-        MLST_SUMMARY.out.mlst_tsv,
-        KRAKEN_SUMMARY.out.kraken_tsv,
-        AMRFINDER_SUMMARY.out.amrfinder_tsv,
-        AMRFINDER_SUMMARY.out.selected_ar_tsv,
-        KRAKEN.out.versions.first(),
-        AMRFINDER.out.versions.first(),
-        ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv,
-        GC_STATS_SUMMARY.out.gc_stats_tsv
-    )
+    if (params.ntc_regex != null) {
+        ch_ntc_pattern = Channel.value(params.ntc_regex)
+        ch_kraken_ntc = KRAKEN_NTC.out.kraken_results.map { meta, file -> file}.collect().ifEmpty([])
+    } else {
+        ch_ntc_pattern = Channel.value("Empty")
+        //setting up placeholder file
+        ch_empty = Channel
+            .fromPath("$baseDir/assets/empty.txt",checkIfExists:true)
+            .map { file_path ->
+                def meta = [
+                    id: file_path.baseName,
+                ]
+                def ref = [
+                    file_path
+                ]
+                tuple(meta, ref)
+            }
+        ch_kraken_ntc = ch_empty.map { meta, file -> file}.first() // Empty file is being used as a placeholder.
+    }
+
+    ch_compiled_results = Channel.empty()
+    ch_compiled_results = ch_compiled_results.mix(ch_kraken_ntc)
+    ch_compiled_results = ch_compiled_results.mix(BBDUK_SUMMARY.out.bbduk_tsv)
+    ch_compiled_results = ch_compiled_results.mix(COVERAGE_STATS.out.coverage_tsv)
+    ch_compiled_results = ch_compiled_results.mix(QUAST_SUMMARY.out.quast_tsv)
+    ch_compiled_results = ch_compiled_results.mix(MLST_SUMMARY.out.mlst_tsv)
+    ch_compiled_results = ch_compiled_results.mix(KRAKEN_SUMMARY.out.kraken_tsv)
+    ch_compiled_results = ch_compiled_results.mix(AMRFINDER_SUMMARY.out.amrfinder_tsv)
+    ch_compiled_results = ch_compiled_results.mix(AMRFINDER_SUMMARY.out.selected_ar_tsv)
+    ch_compiled_results = ch_compiled_results.mix(ASSEMBLY_STATS_SUMMARY.out.assembly_stats_tsv)
+    ch_compiled_results = ch_compiled_results.mix(GC_STATS_SUMMARY.out.gc_stats_tsv)
+    ch_compiled_results = ch_compiled_results.mix(report_versions.unique().collectFile(name: 'db_versions.yml'))
+
+    if (params.ntc_regex != null) {
+        REPORT_WITH_NTC (
+            ch_compiled_results.collect(),
+            ch_empty_ntc
+        )
+    }
+
+    if (params.ntc_regex == null) {
+        REPORT_NO_NTC (
+            ch_compiled_results.collect(),
+            ch_empty_ntc
+        )
+    }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
@@ -354,7 +461,7 @@ workflow SPRIGGAN {
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_adapters.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(BBDUK.out.bbduk_trim.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS.out.stats_multiqc.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN
+    ch_multiqc_files = ch_multiqc_files.mix(KRAKEN_SAMPLE
         .out
         .kraken_results
         .map {meta, path -> path }
