@@ -14,7 +14,7 @@ def sanitize_sample(sample):
     """
     if pd.isna(sample):
         return sample
-    
+
     s = str(sample)
 
     # Internal pattern: two digits + MP + six digits
@@ -31,7 +31,7 @@ def sanitize_primary_species(primary_species):
     """
     if pd.isna(primary_species):
         return primary_species
-    
+
     species = str(primary_species)
     cleaned_species = species.split('(')[0].strip()
     return cleaned_species
@@ -42,17 +42,17 @@ def modify_mlst_scheme(row):
     """
     scheme_str = row['MLST Scheme']
     species = row['Primary Species (%)'].split(' (')[0]
-    
+
     # handle missing or empty MLST Scheme
     if pd.isna(scheme_str) or scheme_str.strip() == "":
         return scheme_str
-    
+
     # split on semicolon if present (for organisms with multiple schemes)
     schemes = scheme_str.split(';') if ';' in scheme_str else [scheme_str]
-    
+
     # modify the MLST scheme with species appended to each
     modified = [f"{s}_{species}" for s in schemes]
-    
+
     # join with "_" separator
     return '_'.join(modified)
 
@@ -84,7 +84,7 @@ def create_dataframe(result_files):
         logging.debug(f"Sanitizing {file} primary species")
         if 'Primary Species (%)' in df.columns:
             df['Primary Species'] = df['Primary Species (%)'].apply(sanitize_primary_species)
-        
+
         dfs.append(df)
 
     logging.debug("Merging data frames based on sample")
@@ -123,7 +123,7 @@ def kraken_ntc_processing_and_empty_check(kraken_ntc_files, empty_ntcs, merged_d
 
         logging.debug("Reading in kraken NTC files and get # of total reads")
         for file in kraken_ntc_results:
-            id = file.split(".kraken.txt")[0]
+            id = file.split(".kraken2.txt")[0]
             total_reads = 0
 
             with open(file,'r') as csvfile:
@@ -251,15 +251,15 @@ if __name__ == "__main__":
         epilog='Use with create_report.py --result_files <CH_RESULTS> --workflowRunName <RUN_NAME> --empty_ntc_list <EMPTY_NTC_LIST>'
         )
     parser.add_argument('--result_files',
-        nargs="+", 
+        nargs="+",
         help='Compiled results from SPNtypeID'
         )
     parser.add_argument('--workflowVersion',
-        type=str, 
+        type=str,
         help='This is supplied by the nextflow config and can be changed via the usual methods i.e. command line.'
         )
     parser.add_argument('--workflowRunName',
-        type=str, 
+        type=str,
         help='This is supplied by the nextflow config and can be changed via the usual methods i.e. command line.'
         )
     parser.add_argument('--empty_ntc_list',
