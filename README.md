@@ -66,7 +66,7 @@ Spriggan's main parameters and their defaults are shown in the table below:
 
 ### Workflow outline
 
-<img src ='/assets/sprigganUpdate.drawio.png'>
+<img src ='/assets/spriggan_nfmetro.png'>
 
 #### Read counting and sample filtering
 The number of reads in each sample is counted using a python script. Samples with zero reads are excluded and their names are recored in the output file `Spriggan_empty_samples.csv`, while all other samples continue through the pipeline.

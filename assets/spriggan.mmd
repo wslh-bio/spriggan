@@ -1,0 +1,100 @@
+%%metro title: 
+%%metro style: dark
+%%metro file: input | FASTQ
+%%metro file: rejected_fastqs | TXT
+%%metro file: genome_stats | CSV
+%%metro file: final_report | CSV
+%%metro file: multiqc_report | HTML
+%%metro line: main | Main | #00904d
+%%metro line: ntc | NTC | #7058ce
+
+graph LR
+    subgraph preprocessing [Pre-processing]
+        input[ ]
+        count[Count reads]
+        rejected_fastqs[ ]
+        parse_ntc[Separate NTCs]
+        reject[Remove rejected FASTQs]
+        input -->|main| parse_ntc
+        parse_ntc -->|main,ntc| count
+        count -->|main| reject
+        reject -->|main| rejected_fastqs
+    end
+
+    subgraph read_classification [Species ID]
+        kraken[Kraken2]
+        kraken_sum[Kraken summary]
+        kraken -->|main,ntc| kraken_sum
+    end
+
+    subgraph read_qc [Trimming & Assembly]
+        assembly[Shovill]
+        trim[BBDuk]
+        trim -->|main| assembly
+    end
+
+    subgraph assembly_qc [Read/Assembly QC]
+        genome_stats[ ]
+        quast[QUAST]
+        map[BWA]
+        zscore[Z-score]
+        zscore_sum[Z-score summary]
+        quast_sum[QUAST     summary]
+        cov[Samtools]
+        cov_sum[Samtools summary]
+        fastqc[FastQC]
+        fastqc_sum[FastQC summary]
+        trim_sum[BBDuk summary]
+        genome_stats -->|main| zscore
+        zscore -->|main| zscore_sum
+        quast -->|main| quast_sum
+        map -->|main| cov
+        cov -->|main| cov_sum
+        fastqc -->|main| fastqc_sum
+        trim_sum -->|main|
+    end
+
+    subgraph amrfinder [AMR Detection]
+        amr[AMRFinderPlus]
+        amr_sum[AMRFinderPlus summary]
+        amr -->|main| amr_sum
+    end
+
+    subgraph mlst [MLST]
+        st[mlst]
+        st_sum[MLST summary]
+        st -->|main| st_sum
+    end
+
+    subgraph report [Reporting]
+        final_report[ ]
+        multiqc_report[ ]
+        create[Create final report]
+        multiqc[MultiQC]
+        create -->|main,ntc| final_report
+        multiqc -->|main| multiqc_report
+    end
+
+count -->|ntc| kraken
+reject -->|main| trim
+trim -->|main| kraken
+kraken -->|main| multiqc
+kraken_sum -->|main,ntc| create
+kraken_sum -->|main| amr
+assembly -->|main| st
+assembly -->|main| quast
+assembly -->|main| zscore
+assembly -->|main| map
+assembly -->|main| fastqc_sum
+assembly -->|main| trim_sum
+trim_sum -->|main| create
+trim_sum -->|main| multiqc
+amr_sum -->|main| create
+st_sum -->|main| create
+quast_sum -->|main| create
+quast -->|main| multiqc
+zscore_sum -->|main| create
+cov_sum -->|main| create
+cov -->|main| multiqc
+fastqc_sum -->|main| create
+fastqc -->|main| multiqc
