@@ -42,4 +42,28 @@ process SHOVILL {
         shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
     END_VERSIONS
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.contigs.fa"
+    touch "${prefix}.sam"
+
+    mkdir ${prefix}_shovill_output
+
+    touch "${prefix}_shovill_output/shovill.corrections"
+    touch "${prefix}_shovill_output/shovill.log"
+    touch "${prefix}_shovill_output/skesa.fasta"
+    touch "${prefix}_shovill_output/spades.fasta"
+    touch "${prefix}_shovill_output/megahit.fasta"
+    touch "${prefix}_shovill_output/velvet.fasta"
+    touch "${prefix}_shovill_output/contigs.fastg"
+    touch "${prefix}_shovill_output/contigs.gfa"
+    touch "${prefix}_shovill_output/contigs.LastGraph"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+    END_VERSIONS
+    """
 }

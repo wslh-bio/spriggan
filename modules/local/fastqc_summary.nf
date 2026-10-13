@@ -30,4 +30,9 @@ process FASTQC_SUMMARY {
 
     sed -i 's/.fastq.gz//g' fastqc_summary.tsv
     """
+
+    stub:
+    """
+    touch "fastqc_summary.tsv"
+    """
 }

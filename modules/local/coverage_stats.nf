@@ -16,4 +16,9 @@ process COVERAGE_STATS {
     """
     coverage_stats.py ${params.mincoverage}
     """
+
+    stub:
+    """
+    touch "coverage_stats.tsv"
+    """
 }

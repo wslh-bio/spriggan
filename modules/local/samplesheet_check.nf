@@ -24,4 +24,17 @@ process SAMPLESHEET_CHECK {
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch samplesheet.valid.csv
+    echo "sample,single_end,fastq_1,fastq_2
+    SAMPLE1_PE,False,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R2.fastq.gz
+    SAMPLE2_PE,False,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R1.fastq.gz,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R2.fastq.gz
+    " >> samplesheet.valid.csv
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
 }

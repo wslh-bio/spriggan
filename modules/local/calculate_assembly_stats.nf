@@ -22,4 +22,11 @@ process CALCULATE_ASSEMBLY_STATS {
     -q $quast_report_tsv \\
     -t $kraken_results_tsv
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}_Assembly_ratio_20240124.txt"
+    touch "${prefix}_GC_content_20240124.txt"
+    """
 }
