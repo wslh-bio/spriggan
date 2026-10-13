@@ -16,4 +16,9 @@ process ASSEMBLY_STATS_SUMMARY {
     """
     assembly_stats_summary.py
     """
+
+    stub:
+    """
+    touch "assembly_stats_results.tsv"
+    """
 }

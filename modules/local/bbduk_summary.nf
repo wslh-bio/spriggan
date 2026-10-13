@@ -16,4 +16,9 @@ process BBDUK_SUMMARY {
     """
     bbduk_summary.py
     """
+
+    stub:
+    """
+    touch "bbduk_results.tsv"
+    """
 }

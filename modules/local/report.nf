@@ -18,4 +18,9 @@ process REPORT {
         --workflowRunName ${params.run_name} \
         --empty_ntc_list ${empty_ntc}
     """
+
+    stub:
+    """
+    touch "${params.run_name}_spriggan_report.csv"
+    """
 }

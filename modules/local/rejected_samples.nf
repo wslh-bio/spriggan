@@ -20,4 +20,10 @@ process REJECTED_SAMPLES {
     #!/bin/bash
     cp ${csv_file} ${workflow_name}_empty_samples.csv
     """
+
+    stub:
+    def name = task.ext.workflow_name ?: "Spriggan"
+    """
+    touch "${name}_empty_samples.csv"
+    """
 }

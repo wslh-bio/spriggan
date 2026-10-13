@@ -15,4 +15,11 @@ process AMRFINDER_SUMMARY {
     """
     amrfinder_summary.py ${params.selected_genes}
     """
+
+    stub:
+    """
+    touch "amrfinder_predictions.tsv"
+    touch "amrfinder_summary.tsv"
+    touch "selected_ar_genes.tsv"
+    """
 }

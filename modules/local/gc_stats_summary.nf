@@ -16,4 +16,9 @@ process GC_STATS_SUMMARY {
     """
     gc_stats_summary.py
     """
+
+    stub:
+    """
+    touch "gc_stats_results.tsv"
+    """
 }

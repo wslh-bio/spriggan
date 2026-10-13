@@ -31,4 +31,17 @@ process SAMTOOLS {
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //')
     END_VERSIONS
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.depth.tsv"
+    touch "${prefix}.stats.txt"
+    touch "${prefix}.bam"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //')
+    END_VERSIONS
+    """
 }

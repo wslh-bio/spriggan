@@ -45,8 +45,8 @@ process FASTQC {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.html
-    touch ${prefix}.zip
+    touch "${prefix}.html"
+    touch "${prefix}.zip"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
