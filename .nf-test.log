@@ -1,0 +1,3 @@
+Oct-26 13:51:36.766 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
+Oct-26 13:51:36.776 [main] INFO  com.askimed.nf.test.App - Arguments: [init]
+Oct-26 13:51:37.374 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 26.04.3
