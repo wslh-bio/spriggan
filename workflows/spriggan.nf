@@ -40,32 +40,32 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { COUNT_FASTQ                   } from '../modules/local/count_fastq'
-include { COUNT_FASTQ as COUNT_NTC      } from '../modules/local/count_fastq'
-include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples.nf'
-include { BBDUK                         } from '../modules/local/bbduk.nf'
-include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary.nf'
-include { FASTQC                        } from '../modules/local/fastqc.nf'
-include { FASTQC_SUMMARY                } from '../modules/local/fastqc_summary.nf'
-include { SHOVILL                       } from '../modules/local/shovill.nf'
-include { SAMTOOLS                      } from '../modules/local/samtools.nf'
-include { COVERAGE_STATS                } from '../modules/local/coverage_stats.nf'
-include { QUAST                         } from '../modules/local/quast.nf'
-include { QUAST_SUMMARY                 } from '../modules/local/quast_summary.nf'
-include { MLST                          } from '../modules/local/mlst.nf'
-include { MLST_SUMMARY                  } from '../modules/local/mlst_summary.nf'
-include { KRAKEN as KRAKEN_SAMPLE       } from '../modules/local/kraken.nf'
-include { KRAKEN as KRAKEN_NTC          } from '../modules/local/kraken.nf'
-include { KRAKEN_SUMMARY                } from '../modules/local/kraken_summary.nf'
-include { AMRFINDER_SETUP               } from '../modules/local/amrfinder_setup.nf'
-include { AMRFINDER                     } from '../modules/local/amrfinder.nf'
-include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary.nf'
-include { REPORT as REPORT_WITH_NTC     } from '../modules/local/report.nf'
-include { REPORT as REPORT_NO_NTC       } from '../modules/local/report.nf'
-include { MULTIQC                       } from '../modules/local/multiqc.nf'
-include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats.nf'
-include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary.nf'
-include { GC_STATS_SUMMARY              } from '../modules/local/gc_stats_summary.nf'
+include { COUNT_FASTQ                   } from '../modules/local/count_fastq/count_fastq'
+include { COUNT_FASTQ as COUNT_NTC      } from '../modules/local/count_fastq/count_fastq'
+include { REJECTED_SAMPLES              } from '../modules/local/rejected_samples/rejected_samples.nf'
+include { BBDUK                         } from '../modules/local/bbduk/bbduk.nf'
+include { BBDUK_SUMMARY                 } from '../modules/local/bbduk_summary/bbduk_summary.nf'
+include { FASTQC                        } from '../modules/local/fastqc/fastqc.nf'
+include { FASTQC_SUMMARY                } from '../modules/local/fastqc_summary/fastqc_summary.nf'
+include { SHOVILL                       } from '../modules/local/shovill/shovill.nf'
+include { SAMTOOLS                      } from '../modules/local/samtools/samtools.nf'
+include { COVERAGE_STATS                } from '../modules/local/coverage_stats/coverage_stats.nf'
+include { QUAST                         } from '../modules/local/quast/quast.nf'
+include { QUAST_SUMMARY                 } from '../modules/local/quast_summary/quast_summary.nf'
+include { MLST                          } from '../modules/local/mlst/mlst.nf'
+include { MLST_SUMMARY                  } from '../modules/local/mlst_summary/mlst_summary.nf'
+include { KRAKEN as KRAKEN_SAMPLE       } from '../modules/local/kraken/kraken.nf'
+include { KRAKEN as KRAKEN_NTC          } from '../modules/local/kraken/kraken.nf'
+include { KRAKEN_SUMMARY                } from '../modules/local/kraken_summary/kraken_summary.nf'
+include { AMRFINDER_SETUP               } from '../modules/local/amrfinder_setup/amrfinder_setup.nf'
+include { AMRFINDER                     } from '../modules/local/amrfinder/amrfinder.nf'
+include { AMRFINDER_SUMMARY             } from '../modules/local/amrfinder_summary/amrfinder_summary.nf'
+include { REPORT as REPORT_WITH_NTC     } from '../modules/local/report/report.nf'
+include { REPORT as REPORT_NO_NTC       } from '../modules/local/report/report.nf'
+include { MULTIQC                       } from '../modules/local/multiqc/multiqc.nf'
+include { CALCULATE_ASSEMBLY_STATS      } from '../modules/local/calculate_assembly_stats/calculate_assembly_stats.nf'
+include { ASSEMBLY_STATS_SUMMARY        } from '../modules/local/assembly_stats_summary/assembly_stats_summary.nf'
+include { GC_STATS_SUMMARY              } from '../modules/local/gc_stats_summary/gc_stats_summary.nf'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -87,14 +87,14 @@ workflow SPRIGGAN {
         ch_input
     )
 
-    // Checking input and setting single and paired end 
+    // Checking input and setting single and paired end
     INPUT_CHECK.out.reads
-        .branch{ meta, file -> 
+        .branch{ meta, file ->
             single_end: meta.single_end
             paired_end: !meta.single_end
             }
         .set{ ch_end }
-    
+
     ch_end.paired_end
         .branch{ meta, file ->
             ntc: (meta.id =~ params.ntc_regex)
@@ -102,7 +102,7 @@ workflow SPRIGGAN {
         }
         .set { ch_input_reads }
 
-    
+
     // Run Module: countFastq
     COUNT_FASTQ(
         ch_input_reads.sample
@@ -125,7 +125,7 @@ workflow SPRIGGAN {
         .set{ ch_paired_end }
 
     ch_paired_end.pass
-        .map { meta, file, count1, count2 -> 
+        .map { meta, file, count1, count2 ->
             [meta, file]
             }
         .set{ ch_filtered }
@@ -136,7 +136,7 @@ workflow SPRIGGAN {
             }
         .set{ ch_failed }
 
-    // Collect 
+    // Collect
     ch_failed
         .ifEmpty('NO_EMPTY_SAMPLES')
         .collectFile(
@@ -144,7 +144,7 @@ workflow SPRIGGAN {
                 newLine: true
             )
         .set{ ch_rejected_file }
-    
+
 
     if (params.ntc_regex != null) {
 
@@ -170,7 +170,7 @@ workflow SPRIGGAN {
             .set{ ch_ntc_paired_end }
 
         ch_ntc_paired_end.pass
-            .map { meta, file, count1, count2 -> 
+            .map { meta, file, count1, count2 ->
                 [meta, file]
                 }
             .set{ ch_ntc_filtered }
@@ -267,7 +267,7 @@ workflow SPRIGGAN {
     //
 
     QUAST.out.transposed_report
-        .map{ meta, path -> 
+        .map{ meta, path ->
             [path]
         }
         .collect()
@@ -325,7 +325,7 @@ workflow SPRIGGAN {
         //
         // MODULE: KRAKEN_NTC
         //
-        
+
         KRAKEN_NTC(
             ch_ntc_filtered,
             kraken_db.first()
@@ -338,7 +338,7 @@ workflow SPRIGGAN {
     // *** REMOVE AFTER TESTING ***
     // ch_kraken_tsv = KRAKEN_SUMMARY.out.kraken_tsv
     // QUAST.out.transposed_report
-    //     .map{meta, result -> 
+    //     .map{meta, result ->
     //         [[id:meta.id], result]
     //         }
     //         .set { ch_quast }
