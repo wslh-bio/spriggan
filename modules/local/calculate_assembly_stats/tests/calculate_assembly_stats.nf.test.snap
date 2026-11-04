@@ -1,0 +1,48 @@
+{
+    "stub test for calculate assembly stats": {
+        "content": [
+            {
+                "0": [
+                    "test_Assembly_ratio_20240124.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "test_GC_content_20240124.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "assembly_ratio": [
+                    "test_Assembly_ratio_20240124.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "gc_content": [
+                    "test_GC_content_20240124.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-04T16:42:53.074959747",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "SAMPLE1_PE_Assembly_ratio_20240124.txt:md5,767f06a978d9ad6f1de5e54c44596344"
+                ],
+                "1": [
+                    "SAMPLE1_PE_GC_content_20240124.txt:md5,1f30efb3bb88442805ab2c2c42cd7296"
+                ],
+                "assembly_ratio": [
+                    "SAMPLE1_PE_Assembly_ratio_20240124.txt:md5,767f06a978d9ad6f1de5e54c44596344"
+                ],
+                "gc_content": [
+                    "SAMPLE1_PE_GC_content_20240124.txt:md5,1f30efb3bb88442805ab2c2c42cd7296"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-04T16:36:56.199071051",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

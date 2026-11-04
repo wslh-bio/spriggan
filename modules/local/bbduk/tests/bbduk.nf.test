@@ -34,6 +34,9 @@ nextflow_process {
     test("sample01 - paired end fastq") {
 
         when {
+            params {
+                outdir = "$outputDir"
+            }
             process {
                 """
                 input[0] = [
@@ -62,7 +65,7 @@ nextflow_process {
 
         when {
             params {
-                outdir = "tests/results"
+                outdir = "$outputDir"
             }
 
             process {
