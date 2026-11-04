@@ -1,0 +1,14 @@
+{
+    "sample01 - paired end fastq": {
+        "content": [
+            [
+                "versions.yml:md5,2060d91a44f0b45bcd8f7828e09bc2e6"
+            ]
+        ],
+        "timestamp": "2026-11-04T15:13:29.91791211",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
