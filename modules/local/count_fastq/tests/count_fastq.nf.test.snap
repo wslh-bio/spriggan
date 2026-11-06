@@ -1,0 +1,72 @@
+{
+    "stub test for count_fastq.nf": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test_output.csv:md5,8c20d89154b1f937139fdb835cea3b9c"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,3df9bd7128558cf7f219ff106eca0bca"
+                ],
+                "csv": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test_output.csv:md5,8c20d89154b1f937139fdb835cea3b9c"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,3df9bd7128558cf7f219ff106eca0bca"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-06T12:37:43.680720949",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test_output.csv:md5,4d1d20d3c70739c7399f0a9430bb6ecd"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,3df9bd7128558cf7f219ff106eca0bca"
+                ],
+                "csv": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test_output.csv:md5,4d1d20d3c70739c7399f0a9430bb6ecd"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,3df9bd7128558cf7f219ff106eca0bca"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-05T08:58:05.548419287",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

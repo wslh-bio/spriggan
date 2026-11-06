@@ -1,0 +1,36 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "coverage_stats.tsv:md5,5d9889f0c458b359a424001bc7032dc3"
+                ],
+                "coverage_tsv": [
+                    "coverage_stats.tsv:md5,5d9889f0c458b359a424001bc7032dc3"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-05T09:43:18.763466818",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "stub test for coverage_stats.nf": {
+        "content": [
+            {
+                "0": [
+                    "coverage_stats.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "coverage_tsv": [
+                    "coverage_stats.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-05T09:45:10.105373093",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
