@@ -16,7 +16,30 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-04T13:41:17.516171247",
+        "timestamp": "2026-11-10T09:28:09.674190267",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "Sample01.amr.tsv:md5,5fe51784f2d9b2e72a3c8df6329ee93c"
+                ],
+                "1": [
+                    "versions.yml:md5,78d09c2f2450572954b42fc0e6b0e400"
+                ],
+                "amrfinder_predictions": [
+                    "Sample01.amr.tsv:md5,5fe51784f2d9b2e72a3c8df6329ee93c"
+                ],
+                "versions": [
+                    "versions.yml:md5,78d09c2f2450572954b42fc0e6b0e400"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T09:26:47.348605268",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.5"
