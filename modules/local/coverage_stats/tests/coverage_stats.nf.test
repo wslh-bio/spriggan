@@ -13,8 +13,10 @@ nextflow_process {
             process {
                 def data_dir = "${baseDir}/modules/local/coverage_stats/tests/data"
                 """
-                input[0] = [ file("${data_dir}/SAMPLE1_PE.depth.tsv"),
-                           file("${data_dir}/SAMPLE2_PE.depth.tsv") ]
+                input[0] = [
+                    file("${data_dir}/SAMPLE1_PE.depth.tsv"),
+                    file("${data_dir}/SAMPLE2_PE.depth.tsv")
+                ]
                 """
             }
         }
