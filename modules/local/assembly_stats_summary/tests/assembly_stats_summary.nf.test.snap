@@ -1,0 +1,36 @@
+{
+    "stub test for assembly_stats_summary.nf": {
+        "content": [
+            {
+                "0": [
+                    "assembly_stats_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "assembly_stats_tsv": [
+                    "assembly_stats_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T13:41:59.151707776",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "assembly_stats_results.tsv:md5,d769e8be59a30dce6d6416a77b3a3666"
+                ],
+                "assembly_stats_tsv": [
+                    "assembly_stats_results.tsv:md5,d769e8be59a30dce6d6416a77b3a3666"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T13:40:14.799171337",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

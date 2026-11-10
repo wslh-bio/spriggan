@@ -1,0 +1,54 @@
+{
+    "stub run without failures": {
+        "content": [
+            {
+                "0": [
+                    "amrfinder_predictions.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "amrfinder_summary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "selected_ar_genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "amrfinder_tsv": [
+                    "amrfinder_summary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "selected_ar_tsv": [
+                    "selected_ar_genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T10:49:00.84964512",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "amrfinder_predictions.tsv:md5,f70e413c6a35ef43a05f4b77fe6b9acf"
+                ],
+                "1": [
+                    "amrfinder_summary.tsv:md5,1e5a121379607134b252ac586ae2ce56"
+                ],
+                "2": [
+                    "selected_ar_genes.tsv:md5,f73d2cb02e9f571fdb011824b6f67505"
+                ],
+                "amrfinder_tsv": [
+                    "amrfinder_summary.tsv:md5,1e5a121379607134b252ac586ae2ce56"
+                ],
+                "selected_ar_tsv": [
+                    "selected_ar_genes.tsv:md5,f73d2cb02e9f571fdb011824b6f67505"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T10:48:56.91124226",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

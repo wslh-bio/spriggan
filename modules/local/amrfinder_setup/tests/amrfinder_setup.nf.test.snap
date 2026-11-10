@@ -1,0 +1,60 @@
+{
+    "-stub test for amrfinder_setup.nf": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.amrfinder_input.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "amrfinder_input": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.amrfinder_input.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T10:51:50.343987873",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.Acinetobacter_baumannii.fa:md5,3d5c75aa73b0cff179de017ad1f97ee3"
+                    ]
+                ],
+                "amrfinder_input": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.Acinetobacter_baumannii.fa:md5,3d5c75aa73b0cff179de017ad1f97ee3"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T10:28:23.362230397",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
