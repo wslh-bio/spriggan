@@ -1,0 +1,36 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "quast_results.tsv:md5,47fc60ce4db3435f9fbef016609ea3dd"
+                ],
+                "quast_tsv": [
+                    "quast_results.tsv:md5,47fc60ce4db3435f9fbef016609ea3dd"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T16:26:30.39663297",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "stub test for quast_summary.nf": {
+        "content": [
+            {
+                "0": [
+                    "quast_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "quast_tsv": [
+                    "quast_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T16:26:34.924410825",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

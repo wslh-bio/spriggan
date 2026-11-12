@@ -8,20 +8,55 @@ nextflow_process {
 
         when {
             params {
-                // define parameters here. Example:
-                // outdir = "tests/results"
+                outdir = "$outputDir"
+
             }
             process {
+                def data_dir = "${baseDir}/modules/local/quast_summary/tests/data/"
                 """
-                // define inputs of the process here. Example:
-                // input[0] = file("test-file.txt")
+                input[0] = [
+                file("${data_dir}" + 'Sample02.transposed.quast.report.tsv'),
+                file("${data_dir}" + 'Sample01.transposed.quast.report.tsv')
+                ]
                 """
             }
         }
 
         then {
-            assert process.success
-            assert snapshot(process.out).match()
+            assertAll(
+                { assert process.success               },
+                { assert snapshot(process.out).match() },
+                { assert file(process.out.quast_tsv[0]).name.split("/")[-1] == 'quast_results.tsv' }
+            )
+        }
+    }
+
+    test("stub test for quast_summary.nf") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+
+            }
+            process {
+                def data_dir = "${baseDir}/modules/local/quast_summary/tests/data/"
+                """
+                input[0] = [
+                file("${data_dir}" + 'Sample02.transposed.quast.report.tsv'),
+                file("${data_dir}" + 'Sample01.transposed.quast.report.tsv')
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success               },
+                { assert snapshot(process.out).match() },
+                { assert file(process.out.quast_tsv[0]).name.split("/")[-1] == 'quast_results.tsv' }
+            )
         }
     }
 }
