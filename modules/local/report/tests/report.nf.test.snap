@@ -1,0 +1,36 @@
+{
+    "stub test for report.nf": {
+        "content": [
+            {
+                "0": [
+                    "test_full_spriggan_report.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "result_csv": [
+                    "test_full_spriggan_report.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T16:09:11.348964483",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "test_full_spriggan_report.csv:md5,62a6798dd4683dbe36fbbc65aad98ec7"
+                ],
+                "result_csv": [
+                    "test_full_spriggan_report.csv:md5,62a6798dd4683dbe36fbbc65aad98ec7"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T16:09:06.876841932",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "stub test for rejected_samples.nf": {
+        "content": [
+            {
+                "0": [
+                    "Spriggan_empty_samples.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "rejected_samples_report": [
+                    "Spriggan_empty_samples.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T15:42:15.70438737",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "Spriggan_empty_samples.csv:md5,97c074815e67a1e9fa89bec65d61ec01"
+                ],
+                "rejected_samples_report": [
+                    "Spriggan_empty_samples.csv:md5,97c074815e67a1e9fa89bec65d61ec01"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T15:45:45.95820201",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

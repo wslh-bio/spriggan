@@ -1,0 +1,57 @@
+{
+    "stub test for mlst.nf": {
+        "content": [
+            {
+                "0": [
+                    "Sample01.mlst.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "versions.yml:md5,2395f3056598a70a7e740a9d7411373f"
+                ],
+                "2": [
+                    "Sample01.alleles.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "mlst_files": [
+                    "Sample01.mlst.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions": [
+                    "versions.yml:md5,2395f3056598a70a7e740a9d7411373f"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T10:32:56.061575968",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "Sample01.mlst.tsv:md5,88474cc85de95923c1c70ad369126d98"
+                ],
+                "1": [
+                    "versions.yml:md5,2395f3056598a70a7e740a9d7411373f"
+                ],
+                "2": [
+                    [
+                        "Sample01.abaumannii.alleles.tsv:md5,a69dbda56e44f2d48f2cd8f5e844a42a",
+                        "Sample01.abaumannii_2.alleles.tsv:md5,2d1226335a4a108a7b18ee20003a0014"
+                    ]
+                ],
+                "mlst_files": [
+                    "Sample01.mlst.tsv:md5,88474cc85de95923c1c70ad369126d98"
+                ],
+                "versions": [
+                    "versions.yml:md5,2395f3056598a70a7e740a9d7411373f"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T10:31:47.666142194",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

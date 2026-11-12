@@ -1,0 +1,36 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "mlst_results.tsv:md5,a35c44ecaa1e4ba4fe0169f3fc2e4e70"
+                ],
+                "mlst_tsv": [
+                    "mlst_results.tsv:md5,a35c44ecaa1e4ba4fe0169f3fc2e4e70"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T10:38:13.822361355",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "stub test for mlst_summary.nf": {
+        "content": [
+            {
+                "0": [
+                    "mlst_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "mlst_tsv": [
+                    "mlst_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T10:38:46.034932556",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

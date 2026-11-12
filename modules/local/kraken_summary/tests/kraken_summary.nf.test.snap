@@ -1,0 +1,36 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "kraken_results.tsv:md5,843e437d5e80912c78d6524e7bc78a3f"
+                ],
+                "kraken_tsv": [
+                    "kraken_results.tsv:md5,843e437d5e80912c78d6524e7bc78a3f"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T09:28:52.490633796",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "stub test for kraken_summary.nf": {
+        "content": [
+            {
+                "0": [
+                    "kraken_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "kraken_tsv": [
+                    "kraken_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T09:31:06.280598457",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

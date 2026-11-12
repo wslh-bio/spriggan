@@ -1,0 +1,84 @@
+{
+    "stub test for kraken2.nf": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.kraken2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "kraken2.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "versions.yml:md5,4bb0cdb749a885545f8ca4ce3b2ae588"
+                ],
+                "kraken_results": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.kraken2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    "kraken2.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions": [
+                    "versions.yml:md5,4bb0cdb749a885545f8ca4ce3b2ae588"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T08:20:28.183916133",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.kraken2.txt:md5,e96d1342e044093413cd143255684d5f"
+                    ]
+                ],
+                "1": [
+                    "kraken2.log:md5,009ce6cf00b2ba7e0daa14f30e62fcad"
+                ],
+                "2": [
+                    "versions.yml:md5,341972fe3f1669d74b0d775294896f2c"
+                ],
+                "kraken_results": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.kraken2.txt:md5,e96d1342e044093413cd143255684d5f"
+                    ]
+                ],
+                "log": [
+                    "kraken2.log:md5,009ce6cf00b2ba7e0daa14f30e62fcad"
+                ],
+                "versions": [
+                    "versions.yml:md5,341972fe3f1669d74b0d775294896f2c"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T08:20:21.542490511",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

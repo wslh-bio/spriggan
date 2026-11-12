@@ -1,0 +1,108 @@
+{
+    "Stub test for quast.nf": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.transposed.quast.report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.quast.report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,7925979e18258a1a5d8c537c738765f2"
+                ],
+                "result": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.quast.report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "transposed_report": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.transposed.quast.report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7925979e18258a1a5d8c537c738765f2"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T13:47:39.43919113",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.transposed.quast.report.tsv:md5,e8f5c369f8f4643ef3f5d03d67f35672"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.quast.report.tsv:md5,dce0cf7fa252fdcc9f42b7ac54497a03"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,7925979e18258a1a5d8c537c738765f2"
+                ],
+                "result": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.quast.report.tsv:md5,dce0cf7fa252fdcc9f42b7ac54497a03"
+                    ]
+                ],
+                "transposed_report": [
+                    [
+                        {
+                            "id": "SPN_Sample_01",
+                            "single_end": false
+                        },
+                        "SPN_Sample_01.transposed.quast.report.tsv:md5,e8f5c369f8f4643ef3f5d03d67f35672"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7925979e18258a1a5d8c537c738765f2"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-12T13:31:38.171180864",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
