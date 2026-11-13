@@ -1,0 +1,9 @@
+Sample: Sample01
+Tax: Acinetobacter baumannii
+NCBI_TAXID: 470
+Species_St.Dev: 259000
+Isolate_St.Devs: 0.2789343629343629
+Actual_length: 4059459
+Expected_length: 3987215
+Ratio Actual:Expected: 1.0181189125743157
+Ratio Expected:Actual: 0.9822035399298281

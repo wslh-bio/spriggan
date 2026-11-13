@@ -1,0 +1,9 @@
+Sample: Sample02
+Tax: Acinetobacter baumannii
+NCBI_TAXID: 470
+Species_GC_StDev: 0.5309382003563407
+Species_GC_Min: 34.9
+Species_GC_Max: 62.6
+Species_GC_Mean: 39.00642285980872
+Species_GC_Count: 8574
+Sample_GC_Percent: 38.92

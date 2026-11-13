@@ -1,0 +1,6 @@
+"WSLHBIO_SPRIGGAN:SPRIGGAN:AMRFINDER":
+    amrfinder: 3.10.20
+    amrfinder DB: 2022-05-26.1
+"WSLHBIO_SPRIGGAN:SPRIGGAN:KRAKEN_SAMPLE":
+    kraken2: 2.0.8-beta
+    kraken DB: minikraken2_v1_8GB

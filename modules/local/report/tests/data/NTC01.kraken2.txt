@@ -1,0 +1,11 @@
+ 42.86	3	3	U	0	unclassified
+ 57.14	4	0	R	1	root
+ 57.14	4	0	R1	131567	  cellular organisms
+ 57.14	4	0	D	2	    Bacteria
+ 57.14	4	0	D1	1783272	      Terrabacteria group
+ 57.14	4	0	P	1239	        Firmicutes
+ 57.14	4	0	C	91061	          Bacilli
+ 57.14	4	0	O	186826	            Lactobacillales
+ 57.14	4	0	F	1300	              Streptococcaceae
+ 57.14	4	0	G	1301	                Streptococcus
+ 57.14	4	4	S	1313	                  Streptococcus pneumoniae

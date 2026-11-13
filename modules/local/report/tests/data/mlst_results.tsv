@@ -1,0 +1,4 @@
+Sample	MLST Scheme
+Sample03	MLST_Oxford;MLST499_Pasteur
+Sample01	MLST2_Pasteur;MLST_Oxford
+Sample02	MLST_Oxford;MLST2_Pasteur

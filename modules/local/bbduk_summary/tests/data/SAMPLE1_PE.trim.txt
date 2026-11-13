@@ -1,0 +1,3 @@
+Input:                  	55442 reads 		16571632 bases.
+Total Removed:          	30 reads (0.05%) 	7868 bases (0.05%)
+Result:                 	55412 reads (99.95%) 	16563764 bases (99.95%)
