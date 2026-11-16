@@ -14,8 +14,8 @@ nextflow_process {
                 def data_dir = "${baseDir}/modules/local/samtools/tests/data"
                 """
                 input[0] = [
-                [id:'Sample01', single_end:false ],
-                [ file("${data_dir}" + '/Sample01.sam') ]
+                [id:'SAMPLE1_PE', single_end:false ],
+                [ file("${data_dir}" + '/SAMPLE1_PE.sam') ]
                 ]
                 """
             }
@@ -24,7 +24,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(sanitizeOutput(process.out)).match() }            )
+                { assert snapshot(sanitizeOutput(process.out)).match() }
+            )
         }
     }
 
@@ -38,8 +39,8 @@ nextflow_process {
                 def data_dir = "${baseDir}/modules/local/samtools/tests/data"
                 """
                 input[0] = [
-                [id:'Sample01', single_end:false ],
-                [ file("${data_dir}" + '/Sample01.sam') ]
+                [id:'SAMPLE1_PE', single_end:false ],
+                [ file("${data_dir}" + '/SAMPLE1_PE.sam') ]
                 ]
                 """
             }

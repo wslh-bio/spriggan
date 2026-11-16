@@ -3,20 +3,20 @@
         "content": [
             {
                 "cov_files": [
-                    "Sample01.depth.tsv:md5,d2b06e7b08eb07ce53e9b32f1d08b19a"
+                    "SAMPLE1_PE.depth.tsv:md5,6a91ba96fe95b34bcb41f3f868452f31"
                 ],
                 "sorted_bam": [
-                    "Sample01.bam:md5,8f535335575a16ddd9786b55e7b16fc3"
+                    "SAMPLE1_PE.bam:md5,91d2606f3736ef9109258d5dc947d99f"
                 ],
                 "stats_multiqc": [
-                    "Sample01.stats.txt:md5,ed30d6b3dc52e9110161aaa1291f0b09"
+                    "SAMPLE1_PE.stats.txt:md5,8bdeabbfb269a75a78a0a8248f59c7d5"
                 ],
                 "versions": [
                     "versions.yml:md5,ddeac17f4c81ee23069915db7fed6c91"
                 ]
             }
         ],
-        "timestamp": "2026-11-16T09:06:06.716103616",
+        "timestamp": "2026-11-16T13:50:22.010847458",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.5"
@@ -26,20 +26,20 @@
         "content": [
             {
                 "cov_files": [
-                    "Sample01.depth.tsv:md5,d2b06e7b08eb07ce53e9b32f1d08b19a"
+                    "SAMPLE1_PE.depth.tsv:md5,6a91ba96fe95b34bcb41f3f868452f31"
                 ],
                 "sorted_bam": [
-                    "Sample01.bam:md5,8f535335575a16ddd9786b55e7b16fc3"
+                    "SAMPLE1_PE.bam:md5,91d2606f3736ef9109258d5dc947d99f"
                 ],
                 "stats_multiqc": [
-                    "Sample01.stats.txt:md5,ed30d6b3dc52e9110161aaa1291f0b09"
+                    "SAMPLE1_PE.stats.txt:md5,8bdeabbfb269a75a78a0a8248f59c7d5"
                 ],
                 "versions": [
                     "versions.yml:md5,ddeac17f4c81ee23069915db7fed6c91"
                 ]
             }
         ],
-        "timestamp": "2026-11-16T09:05:29.397878285",
+        "timestamp": "2026-11-16T13:50:16.179219989",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.5"
