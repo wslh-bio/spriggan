@@ -1,0 +1,70 @@
+{
+    "stub test for shovill.nf": {
+        "content": [
+            {
+                "contigs": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.contigs.fa:md5,fced350a91dc7fffd79cf3eeac77ece8"
+                    ]
+                ],
+                "corrections": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "shovill.corrections:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "gfa": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "contigs.gfa:md5,bfbd8521404e0a54ad68f953bffda04b"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "shovill.log:md5,f03312150bd803a0f92f275f5ba316b3"
+                    ]
+                ],
+                "raw_contigs": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "spades.fasta:md5,0da37f2dd348a7b9f273cc34fabefd4e"
+                    ]
+                ],
+                "sam_files": [
+                    [
+                        {
+                            "id": "Sample01",
+                            "single_end": false
+                        },
+                        "Sample01.sam:md5,18001d4a771741a58524e87b2ceefe99"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,aa657c335ef793da97b3d627140e7fb2"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T11:06:55.565121038",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}

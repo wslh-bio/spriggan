@@ -1,0 +1,48 @@
+{
+    "stub test for samtools.nf": {
+        "content": [
+            {
+                "cov_files": [
+                    "Sample01.depth.tsv:md5,d2b06e7b08eb07ce53e9b32f1d08b19a"
+                ],
+                "sorted_bam": [
+                    "Sample01.bam:md5,8f535335575a16ddd9786b55e7b16fc3"
+                ],
+                "stats_multiqc": [
+                    "Sample01.stats.txt:md5,ed30d6b3dc52e9110161aaa1291f0b09"
+                ],
+                "versions": [
+                    "versions.yml:md5,ddeac17f4c81ee23069915db7fed6c91"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T09:06:06.716103616",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "cov_files": [
+                    "Sample01.depth.tsv:md5,d2b06e7b08eb07ce53e9b32f1d08b19a"
+                ],
+                "sorted_bam": [
+                    "Sample01.bam:md5,8f535335575a16ddd9786b55e7b16fc3"
+                ],
+                "stats_multiqc": [
+                    "Sample01.stats.txt:md5,ed30d6b3dc52e9110161aaa1291f0b09"
+                ],
+                "versions": [
+                    "versions.yml:md5,ddeac17f4c81ee23069915db7fed6c91"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T09:05:29.397878285",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
