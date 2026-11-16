@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process KRAKEN_SUMMARY"
     script "modules/local/kraken_summary/kraken_summary.nf"
     process "KRAKEN_SUMMARY"
+    tag "modules"
 
     test("Should run without failures") {
 

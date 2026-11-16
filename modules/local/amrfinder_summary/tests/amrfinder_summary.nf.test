@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process AMRFINDER_SUMMARY"
     script "modules/local/amrfinder_summary/amrfinder_summary.nf"
     process "AMRFINDER_SUMMARY"
+    tag "modules"
 
     test("Should run without failures") {
 
@@ -11,7 +12,7 @@ nextflow_process {
                 outdir = "$outputDir"
             }
             process {
-                def data_dir = "${baseDir}/modules/local/amrfinder_summary/tests/data/"
+                def data_dir = "${baseDir}/modules/local/amrfinder_summary/tests/data"
                 """
                 input[0] = [
                     file("${data_dir}/Sample01.amr.tsv"),
@@ -38,7 +39,7 @@ nextflow_process {
                 outdir = "$outputDir"
             }
             process {
-                def data_dir = "${baseDir}/modules/local/amrfinder_summary/tests/data/"
+                def data_dir = "${baseDir}/modules/local/amrfinder_summary/tests/data"
                 """
                 input[0] = [
                     file("${data_dir}/Sample01.amr.tsv"),

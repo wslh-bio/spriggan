@@ -3,7 +3,7 @@ nextflow_process {
     name "Test Process FASTQC_SUMMARY"
     script "modules/local/fastqc_summary/fastqc_summary.nf"
     process "FASTQC_SUMMARY"
-    tag "module"
+    tag "modules"
 
     test("Checking that output channels have appropriate amount of values.") {
 

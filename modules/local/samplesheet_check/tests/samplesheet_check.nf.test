@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process SAMPLESHEET_CHECK"
     script "modules/local/samplesheet_check/samplesheet_check.nf"
     process "SAMPLESHEET_CHECK"
+    tag "modules"
 
     test("Should run without failures") {
 

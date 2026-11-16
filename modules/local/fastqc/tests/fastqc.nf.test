@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process FASTQC"
     script "modules/local/fastqc/fastqc.nf"
     process "FASTQC"
+    tag "modules"
 
     test("Should run without failures") {
 

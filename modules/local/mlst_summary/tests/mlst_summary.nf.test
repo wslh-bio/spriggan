@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process MLST_SUMMARY"
     script "modules/local/mlst_summary/mlst_summary.nf"
     process "MLST_SUMMARY"
+    tag "modules"
 
     test("Should run without failures") {
 

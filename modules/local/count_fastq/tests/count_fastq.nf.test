@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process COUNT_FASTQ"
     script "modules/local/count_fastq/count_fastq.nf"
     process "COUNT_FASTQ"
+    tag "modules"
 
     test("Should run without failures") {
 

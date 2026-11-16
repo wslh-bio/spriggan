@@ -3,6 +3,8 @@ nextflow_process {
     name "Test Process BBDUK_SUMMARY"
     script "modules/local/bbduk_summary/bbduk_summary.nf"
     process "BBDUK_SUMMARY"
+    tag "modules"
+
 
     test("Should run without failures") {
 

@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process SAMTOOLS"
     script "modules/local/samtools/samtools.nf"
     process "SAMTOOLS"
+    tag "modules"
 
     test("Should run without failures") {
 

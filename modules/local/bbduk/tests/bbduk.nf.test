@@ -3,7 +3,7 @@ nextflow_process {
     name "Test Process BBDUK"
     script "../bbduk.nf"
     process "BBDUK"
-    tag "module"
+    tag "modules"
 
     test("Should run without failures") {
 

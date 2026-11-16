@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process GC_STATS_SUMMARY"
     script "modules/local/gc_stats_summary/gc_stats_summary.nf"
     process "GC_STATS_SUMMARY"
+    tag "modules"
 
     test("Should run without failures") {
 

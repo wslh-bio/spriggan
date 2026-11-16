@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process CALCULATE_ASSEMBLY_STATS"
     script "modules/local/calculate_assembly_stats/calculate_assembly_stats.nf"
     process "CALCULATE_ASSEMBLY_STATS"
+    tag "modules"
 
     test("Should run without failures") {
 

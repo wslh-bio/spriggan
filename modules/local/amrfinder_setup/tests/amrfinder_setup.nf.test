@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process AMRFINDER_SETUP"
     script "modules/local/amrfinder_setup/amrfinder_setup.nf"
     process "AMRFINDER_SETUP"
+    tag "modules"
 
     test("Should run without failures") {
 

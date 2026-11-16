@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process SHOVILL"
     script "modules/local/shovill/shovill.nf"
     process "SHOVILL"
+    tag "modules"
 
     test("Should run without failures") {
 

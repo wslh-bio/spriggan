@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process REJECTED_SAMPLES"
     script "modules/local/rejected_samples/rejected_samples.nf"
     process "REJECTED_SAMPLES"
+    tag "modules"
 
     test("Should run without failures") {
 

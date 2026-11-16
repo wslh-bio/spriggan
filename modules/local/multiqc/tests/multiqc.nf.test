@@ -3,7 +3,7 @@ nextflow_process {
     name "Test Process MULTIQC"
     script "modules/local/multiqc/multiqc.nf"
     process "MULTIQC"
-    tag "module"
+    tag "modules"
 
     test("Checking that mandatory output channels have appropriate amount of values") {
 
