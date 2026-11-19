@@ -1,0 +1,48 @@
+{
+    "stub test for samplesheet_check.nf": {
+        "content": [
+            {
+                "0": [
+                    "samplesheet.valid.csv:md5,15e8e8ce1a4aa3521f30a04431032640"
+                ],
+                "1": [
+                    "versions.yml:md5,adc2d0d3c8cd6580c3c6e933944fe957"
+                ],
+                "csv": [
+                    "samplesheet.valid.csv:md5,15e8e8ce1a4aa3521f30a04431032640"
+                ],
+                "versions": [
+                    "versions.yml:md5,adc2d0d3c8cd6580c3c6e933944fe957"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-19T10:25:08.667630732",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    },
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "samplesheet.valid.csv:md5,6c6540dc2bcefc9111949995ad8a7905"
+                ],
+                "1": [
+                    "versions.yml:md5,adc2d0d3c8cd6580c3c6e933944fe957"
+                ],
+                "csv": [
+                    "samplesheet.valid.csv:md5,6c6540dc2bcefc9111949995ad8a7905"
+                ],
+                "versions": [
+                    "versions.yml:md5,adc2d0d3c8cd6580c3c6e933944fe957"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-19T10:23:11.019996129",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.5"
+        }
+    }
+}
