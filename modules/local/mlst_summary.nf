@@ -13,4 +13,9 @@ process MLST_SUMMARY {
     """
     mlst_summary.py
     """
+
+    stub:
+    """
+    touch "mlst_results.tsv"
+    """
 }

@@ -21,7 +21,7 @@ process COUNT_FASTQ {
         $args \\
         --sample_id ${meta.id} \\
         --raw_reads ${reads} \\
-        --output ${meta.id}_output.csv 
+        --output ${meta.id}_output.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -34,8 +34,10 @@ process COUNT_FASTQ {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo $args
-    
+
     touch ${prefix}_output.csv
+    echo "id,count1,count2
+    SAMPLE2_PE,21481,21481" >> ${prefix}_output.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -8,13 +8,13 @@ process SHOVILL {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("${meta.id}.contigs.fa")                              , emit: contigs
-    tuple val(meta), path("${meta.id}.sam")                                     , emit: sam_files
-    tuple val(meta), path("shovill_output/shovill.corrections")                 , emit: corrections
-    tuple val(meta), path("shovill_output/shovill.log")                         , emit: log
-    tuple val(meta), path("shovill_output/{skesa,spades,megahit,velvet}.fasta") , emit: raw_contigs
-    tuple val(meta), path("shovill_output/contigs.{fastg,gfa,LastGraph}")       , optional:true, emit: gfa
-    path "versions.yml"                                                         , emit: versions
+    tuple val(meta), path("${meta.id}.contigs.fa")                                  , emit: contigs
+    tuple val(meta), path("${meta.id}.sam")                                         , emit: sam_files
+    tuple val(meta), path("*_shovill_output/shovill.corrections")                   , emit: corrections
+    tuple val(meta), path("*_shovill_output/shovill.log")                           , emit: log
+    tuple val(meta), path("*_shovill_output/{skesa,spades,megahit,velvet}.fasta")   , emit: raw_contigs
+    tuple val(meta), path("*_shovill_output/contigs.{fastg,gfa,LastGraph}")         , optional:true, emit: gfa
+    path "versions.yml"                                                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,12 +30,36 @@ process SHOVILL {
         $args \\
         --cpus $task.cpus \\
         --ram $memory \\
-        --outdir ./shovill_output \\
+        --outdir ./${prefix}_shovill_output \\
         --force
 
-    mv shovill_output/contigs.fa ${prefix}.contigs.fa
+    mv ${prefix}_shovill_output/contigs.fa ${prefix}.contigs.fa
     bwa index ${prefix}.contigs.fa
     bwa mem ${prefix}.contigs.fa ${reads[0]} ${reads[1]} > ${prefix}.sam
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.contigs.fa"
+    touch "${prefix}.sam"
+
+    mkdir ${prefix}_shovill_output
+
+    touch "${prefix}_shovill_output/shovill.corrections"
+    touch "${prefix}_shovill_output/shovill.log"
+    touch "${prefix}_shovill_output/skesa.fasta"
+    touch "${prefix}_shovill_output/spades.fasta"
+    touch "${prefix}_shovill_output/megahit.fasta"
+    touch "${prefix}_shovill_output/velvet.fasta"
+    touch "${prefix}_shovill_output/contigs.fastg"
+    touch "${prefix}_shovill_output/contigs.gfa"
+    touch "${prefix}_shovill_output/contigs.LastGraph"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

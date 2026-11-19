@@ -46,4 +46,18 @@ process KRAKEN {
         END_VERSIONS
         """
     }
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+
+    """
+    touch "kraken2.log"
+    touch "${prefix}.kraken2.txt"
+
+    cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            kraken2: \$(echo \$(kraken2 --version 2>&1) | sed 's/^.*Kraken version //; s/ .*\$//')
+            kraken DB: \$(echo \${db:-\$(ls /kraken2-db/)})
+        END_VERSIONS
+    """
 }

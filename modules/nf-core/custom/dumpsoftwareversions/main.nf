@@ -21,4 +21,12 @@ process CUSTOM_DUMPSOFTWAREVERSIONS {
     script:
     def args = task.ext.args ?: ''
     template 'dumpsoftwareversions.py'
+
+    stub:
+    def args = task.ext.args ?: ''
+    """
+    touch software_versions.yml
+    touch software_versions_mqc.yml
+    touch versions.yml
+    """
 }

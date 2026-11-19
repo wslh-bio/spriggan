@@ -35,7 +35,7 @@ process BBDUK {
         outs=${prefix}_singletons.fastq.gz \\
         repair \\
         &> ${prefix}.repair.log
-        
+
     bbduk.sh \\
         -Xmx\$maxmem \\
         in1=${prefix}_repaired_1.fastq.gz in2=${prefix}_repaired_2.fastq.gz \\
@@ -47,6 +47,23 @@ process BBDUK {
         &> ${prefix}.bbduk.log
 
     grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${prefix}.bbduk.log > ${prefix}.trim.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bbmap: \$(bbversion.sh)
+    END_VERSIONS
+    """
+
+    stub:
+    prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}_trimmed_1.fastq.gz"
+    touch "${prefix}_trimmed_2.fastq.gz"
+    touch "${prefix}.bbduk.log"
+    touch "${prefix}.trim.txt"
+    touch "${prefix}.adapter.stats.txt"
+    touch "${prefix}_singletons.fastq.gz"
+    touch "${prefix}.repair.log"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -15,4 +15,10 @@ process AMRFINDER_SETUP {
     """
     amrfinder_setup.py ${assembly}
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.amrfinder_input.fa"
+    """
 }

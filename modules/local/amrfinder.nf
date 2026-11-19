@@ -21,4 +21,15 @@ process AMRFINDER {
         amrfinder DB: \$(echo \$(cat /amrfinder/data/latest/version.txt) )
     END_VERSIONS
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.amr.tsv"
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        amrfinder: \$(echo \$(amrfinder --version) )
+        amrfinder DB: \$(echo \$(cat /amrfinder/data/latest/version.txt) )
+    END_VERSIONS
+    """
 }
