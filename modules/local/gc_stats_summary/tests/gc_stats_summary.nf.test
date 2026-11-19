@@ -23,8 +23,37 @@ nextflow_process {
         }
 
         then {
-            assert process.success
-            assert snapshot(process.out).match()
+            assertAll(
+                { assert process.success               },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("stub test for gc_stats_summary.nf") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                def data_dir = "${baseDir}/modules/local/gc_stats_summary/tests/data/"
+                """
+                input[0] = [
+                file("${data_dir}" + 'Sample01_GC_content_20240124.txt'),
+                file("${data_dir}" + 'Sample02_GC_content_20240124.txt')
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success               },
+                { assert snapshot(process.out).match() }
+            )
         }
     }
 }

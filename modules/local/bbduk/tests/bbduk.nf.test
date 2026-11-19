@@ -3,7 +3,7 @@ nextflow_process {
     name "Test Process BBDUK"
     script "../bbduk.nf"
     process "BBDUK"
-    tag "modules"
+    tag "module"
 
     test("Should run without failures") {
 
@@ -51,9 +51,9 @@ nextflow_process {
 
         then {
             assertAll(
-                { assert process.success },
+                { assert process.success                                                                     },
                 { assert path(process.out.log[0][1]).getText().contains("Input is being processed as paired")},
-                { assert snapshot(process.out.versions).match() }
+                { assert snapshot(process.out.versions).match()                                              }
 
             )
         }
