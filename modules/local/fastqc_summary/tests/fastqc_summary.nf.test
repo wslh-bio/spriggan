@@ -15,10 +15,8 @@ nextflow_process {
                 def data_dir = "${baseDir}/modules/local/fastqc_summary/tests/data"
                 """
                 input[0] = [
-                file("${data_dir}" + "/SPN_Sample_01_1_fastqc.zip"),
-                file("${data_dir}" + "/SPN_Sample_01_2_fastqc.zip"),
-                file("${data_dir}" + "/SPN_Sample_02_1_fastqc.zip"),
-                file("${data_dir}" + "/SPN_Sample_02_2_fastqc.zip")
+                file("${data_dir}" + "/SAMPLE1_PE_1_fastqc.zip"),
+                file("${data_dir}" + "/SAMPLE2_PE_2_fastqc.zip")
                 ]
                 """
             }
@@ -34,4 +32,32 @@ nextflow_process {
         }
     }
 
+    test("stub test for fastqc_summary.nf") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                def data_dir = "${baseDir}/modules/local/fastqc_summary/tests/data"
+                """
+                input[0] = [
+                file("${data_dir}" + "/SAMPLE1_PE_1_fastqc.zip"),
+                file("${data_dir}" + "/SAMPLE2_PE_2_fastqc.zip")
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success                        },
+                { assert process.exitStatus == 0                },
+                { assert process.out.fastqc_summary.size() == 1 }
+
+            )
+        }
+    }
 }
