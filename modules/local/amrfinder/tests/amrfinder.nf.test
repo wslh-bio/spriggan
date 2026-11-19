@@ -41,8 +41,8 @@ nextflow_process {
             process {
                 """
                 input[0] = [
-                [id:'SAMPLE2'],
-                [ file("${baseDir}" + '/modules/local/amrfinder/tests/data/SAMPLE1_PE.NA.fa') ]
+                [id:'Sample01'],
+                [ file("${baseDir}" + '/modules/local/amrfinder/tests/data/Sample01.Acinetobacter_baumannii.fa') ]
                 ]
                 """
             }

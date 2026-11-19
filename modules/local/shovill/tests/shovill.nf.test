@@ -38,15 +38,19 @@ nextflow_process {
     test("stub test for shovill.nf") {
 
         when {
+
+            options "-stub"
+
             params {
                 outdir = "$outputDir"
             }
+
             process {
                 """
-                // define inputs of the process here. Example:
                 input[0] = [
                     [id:'Sample01', single_end:false ],
-                        [file("${baseDir}/test-dataset/Sample01_R1.fastq.gz"), file("${baseDir}/test-dataset/Sample01_R2.fastq.gz")
+                    [file("${baseDir}/test-dataset/Sample01_R1.fastq.gz"),
+                     file("${baseDir}/test-dataset/Sample01_R2.fastq.gz")
                     ]
                 ]
                 """
@@ -55,7 +59,7 @@ nextflow_process {
 
         then {
             assertAll(
-                { assert process.success },
+                { assert process.success                               },
                 { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }

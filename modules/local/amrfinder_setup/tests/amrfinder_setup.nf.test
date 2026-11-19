@@ -14,7 +14,6 @@ nextflow_process {
             process {
                 def data_dir = "${baseDir}/modules/local/amrfinder_setup/tests/data/"
                 """
-                // define inputs of the process here. Example:
                 input[0] = file("${data_dir}" + "kraken_results.tsv")
                 input[1] = [
                 [ id: 'Sample01', single_end:false ],
@@ -43,7 +42,6 @@ nextflow_process {
             process {
                 def data_dir = "${baseDir}/modules/local/amrfinder_setup/tests/data/"
                 """
-                // define inputs of the process here. Example:
                 input[0] = file("${data_dir}" + "kraken_results.tsv")
                 input[1] = [
                 [ id: 'Sample01', single_end:false ],
