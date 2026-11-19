@@ -8,7 +8,7 @@
                             "id": "Sample01",
                             "single_end": false
                         },
-                        "Sample01.contigs.fa:md5,fced350a91dc7fffd79cf3eeac77ece8"
+                        "Sample01.contigs.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "corrections": [
@@ -26,7 +26,11 @@
                             "id": "Sample01",
                             "single_end": false
                         },
-                        "contigs.gfa:md5,bfbd8521404e0a54ad68f953bffda04b"
+                        [
+                            "contigs.LastGraph:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "contigs.fastg:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "contigs.gfa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
                     ]
                 ],
                 "log": [
@@ -35,7 +39,7 @@
                             "id": "Sample01",
                             "single_end": false
                         },
-                        "shovill.log:md5,f03312150bd803a0f92f275f5ba316b3"
+                        "shovill.log:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "raw_contigs": [
@@ -44,7 +48,12 @@
                             "id": "Sample01",
                             "single_end": false
                         },
-                        "spades.fasta:md5,0da37f2dd348a7b9f273cc34fabefd4e"
+                        [
+                            "megahit.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "skesa.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "spades.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "velvet.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
                     ]
                 ],
                 "sam_files": [
@@ -53,7 +62,7 @@
                             "id": "Sample01",
                             "single_end": false
                         },
-                        "Sample01.sam:md5,18001d4a771741a58524e87b2ceefe99"
+                        "Sample01.sam:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "versions": [
@@ -61,7 +70,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T11:06:55.565121038",
+        "timestamp": "2026-11-17T09:19:31.248334045",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.5"
